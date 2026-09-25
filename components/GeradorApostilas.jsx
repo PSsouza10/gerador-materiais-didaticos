@@ -43,21 +43,34 @@ export default function GeradorApostilas() {
   });
 
   // ===== ESTADO COM O RESULTADO DA IA =====
+  // Schema enriquecido: conceitos, fórmulas e dicas em listas (em vez de
+  // um único item cada), e aplicação prática com exemplos — mesma
+  // profundidade de conteúdo do protótipo "Criador Visual BNCC".
   const [resultadoIA, setResultadoIA] = useState({
     tituloDidatico: "Volume: O Guia Completo de Capacidade",
     resumoPedagogico:
       "O estudo do volume e da capacidade fundamenta-se em entender o espaço ocupado por um corpo e a quantidade de fluido que ele pode conter.",
-    dicaResolucao:
-      "Converta sempre para a mesma unidade antes de iniciar qualquer cálculo de capacidade.",
+    conceitos: [
+      { termo: "Volume", definicao: "Espaço tridimensional ocupado por um corpo." },
+      { termo: "Capacidade", definicao: "Quantidade de líquido ou material que um objeto pode conter." },
+      { termo: "Litro", definicao: "Unidade de medida de capacidade equivalente a 1 dm³." },
+    ],
+    formulas: [
+      { nome: "Volume do cubo", expressao: "V = a × a × a", descricao: "onde a é a medida da aresta" },
+      { nome: "Conversão", expressao: "1 dm³ = 1 L = 1000 cm³", descricao: "relação entre volume e capacidade" },
+    ],
+    dicas: [
+      "Converta sempre para a mesma unidade antes de iniciar qualquer cálculo.",
+      "Desenhe a figura e identifique altura, largura e profundidade antes de multiplicar.",
+    ],
     lembreteImportante:
       "Capacidade mede o quanto cabe dentro de um objeto; volume mede o espaço que o objeto ocupa.",
-    aplicacaoPratica:
-      "Uma caixa-d'água tem 2 m de altura, 1,5 m de largura e 1 m de profundidade. Quantos litros ela comporta?",
-    tabelaConceitos: [
-      ["1 litro", "1 dm³ = 1000 cm³"],
-      ["1 ml", "1 cm³"],
-      ["Cubo", "V = a × a × a"],
-    ],
+    aplicacaoPratica: {
+      titulo: "Caixa-d'água em casa",
+      situacao:
+        "Uma caixa-d'água tem 2 m de altura, 1,5 m de largura e 1 m de profundidade.",
+      exemplos: ["Quantos litros ela comporta?", "V = 2 × 1,5 × 1 = 3 m³ = 3000 L"],
+    },
     urlImagem: null,
   });
 
@@ -100,10 +113,11 @@ export default function GeradorApostilas() {
         ...prev,
         tituloDidatico: data.tituloDidatico,
         resumoPedagogico: data.resumoPedagogico,
-        dicaResolucao: data.dicaResolucao,
+        conceitos: data.conceitos,
+        formulas: data.formulas,
+        dicas: data.dicas,
         lembreteImportante: data.lembreteImportante,
         aplicacaoPratica: data.aplicacaoPratica,
-        tabelaConceitos: data.tabelaConceitos,
       }));
     } catch (e) {
       console.error(e);
@@ -112,7 +126,7 @@ export default function GeradorApostilas() {
       setLoading(false);
     }
 
-    // --- Imagem (DALL-E 3) ---
+    // --- Imagem (gpt-image-2) ---
     try {
       const res = await imagemPromise;
       const data = await res.json();
@@ -136,7 +150,7 @@ export default function GeradorApostilas() {
       const nomeArquivo = `apostila-${form.tema
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[̀-ͯ]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "")}.pdf`;
 
@@ -342,7 +356,7 @@ export default function GeradorApostilas() {
               {loading
                 ? "Gerando conteúdo (GPT-4o)..."
                 : loadingImagem
-                ? "Gerando ilustração (DALL-E 3)..."
+                ? "Gerando ilustração (gpt-image-2)..."
                 : "Gerar Material Visual"}
             </button>
           </section>
@@ -434,58 +448,101 @@ export default function GeradorApostilas() {
                   {resultadoIA.resumoPedagogico}
                 </p>
 
-                {/* Tabela */}
-                <div className="mt-3 overflow-hidden rounded-lg border border-slate-100">
-                  <div className="grid grid-cols-2 bg-indigo-50 text-[8px] font-bold text-indigo-600">
-                    <span className="px-2 py-1">Conceito</span>
-                    <span className="px-2 py-1">Definição / Aplicação</span>
-                  </div>
-                  {resultadoIA.tabelaConceitos.map(([a, b], i) => (
-                    <div
-                      key={i}
-                      className={`grid grid-cols-2 text-[8px] text-slate-500 ${
-                        i % 2 ? "bg-white" : "bg-slate-50/50"
-                      }`}
-                    >
-                      <span className="px-2 py-1 font-medium">{a}</span>
-                      <span className="px-2 py-1">{b}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Caixas de dica */}
+                {/* Conceitos-chave e Fórmulas & regras */}
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-amber-50 p-2">
-                    <div className="flex items-center gap-1 text-amber-600">
-                      <Lightbulb className="h-3 w-3" />
-                      <span className="text-[8px] font-bold">Dica da IA</span>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-2">
+                    <div className="flex items-center gap-1 text-indigo-600">
+                      <BookOpen className="h-3 w-3" />
+                      <span className="text-[8px] font-bold uppercase tracking-wide">
+                        Conceitos-chave
+                      </span>
                     </div>
-                    <p className="mt-1 text-[7px] text-amber-500/80 leading-tight">
-                      {resultadoIA.dicaResolucao}
-                    </p>
+                    <ul className="mt-1 space-y-0.5">
+                      {(resultadoIA.conceitos || []).map((c, i) => (
+                        <li key={i} className="text-[7px] leading-snug text-slate-600">
+                          <span className="font-bold text-indigo-500">{c.termo}:</span>{" "}
+                          {c.definicao}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="rounded-lg bg-emerald-50 p-2">
-                    <div className="flex items-center gap-1 text-emerald-600">
-                      <Boxes className="h-3 w-3" />
-                      <span className="text-[8px] font-bold">Lembre-se</span>
+
+                  <div className="rounded-lg bg-violet-50 p-2">
+                    <div className="flex items-center gap-1 text-violet-600">
+                      <Target className="h-3 w-3" />
+                      <span className="text-[8px] font-bold uppercase tracking-wide">
+                        Fórmulas &amp; regras
+                      </span>
                     </div>
-                    <p className="mt-1 text-[7px] text-emerald-500/80 leading-tight">
-                      {resultadoIA.lembreteImportante}
-                    </p>
+                    <div className="mt-1 space-y-1">
+                      {(resultadoIA.formulas || []).map((f, i) => (
+                        <div key={i} className="rounded bg-white/80 px-1.5 py-1">
+                          <div className="font-mono text-[8px] font-bold text-violet-600">
+                            {f.expressao}
+                          </div>
+                          <div className="text-[6.5px] text-slate-500 leading-tight">
+                            {f.descricao}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Rodapé */}
-                <div className="mt-auto rounded-lg bg-gradient-to-r from-violet-50 to-indigo-50 p-2">
+                {/* Dicas */}
+                <div className="mt-2 rounded-lg border border-dashed border-amber-200 bg-amber-50 p-2">
+                  <div className="flex items-center gap-1 text-amber-600">
+                    <Lightbulb className="h-3 w-3" />
+                    <span className="text-[8px] font-bold uppercase tracking-wide">
+                      Dicas de resolução
+                    </span>
+                  </div>
+                  <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
+                    {(resultadoIA.dicas || []).map((d, i) => (
+                      <div key={i} className="flex items-start gap-1 text-[7px] leading-snug text-amber-700/90">
+                        <span className="mt-0.5 flex h-2.5 w-2.5 flex-none items-center justify-center rounded-full bg-amber-400 text-[5.5px] font-bold text-white">
+                          {i + 1}
+                        </span>
+                        <span>{d}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lembrete importante */}
+                <div className="mt-2 rounded-lg bg-emerald-50 p-2">
+                  <div className="flex items-center gap-1 text-emerald-600">
+                    <Boxes className="h-3 w-3" />
+                    <span className="text-[8px] font-bold">Lembre-se</span>
+                  </div>
+                  <p className="mt-1 text-[7px] text-emerald-500/80 leading-tight">
+                    {resultadoIA.lembreteImportante}
+                  </p>
+                </div>
+
+                {/* Aplicação prática */}
+                <div className="mt-2 mt-auto rounded-lg bg-gradient-to-r from-violet-50 to-indigo-50 p-2">
                   <div className="flex items-center gap-1 text-indigo-600">
                     <Target className="h-3 w-3" />
                     <span className="text-[8px] font-bold uppercase tracking-wide">
-                      Aplicação Prática no Cotidiano
+                      {resultadoIA.aplicacaoPratica?.titulo || "Aplicação Prática no Cotidiano"}
                     </span>
                   </div>
                   <p className="mt-1 text-[7px] text-slate-600 font-medium">
-                    {resultadoIA.aplicacaoPratica}
+                    {resultadoIA.aplicacaoPratica?.situacao}
                   </p>
+                  {(resultadoIA.aplicacaoPratica?.exemplos || []).length > 0 && (
+                    <ul className="mt-1 grid grid-cols-2 gap-1">
+                      {resultadoIA.aplicacaoPratica.exemplos.map((ex, i) => (
+                        <li
+                          key={i}
+                          className="rounded bg-white/70 px-1.5 py-0.5 text-[6.5px] font-medium text-indigo-600"
+                        >
+                          → {ex}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
