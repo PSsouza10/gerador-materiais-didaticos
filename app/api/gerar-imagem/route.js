@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
+// Mapeia o estilo escolhido no formulário para uma direção visual rica
+const ESTILOS = {
+  "3D Pixar/Disney":
+    "estilo 3D render no estilo Pixar/Disney, personagens fofos, iluminação suave, cores vibrantes, alta qualidade",
+  Isométrico:
+    "ilustração isométrica limpa, perspectiva 3D em ângulo, cores planas e modernas, estilo infográfico educacional",
+  "Vetor Ilustrado":
+    "ilustração vetorial flat design, traços limpos, paleta amigável, estilo de material didático moderno",
+  Realista:
+    "ilustração realista detalhada, iluminação natural, fotorrealismo educacional, alta definição",
+};
+
 export async function POST(request) {
   try {
-    const { professor, bncc, disciplina, nivel, tema, conteudo } =
-      await request.json();
+    const { tema, estilo, disciplina } = await request.json();
 
-    // Validação dos campos obrigatórios
-    if (!disciplina || !nivel || !tema?.trim()) {
+    if (!tema?.trim()) {
       return NextResponse.json(
-        { error: "Disciplina, Nível de Ensino e Tema Principal são obrigatórios." },
+        { error: "O tema é obrigatório para gerar a imagem." },
         { status: 400 }
       );
     }
@@ -22,28 +33,26 @@ export async function POST(request) {
       );
     }
 
-    const systemPrompt =
-      "Você é um especialista em produção de material didático alinhado à BNCC brasileira. Responda sempre em português do Brasil e com rigor pedagógico.";
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: "Storage de imagens (Vercel Blob) não configurado." },
+        { status: 500 }
+      );
+    }
 
-    const userPrompt = `Gere o conteúdo de uma apostila visual com base nestes parâmetros:
+    const direcaoVisual =
+      ESTILOS[estilo] || "ilustração educacional colorida e amigável";
 
-- Professor: ${professor || "não informado"}
-- Código BNCC: ${bncc || "não informado"}
-- Disciplina: ${disciplina}
-- Nível de Ensino: ${nivel}
-- Tema Principal: ${tema}
-- Orientações do professor: ${conteudo || "nenhuma"}
+    const prompt = `Ilustração educacional sobre o tema "${tema}"${
+      disciplina ? ` da disciplina de ${disciplina}` : ""
+    }, voltada para material didático escolar brasileiro. ${direcaoVisual}. Sem texto, sem letras e sem números na imagem. Composição central, fundo limpo.`;
 
-Retorne um JSON com exatamente estas chaves:
-- "tituloDidatico": título chamativo em caixa alta, curto e impactante (string)
-- "resumoPedagogico": 2 a 3 frases introdutórias sobre o tema, alinhadas à habilidade da BNCC e adequadas ao nível de ensino (string)
-- "dicaResolucao": uma dica prática de resolução, máximo 2 frases (string)
-- "lembreteImportante": um lembrete conceitual importante, máximo 2 frases (string)
-- "aplicacaoPratica": um problema contextualizado do cotidiano relacionado ao tema (string)
-- "tabelaConceitos": array de exatamente 3 pares, cada um no formato ["conceito","definição ou fórmula"]`;
-
+    // 1) Gera a imagem com gpt-image-2 (upgrade do dall-e-3: modelo de
+    // imagem atual da OpenAI, mesma família usada no protótipo "Criador
+    // Visual BNCC"). Diferente do dall-e-3, retorna a imagem já em
+    // base64 (b64_json), sem precisar buscar uma URL temporária depois.
     const openaiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      "https://api.openai.com/v1/images/generations",
       {
         method: "POST",
         headers: {
@@ -51,48 +60,58 @@ Retorne um JSON com exatamente estas chaves:
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
+          model: "gpt-image-2",
+          prompt,
+          size: "1024x1024",
+          quality: "high",
         }),
       }
     );
 
     if (!openaiResponse.ok) {
       const detalhe = await openaiResponse.text();
-      console.error("Erro OpenAI (texto):", detalhe);
+      console.error("Erro OpenAI (imagem):", detalhe);
       return NextResponse.json(
-        { error: "Falha ao gerar conteúdo na OpenAI." },
+        { error: "Falha ao gerar a imagem na OpenAI." },
         { status: 502 }
       );
     }
 
     const data = await openaiResponse.json();
-    const conteudoBruto = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(conteudoBruto);
+    const b64 = data.data?.[0]?.b64_json ?? null;
 
-    // Normaliza a tabela para garantir o formato esperado pelo front
-    const tabelaConceitos =
-      Array.isArray(parsed.tabelaConceitos) && parsed.tabelaConceitos.length
-        ? parsed.tabelaConceitos
-        : [["—", "—"]];
+    if (!b64) {
+      return NextResponse.json(
+        { error: "A OpenAI não retornou nenhuma imagem." },
+        { status: 502 }
+      );
+    }
 
-    return NextResponse.json({
-      tituloDidatico: parsed.tituloDidatico || tema.toUpperCase(),
-      resumoPedagogico: parsed.resumoPedagogico || "",
-      dicaResolucao: parsed.dicaResolucao || "",
-      lembreteImportante: parsed.lembreteImportante || "",
-      aplicacaoPratica: parsed.aplicacaoPratica || "",
-      tabelaConceitos,
+    const imagemBuffer = Buffer.from(b64, "base64");
+
+    // 2) Sobe para o Vercel Blob → URL permanente e com CORS liberado
+    // (gpt-image-2 não expira como a URL temporária do dall-e-3, mas
+    // mantemos o Blob pra ter uma cópia permanente e leve de servir)
+    const slug = tema
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const nomeArquivo = `apostilas/${slug || "ilustracao"}-${Date.now()}.png`;
+
+    const blob = await put(nomeArquivo, imagemBuffer, {
+      access: "public",
+      contentType: "image/png",
     });
+
+    // 3) Retorna a URL permanente do nosso próprio storage
+    return NextResponse.json({ urlImagem: blob.url });
   } catch (error) {
-    console.error("Erro na rota gerar-material:", error);
+    console.error("Erro na rota gerar-imagem:", error);
     return NextResponse.json(
-      { error: "Erro interno ao gerar o material." },
+      { error: "Erro interno ao gerar a imagem." },
       { status: 500 }
     );
   }
