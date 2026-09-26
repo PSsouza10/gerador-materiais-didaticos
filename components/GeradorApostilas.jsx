@@ -23,8 +23,10 @@ import {
   KeyRound,
   Gauge,
   Info,
+  PanelTop,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
+import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { NIVEIS_DIFICULDADE, NIVEL_PADRAO } from "@/lib/niveis";
@@ -85,6 +87,7 @@ export default function GeradorApostilas() {
   const [compartilhar, setCompartilhar] = useState({ estado: "vazio", url: null, chave: null });
 
   const folhaRef = useRef(null);
+  const capaRef = useRef(null);
 
   // ===== ESTADO DO FORMULÁRIO =====
   const [form, setForm] = useState({
@@ -97,6 +100,7 @@ export default function GeradorApostilas() {
     conteudo: "",
     estilo: "3D Pixar/Disney",
     dificuldade: NIVEL_PADRAO,
+    capa: true,
   });
 
   // ===== RESULTADO DA IA =====
@@ -222,7 +226,9 @@ export default function GeradorApostilas() {
     if (!folhaRef.current) return;
     setBaixandoPdf(true);
     try {
-      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`);
+      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`, {
+        capa: form.capa ? capaRef.current : null,
+      });
     } catch (e) {
       console.error("Erro ao gerar PDF:", e);
       setErro("Não foi possível gerar o PDF. Tente novamente.");
@@ -466,6 +472,14 @@ export default function GeradorApostilas() {
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setForm((f) => ({ ...f, capa: !f.capa }))}
+                  aria-pressed={form.capa}
+                  title="Capa estilo ComfyUI com a ilustração ao fundo"
+                  className={`btn-prev ${form.capa ? "!bg-indigo-50" : ""}`}
+                >
+                  <PanelTop className="h-3.5 w-3.5" /> Capa
+                </button>
                 {material.exercicios?.length > 0 && (
                   <button
                     onClick={() => setMostrarGabarito((g) => !g)}
@@ -516,6 +530,7 @@ export default function GeradorApostilas() {
             )}
 
             <PreviewEscalado>
+              {form.capa && <CapaA4 ref={capaRef} form={form} material={material} urlImagem={urlImagem} />}
               <FolhaA4
                 ref={folhaRef}
                 form={form}

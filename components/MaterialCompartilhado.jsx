@@ -2,12 +2,14 @@
 import React, { useRef, useState } from "react";
 import { Download, Printer, Loader2, GraduationCap, KeyRound } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
+import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
 
 export default function MaterialCompartilhado({ dados }) {
   const folhaRef = useRef(null);
+  const capaRef = useRef(null);
   const [baixando, setBaixando] = useState(false);
   const [gabarito, setGabarito] = useState(false);
   const { form, material, urlImagem } = dados;
@@ -15,7 +17,9 @@ export default function MaterialCompartilhado({ dados }) {
   const baixar = async () => {
     setBaixando(true);
     try {
-      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`);
+      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`, {
+        capa: form.capa ? capaRef.current : null,
+      });
     } finally {
       setBaixando(false);
     }
@@ -51,6 +55,7 @@ export default function MaterialCompartilhado({ dados }) {
 
       <div className="mx-auto max-w-[794px]">
         <PreviewEscalado>
+          {form.capa && <CapaA4 ref={capaRef} form={form} material={material} urlImagem={urlImagem} />}
           <FolhaA4 ref={folhaRef} form={form} material={material} urlImagem={urlImagem} mostrarGabarito={gabarito} />
         </PreviewEscalado>
       </div>

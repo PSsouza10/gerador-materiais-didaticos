@@ -38,6 +38,7 @@ export async function POST(request) {
         tema: str(form.tema, 200),
         estilo: str(form.estilo, 60),
         dificuldade: obterNivel(form.dificuldade).id,
+        capa: form.capa !== false,
       },
       material: {
         ...normalizarMaterial(material, form.tema),

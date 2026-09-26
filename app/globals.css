@@ -32,6 +32,14 @@ body {
   min-height: 0;
 }
 
+/* Capa: página A4 inteira, sangrada; o conteúdo começa na página seguinte */
+.capa-a4 {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  page-break-after: always;
+  break-after: page;
+}
+
 /* Task 1.2 — nenhum bloco é cortado ao meio entre duas páginas */
 .cabecalho-escola,
 .cartao-bncc,
