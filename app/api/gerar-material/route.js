@@ -1,47 +1,70 @@
 import { NextResponse } from "next/server";
+import bnccDados from "@/data/bncc-habilidades.json";
+import { indexar, normalizarCodigo } from "@/lib/bncc";
+import { obterNivel } from "@/lib/niveis";
+import { normalizarMaterial } from "@/lib/material";
 
+// Task 1.1 — Vercel: limite de duração da função e sem cache.
+// No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
+// então a requisição não "morre" esperando a resposta completa do modelo.
 export const runtime = "nodejs";
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+// Encerramos a chamada à OpenAI um pouco antes do limite da Vercel,
+// para ainda conseguir avisar o front com uma mensagem clara.
+const LIMITE_IA_MS = 55_000;
+
+const BNCC = indexar(bnccDados.habilidades);
+
+const erroJson = (mensagem, status) => NextResponse.json({ error: mensagem }, { status });
 
 export async function POST(request) {
+  let body;
   try {
-    const { professor, bncc, disciplina, nivel, tema, conteudo } =
-      await request.json();
+    body = await request.json();
+  } catch {
+    return erroJson("Requisição inválida.", 400);
+  }
 
-    // Validação dos campos obrigatórios
-    if (!disciplina || !nivel || !tema?.trim()) {
-      return NextResponse.json(
-        { error: "Disciplina, Nível de Ensino e Tema Principal são obrigatórios." },
-        { status: 400 }
-      );
-    }
+  const { professor, bncc, habilidade, disciplina, nivel, tema, conteudo, dificuldade } = body;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "Chave da OpenAI não configurada no servidor." },
-        { status: 500 }
-      );
-    }
+  if (!disciplina || !nivel || !tema?.trim()) {
+    return erroJson("Disciplina, Nível de Ensino e Tema Principal são obrigatórios.", 400);
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return erroJson("Chave da OpenAI não configurada no servidor.", 500);
+  }
 
-    const systemPrompt =
-      "Você é um especialista em produção de material didático alinhado à BNCC brasileira. Responda sempre em português do Brasil e com rigor pedagógico. Retorne APENAS JSON válido, sem markdown, sem comentários.";
+  // Task 3.1 — o texto oficial da habilidade vem da base, não do navegador.
+  const oficial = bncc ? BNCC.get(normalizarCodigo(bncc)) : null;
+  const linhaBncc = oficial
+    ? `${oficial.c} — "${oficial.t}" (texto oficial da BNCC; componente: ${oficial.d})`
+    : bncc
+    ? `${bncc}${habilidade ? ` — ${habilidade}` : ""} (código informado pelo professor, não localizado na BNCC nacional)`
+    : "não informado";
 
-    // Schema enriquecido (conceitos, fórmulas, dicas e exemplos em listas,
-    // em vez de um único item cada) — mesma profundidade de conteúdo do
-    // protótipo "Criador Visual BNCC", pra apostila ficar mais completa,
-    // com mais material por tema e sem pular etapas.
-    const userPrompt = `Gere o conteúdo de uma apostila visual com base nestes parâmetros:
+  // Task 3.2 — nível de dificuldade / adaptação
+  const nivelDif = obterNivel(dificuldade);
+
+  const systemPrompt =
+    "Você é um especialista em produção de material didático alinhado à BNCC brasileira. Responda sempre em português do Brasil e com rigor pedagógico. Retorne APENAS JSON válido, sem markdown, sem comentários.";
+
+  const userPrompt = `Gere o conteúdo de uma apostila visual com base nestes parâmetros:
 
 - Professor: ${professor || "não informado"}
-- Código BNCC: ${bncc || "não informado"}
+- Habilidade BNCC: ${linhaBncc}
 - Disciplina: ${disciplina}
 - Nível de Ensino: ${nivel}
 - Tema Principal: ${tema}
 - Orientações do professor: ${conteudo || "nenhuma"}
 
+${nivelDif.prompt}
+
 Retorne um JSON com esta estrutura EXATA:
 {
   "tituloDidatico": "título chamativo, curto e impactante, máx 6 palavras",
-  "resumoPedagogico": "2-3 frases introdutórias sobre o tema, alinhadas à habilidade da BNCC e adequadas ao nível de ensino",
+  "resumoPedagogico": "2-3 frases introdutórias sobre o tema, alinhadas à habilidade da BNCC e adequadas ao nível",
   "conceitos": [
     { "termo": "nome do conceito", "definicao": "definição clara em 1 frase" }
   ],
@@ -54,7 +77,10 @@ Retorne um JSON com esta estrutura EXATA:
     "titulo": "título curto da aplicação no cotidiano",
     "situacao": "situação real do dia a dia relacionada ao tema (2-3 frases)",
     "exemplos": ["exemplo prático curto", "..."]
-  }
+  },
+  "exercicios": [
+    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "resposta": "resposta correta com breve justificativa" }
+  ]
 }
 
 Regras:
@@ -62,76 +88,128 @@ Regras:
 - Entre 2 e 4 fórmulas (se a disciplina não usa fórmulas, use "regras" ou "princípios" com notação simbólica ou palavras-chave).
 - Entre 3 e 5 dicas.
 - Entre 2 e 4 exemplos práticos.
-- Conteúdo tecnicamente correto e adequado ao nível ${nivel}.`;
+- Entre 4 e 6 exercícios; misture questões abertas ("alternativas": []) e de múltipla escolha.
+- Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
 
-    const openaiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-        }),
-      }
-    );
+  // Aborta se passar do limite OU se o professor fechar a página
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error("timeout")), LIMITE_IA_MS);
+  request.signal?.addEventListener?.("abort", () => controller.abort(new Error("cliente")));
 
-    if (!openaiResponse.ok) {
-      const detalhe = await openaiResponse.text();
-      console.error("Erro OpenAI (texto):", detalhe);
-      return NextResponse.json(
-        { error: "Falha ao gerar conteúdo na OpenAI." },
-        { status: 502 }
-      );
-    }
-
-    const data = await openaiResponse.json();
-    const conteudoBruto = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(conteudoBruto);
-
-    // Normaliza pra garantir o formato esperado pelo front mesmo se o
-    // modelo devolver algum campo faltando.
-    const conceitos = Array.isArray(parsed.conceitos) && parsed.conceitos.length
-      ? parsed.conceitos
-      : [{ termo: "—", definicao: "—" }];
-    const formulas = Array.isArray(parsed.formulas) && parsed.formulas.length
-      ? parsed.formulas
-      : [];
-    const dicas = Array.isArray(parsed.dicas) && parsed.dicas.length
-      ? parsed.dicas
-      : [""];
-    const aplicacaoPratica = parsed.aplicacaoPratica && typeof parsed.aplicacaoPratica === "object"
-      ? {
-          titulo: parsed.aplicacaoPratica.titulo || "",
-          situacao: parsed.aplicacaoPratica.situacao || "",
-          exemplos: Array.isArray(parsed.aplicacaoPratica.exemplos)
-            ? parsed.aplicacaoPratica.exemplos
-            : [],
-        }
-      : { titulo: "", situacao: "", exemplos: [] };
-
-    return NextResponse.json({
-      tituloDidatico: parsed.tituloDidatico || tema.toUpperCase(),
-      resumoPedagogico: parsed.resumoPedagogico || "",
-      conceitos,
-      formulas,
-      dicas,
-      lembreteImportante: parsed.lembreteImportante || "",
-      aplicacaoPratica,
+  let openaiResponse;
+  try {
+    openaiResponse = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        temperature: 0.7,
+        stream: true,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
     });
-  } catch (error) {
-    console.error("Erro na rota gerar-material:", error);
-    return NextResponse.json(
-      { error: "Erro interno ao gerar o material." },
-      { status: 500 }
+  } catch (e) {
+    clearTimeout(timer);
+    const timeout = controller.signal.aborted;
+    console.error("Erro de conexão com a OpenAI:", e);
+    return erroJson(
+      timeout
+        ? "A IA demorou demais para começar a responder. Tente novamente em instantes."
+        : "Não foi possível conectar ao serviço de IA.",
+      timeout ? 504 : 502
     );
   }
+
+  if (!openaiResponse.ok) {
+    clearTimeout(timer);
+    const detalhe = await openaiResponse.text();
+    console.error("Erro OpenAI (texto):", openaiResponse.status, detalhe);
+    const msg =
+      openaiResponse.status === 429
+        ? "Limite de uso da IA atingido no momento. Aguarde um pouco e tente novamente."
+        : "Falha ao gerar conteúdo na OpenAI.";
+    return erroJson(msg, 502);
+  }
+
+  // Stream SSE para o navegador: progresso enquanto o modelo escreve,
+  // material normalizado no final, ou um evento de erro legível.
+  const encoder = new TextEncoder();
+  const enviar = (ctrl, evento) => ctrl.enqueue(encoder.encode(`data: ${JSON.stringify(evento)}\n\n`));
+
+  const stream = new ReadableStream({
+    async start(ctrl) {
+      enviar(ctrl, { tipo: "progresso", caracteres: 0 });
+      const reader = openaiResponse.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let acumulado = "";
+      let ultimoEnvio = 0;
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const linhas = buffer.split("\n");
+          buffer = linhas.pop();
+          for (const l of linhas) {
+            if (!l.startsWith("data:")) continue;
+            const dado = l.slice(5).trim();
+            if (dado === "[DONE]") continue;
+            try {
+              acumulado += JSON.parse(dado).choices?.[0]?.delta?.content ?? "";
+            } catch {
+              /* linha parcial — ignorada */
+            }
+          }
+          if (acumulado.length - ultimoEnvio > 150) {
+            ultimoEnvio = acumulado.length;
+            enviar(ctrl, { tipo: "progresso", caracteres: acumulado.length });
+          }
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(acumulado);
+        } catch {
+          throw new Error("json");
+        }
+        const material = normalizarMaterial(parsed, tema);
+        material.bncc = oficial ? { codigo: oficial.c, texto: oficial.t } : bncc ? { codigo: bncc, texto: habilidade || "" } : null;
+        material.dificuldade = nivelDif.id;
+        enviar(ctrl, { tipo: "concluido", material });
+      } catch (e) {
+        const motivo = controller.signal.aborted
+          ? "A geração passou do tempo limite do servidor (60 s). Tente um tema mais específico ou gere novamente."
+          : e.message === "json"
+          ? "A IA devolveu uma resposta incompleta. Clique em gerar novamente."
+          : "A conexão com a IA foi interrompida. Tente novamente.";
+        console.error("Erro no stream gerar-material:", e);
+        enviar(ctrl, { tipo: "erro", mensagem: motivo });
+      } finally {
+        clearTimeout(timer);
+        ctrl.close();
+      }
+    },
+    cancel() {
+      controller.abort(new Error("cliente"));
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }

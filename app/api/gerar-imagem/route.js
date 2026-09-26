@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
+// Task 1.1 — geração de imagem costuma levar 20–40 s: usa o teto do plano Hobby.
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+const LIMITE_IMAGEM_MS = 50_000;
 
 // Mapeia o estilo escolhido no formulário para uma direção visual rica
 const ESTILOS = {
@@ -51,22 +56,38 @@ export async function POST(request) {
     // imagem atual da OpenAI, mesma família usada no protótipo "Criador
     // Visual BNCC"). Diferente do dall-e-3, retorna a imagem já em
     // base64 (b64_json), sem precisar buscar uma URL temporária depois.
-    const openaiResponse = await fetch(
-      "https://api.openai.com/v1/images/generations",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-image-2",
-          prompt,
-          size: "1024x1024",
-          quality: "high",
-        }),
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), LIMITE_IMAGEM_MS);
+    let openaiResponse;
+    try {
+      openaiResponse = await fetch(
+        `${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/images/generations`,
+        {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-image-2",
+            prompt,
+            size: "1024x1024",
+            quality: "high",
+          }),
+        }
+      );
+    } catch (e) {
+      if (controller.signal.aborted) {
+        return NextResponse.json(
+          { error: "A ilustração demorou demais para ser gerada (timeout). O material foi criado sem imagem; tente gerar de novo." },
+          { status: 504 }
+        );
       }
-    );
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (!openaiResponse.ok) {
       const detalhe = await openaiResponse.text();
@@ -95,7 +116,7 @@ export async function POST(request) {
     const slug = tema
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 

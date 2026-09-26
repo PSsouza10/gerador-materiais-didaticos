@@ -11,3 +11,97 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* ================================================================
+   FOLHA A4 (tela, PDF e impressão)
+   Largura real de 210 mm; no live preview ela é apenas escalada.
+   ================================================================ */
+.folha-a4 {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Durante a exportação em PDF as margens de cima/baixo de cada página
+   vêm do próprio html2pdf (15 mm), então a folha não soma as suas. */
+.folha-a4.exportando {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 0;
+}
+
+/* Task 1.2 — nenhum bloco é cortado ao meio entre duas páginas */
+.cabecalho-escola,
+.cartao-bncc,
+.bloco-exercicio {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* ================================================================
+   IMPRESSÃO (Ctrl+P / botão Imprimir)
+   ================================================================ */
+@page {
+  size: A4 portrait;
+  /* margem 0 faz o navegador omitir cabeçalho/rodapé padrão (URL, data, nº);
+     a margem de 15 mm é aplicada pela própria folha, repetida a cada página. */
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    width: 210mm;
+  }
+
+  /* Some tudo o que não é a folha: menu, formulário, botões, avisos */
+  body * {
+    visibility: hidden;
+  }
+  .area-impressao,
+  .area-impressao * {
+    visibility: visible;
+  }
+  .area-impressao {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 210mm;
+  }
+
+  /* Desfaz a escala do live preview */
+  .escala-preview {
+    transform: none !important;
+    height: auto !important;
+    width: auto !important;
+  }
+  .coluna-preview {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .min-h-screen {
+    min-height: 0 !important;
+  }
+  .moldura-preview {
+    width: auto !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .folha-a4 {
+    min-height: 0;
+    /* repete o padding de 15 mm no topo/base de CADA página impressa */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .nao-imprimir {
+    display: none !important;
+  }
+}
