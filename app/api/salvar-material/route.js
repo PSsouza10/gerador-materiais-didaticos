@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import { hashChave } from "@/lib/chave";
+import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarCapa } from "@/lib/opcoes";
@@ -23,6 +24,10 @@ export async function POST(request) {
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json({ error: "Storage (Vercel Blob) não configurado." }, { status: 500 });
+    }
+
+    if (!authConfigurado || !(await usuarioAtual())) {
+      return NextResponse.json({ error: "Entre com sua conta para salvar e compartilhar." }, { status: 401 });
     }
 
     const bruto = await request.text();

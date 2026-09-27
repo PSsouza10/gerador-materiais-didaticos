@@ -16,6 +16,11 @@ export default function Privacidade({ compacto = false }) {
           <b>Exportar backup</b> para guardar uma cópia e <b>Importar</b> para restaurar.
         </li>
         <li>
+          <b>Sua conta:</b> o login é feito pelo Google. O site recebe seu nome, e-mail e foto só para identificar a sessão
+          (um cookie neste navegador, válido por 30 dias). No servidor fica apenas um contador de gerações, sem seu e-mail nem
+          seu nome. Use <b>Sair</b> no menu da conta em computadores compartilhados.
+        </li>
+        <li>
           <b>Computador compartilhado:</b> quem usar este navegador depois verá sua lista e poderá revogar seus links. Exporte o
           backup e use <b>Limpar lista</b> ao terminar.
         </li>

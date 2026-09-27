@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { useSession, signIn } from "next-auth/react";
+import Conta, { MedidorUso } from "@/components/Conta";
 import {
   LayoutDashboard,
   Sparkles,
@@ -157,6 +159,22 @@ export default function GeradorApostilas() {
   const [materiais, setMateriais] = useState([]);
   const [paginacao, setPaginacao] = useState({ paginas: 1, paginasFolha: 1, capa: false });
 
+  // ===== CONTA E LIMITE =====
+  const { data: sessao, status: statusSessao } = useSession();
+  const [conta, setConta] = useState({ authConfigurado: null, uso: null });
+  const atualizarUso = async () => {
+    try {
+      const r = await fetch("/api/uso", { cache: "no-store" });
+      const j = await r.json();
+      setConta({ authConfigurado: j.authConfigurado, uso: j.uso || null });
+    } catch {
+      /* sem rede: mantém o último estado */
+    }
+  };
+  useEffect(() => {
+    if (statusSessao !== "loading") atualizarUso();
+  }, [statusSessao]);
+
   // Task 4.1 — link de compartilhamento
   const [compartilhar, setCompartilhar] = useState({ estado: "vazio", url: null, chave: null });
 
@@ -251,18 +269,24 @@ export default function GeradorApostilas() {
       body: JSON.stringify(formEnviado),
     });
 
-    const imagemPromise = fetch("/api/gerar-imagem", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina }),
-    });
-
     let novoMaterial = null;
     let novaImagem = null;
+    let imagemPromise = null;
 
     try {
       const res = await conteudoPromise;
-      novoMaterial = await lerStreamMaterial(res, { onProgresso: setProgresso });
+      // a ilustração só começa depois que o servidor registrou a geração
+      if (res.ok) {
+        imagemPromise = fetch("/api/gerar-imagem", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina }),
+        });
+      }
+      novoMaterial = await lerStreamMaterial(res, {
+        onProgresso: setProgresso,
+        onUso: (uso) => setConta((c) => ({ ...c, uso: { ...c.uso, ...uso } })),
+      });
       setMaterial(novoMaterial);
       setUrlImagem(null);
     } catch (e) {
@@ -277,6 +301,7 @@ export default function GeradorApostilas() {
     }
 
     try {
+      if (!imagemPromise) throw new Error("Ilustração não gerada.");
       const res = await imagemPromise;
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -289,6 +314,7 @@ export default function GeradorApostilas() {
     } catch (e) {
       console.error(e);
       if (novoMaterial) setAviso(`${e.message} O material foi criado sem ilustração.`);
+      setLoadingImagem(false);
     } finally {
       setLoadingImagem(false);
     }
@@ -445,6 +471,9 @@ export default function GeradorApostilas() {
             <GraduationCap className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-extrabold text-slate-800">EduGera</span>
+          <div className="ml-auto">
+            <Conta sessao={sessao} status={statusSessao} uso={conta.uso} authConfigurado={conta.authConfigurado} />
+          </div>
         </div>
 
         <header className="nao-imprimir flex items-center justify-between px-4 sm:px-6 md:px-8 py-5">
@@ -452,15 +481,10 @@ export default function GeradorApostilas() {
             <h1 className="text-2xl font-extrabold text-slate-800">{active === "Gerar Material" ? "Gerar Material Visual" : active}</h1>
             <p className="text-sm text-slate-700">{tela.descricao}</p>
           </div>
-          <button
-            onClick={() => setActive("Configurações")}
-            className="hidden sm:flex items-center gap-3 rounded-full bg-white px-4 py-2 shadow-sm border border-slate-100 hover:border-indigo-200"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 font-bold text-sm">
-              {(config.professor || "P").trim()[0]?.toUpperCase()}
-            </div>
-            <span className="text-sm font-semibold text-slate-600">{config.professor || "Definir meu nome"}</span>
-          </button>
+          <div className="hidden items-center gap-3 md:flex">
+            {sessao?.user && <MedidorUso uso={conta.uso} />}
+            <Conta sessao={sessao} status={statusSessao} uso={conta.uso} authConfigurado={conta.authConfigurado} />
+          </div>
         </header>
 
         {active === "Dashboard" && (
@@ -648,15 +672,40 @@ export default function GeradorApostilas() {
               </div>
             )}
 
+            {conta.authConfigurado === false && (
+              <p role="status" className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                A geração está desativada até o login ser configurado neste site. Você ainda pode ver o exemplo e testar a prévia e o PDF.
+              </p>
+            )}
+            {sessao?.user && conta.uso?.restantes === 0 && (
+              <p role="status" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                Você usou as {conta.uso.limite} gerações grátis deste mês. O limite renova no dia 1º.
+              </p>
+            )}
+
+            {conta.authConfigurado && statusSessao === "unauthenticated" ? (
+              <button
+                onClick={() => signIn("google")}
+                className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+              >
+                <Sparkles className="h-5 w-5" /> Entrar com Google para gerar
+              </button>
+            ) : (
             <button
               onClick={handleGerarMaterial}
-              disabled={ocupado}
+              disabled={ocupado || conta.authConfigurado === false || conta.uso?.restantes === 0}
               aria-busy={ocupado}
               className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
               <Sparkles className={`h-5 w-5 ${ocupado ? "animate-spin" : ""}`} />
               {statusGeracao || (gerado ? "Gerar novamente" : "Gerar Material Visual")}
             </button>
+            )}
+            {sessao?.user && conta.uso && (
+              <p className="mt-2 text-center">
+                <MedidorUso uso={conta.uso} compacto />
+              </p>
+            )}
             <p className="sr-only" aria-live="polite">
               {statusGeracao}
             </p>

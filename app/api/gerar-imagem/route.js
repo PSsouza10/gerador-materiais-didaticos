@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { authConfigurado, usuarioAtual } from "@/lib/auth";
+import { consumirImagem } from "@/lib/uso";
 
 export const runtime = "nodejs";
 // Task 1.1 — geração de imagem costuma levar 20–40 s: usa o teto do plano Hobby.
@@ -36,6 +38,16 @@ export async function POST(request) {
         { error: "Chave da OpenAI não configurada no servidor." },
         { status: 500 }
       );
+    }
+
+    if (!authConfigurado) {
+      return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
+    }
+    const usuario = await usuarioAtual();
+    if (!usuario) return NextResponse.json({ error: "Entre com sua conta para gerar ilustrações." }, { status: 401 });
+    const img = await consumirImagem(usuario.email);
+    if (!img?.ok) {
+      return NextResponse.json({ error: "A ilustração acompanha uma geração de material; gere o material primeiro." }, { status: 429 });
     }
 
     if (!process.env.BLOB_READ_WRITE_TOKEN) {

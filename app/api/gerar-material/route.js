@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo, rotuloAno } from "@/lib/bncc";
 import { verificarUnidades } from "@/lib/unidades";
+import { authConfigurado, usuarioAtual } from "@/lib/auth";
+import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarMaterial } from "@/lib/material";
 
@@ -36,6 +38,25 @@ export async function POST(request) {
   if (!process.env.OPENAI_API_KEY) {
     return erroJson("Chave da OpenAI não configurada no servidor.", 500);
   }
+
+  // Login obrigatório + limite mensal: protege o crédito da OpenAI
+  if (!authConfigurado) return erroJson("O login ainda não foi configurado neste site. A geração está desativada.", 503);
+  const usuario = await usuarioAtual();
+  if (!usuario) return erroJson("Entre com sua conta para gerar materiais.", 401);
+  let uso;
+  try {
+    uso = await consumirGeracao(usuario.email);
+  } catch (e) {
+    console.error("Erro ao registrar uso:", e);
+    return erroJson("Não foi possível verificar seu limite agora. Tente de novo.", 503);
+  }
+  if (!uso.ok) {
+    return NextResponse.json(
+      { error: `Você usou as ${uso.limite} gerações grátis deste mês. O limite renova no dia 1º.`, uso },
+      { status: 429 }
+    );
+  }
+  const devolver = () => devolverGeracao(usuario.email);
 
   // Task 3.1 — o texto oficial da habilidade vem da base, não do navegador.
   const oficial = bncc ? resolverCodigo(BNCC, bncc) : null;
@@ -124,6 +145,7 @@ Regras:
     });
   } catch (e) {
     clearTimeout(timer);
+    await devolver();
     const timeout = controller.signal.aborted;
     console.error("Erro de conexão com a OpenAI:", e);
     return erroJson(
@@ -136,6 +158,7 @@ Regras:
 
   if (!openaiResponse.ok) {
     clearTimeout(timer);
+    await devolver();
     const detalhe = await openaiResponse.text();
     console.error("Erro OpenAI (texto):", openaiResponse.status, detalhe);
     const msg =
@@ -196,7 +219,7 @@ Regras:
           : null;
         material.dificuldade = nivelDif.id;
         material.alertas = verificarUnidades(material);
-        enviar(ctrl, { tipo: "concluido", material });
+        enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
           ? "A geração passou do tempo limite do servidor (60 s). Tente um tema mais específico ou gere novamente."
@@ -204,6 +227,7 @@ Regras:
           ? "A IA devolveu uma resposta incompleta. Clique em gerar novamente."
           : "A conexão com a IA foi interrompida. Tente novamente.";
         console.error("Erro no stream gerar-material:", e);
+        await devolver();
         enviar(ctrl, { tipo: "erro", mensagem: motivo });
       } finally {
         clearTimeout(timer);

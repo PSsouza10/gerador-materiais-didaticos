@@ -1,4 +1,5 @@
 import "./globals.css";
+import Provedores from "@/components/Provedores";
 
 export const metadata = {
   title: "EduGera · Apostilas BNCC",
@@ -9,7 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <Provedores>{children}</Provedores>
+      </body>
     </html>
   );
 }

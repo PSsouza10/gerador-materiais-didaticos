@@ -18,6 +18,17 @@ Abra http://localhost:3000.
 | `OPENAI_API_KEY` | sim | Geração do conteúdo e da ilustração |
 | `BLOB_READ_WRITE_TOKEN` | sim | Vercel Blob: guarda as ilustrações e os materiais compartilhados (criada automaticamente ao conectar um Blob Store ao projeto na Vercel) |
 | `OPENAI_BASE_URL` | não | Outra URL compatível com a API da OpenAI (padrão `https://api.openai.com/v1`); útil para testes com servidor simulado |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | sim | Login com Google (Google Cloud Console → Credenciais → ID do cliente OAuth, tipo "Aplicativo da Web") |
+| `NEXTAUTH_SECRET` | sim | Segredo longo e aleatório que assina a sessão e protege o registro de uso |
+| `NEXTAUTH_URL` | sim | Endereço público do site, ex.: `https://edugera.vercel.app` |
+| `LIMITE_GERACOES_MES` | não | Gerações por mês no plano grátis (padrão 5) |
+| `ADMIN_EMAILS` | não | E-mails sem limite de geração, separados por vírgula |
+
+**Login e limite:** gerar, ilustrar e salvar exigem login. Sem as variáveis do Google o site funciona (exemplo, prévia, PDF), mas a geração fica desativada — isso protege o crédito da OpenAI. Cada conta tem `LIMITE_GERACOES_MES` gerações por mês; se a IA falhar, a geração é devolvida. O registro de uso fica no Vercel Blob sem e-mail nem nome (caminho = HMAC do e-mail com `NEXTAUTH_SECRET`).
+
+No Google Cloud, em "URIs de redirecionamento autorizados", cadastre `https://edugera.vercel.app/api/auth/callback/google` (e o domínio antigo, se for usar).
+
+Testes: `npm test` (busca BNCC e verificação de unidades).
 
 ## Funcionalidades (Trilha de Otimização)
 
