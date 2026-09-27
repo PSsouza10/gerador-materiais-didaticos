@@ -461,6 +461,10 @@ export default function GeradorApostilas() {
             Busque a habilidade da BNCC pelo código ou por palavra-chave: a descrição oficial entra no material.
           </p>
         </div>
+        <p className="px-5 pb-4 text-[11px] text-slate-500">
+          <a href="/privacidade" className="hover:text-indigo-600 hover:underline">Privacidade</a> ·{" "}
+          <a href="/termos" className="hover:text-indigo-600 hover:underline">Termos de Uso</a>
+        </p>
       </aside>
 
       {/* ===== CONTEÚDO ===== */}

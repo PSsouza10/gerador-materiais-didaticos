@@ -11,7 +11,7 @@ export default function Privacidade({ compacto = false }) {
       </h2>
       <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-slate-700">
         <li>
-          <b>Neste navegador:</b> suas preferências e a lista &ldquo;Minhas Apostilas&rdquo;. Não há conta nem sincronização. Elas se
+          <b>Neste navegador:</b> suas preferências e a lista &ldquo;Minhas Apostilas&rdquo;. Elas não são sincronizadas com a sua conta. Elas se
           perdem se você limpar os dados do navegador, e não aparecem em outro navegador ou aparelho. Use{" "}
           <b>Exportar backup</b> para guardar uma cópia e <b>Importar</b> para restaurar.
         </li>
@@ -42,6 +42,10 @@ export default function Privacidade({ compacto = false }) {
           </>
         )}
       </ul>
+      <p className="mt-4 text-xs text-slate-500">
+        Detalhes na <a href="/privacidade" className="font-semibold text-indigo-600 underline">Política de Privacidade</a> e nos{" "}
+        <a href="/termos" className="font-semibold text-indigo-600 underline">Termos de Uso</a>.
+      </p>
     </section>
   );
 }
