@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bnccDados from "@/data/bncc-habilidades.json";
-import { indexar, normalizarCodigo } from "@/lib/bncc";
+import { indexar, resolverCodigo, rotuloAno } from "@/lib/bncc";
+import { verificarUnidades } from "@/lib/unidades";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarMaterial } from "@/lib/material";
 
@@ -27,7 +28,7 @@ export async function POST(request) {
     return erroJson("Requisição inválida.", 400);
   }
 
-  const { professor, bncc, habilidade, disciplina, nivel, tema, conteudo, dificuldade } = body;
+  const { professor, bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade } = body;
 
   if (!disciplina || !nivel || !tema?.trim()) {
     return erroJson("Disciplina, Nível de Ensino e Tema Principal são obrigatórios.", 400);
@@ -37,11 +38,11 @@ export async function POST(request) {
   }
 
   // Task 3.1 — o texto oficial da habilidade vem da base, não do navegador.
-  const oficial = bncc ? BNCC.get(normalizarCodigo(bncc)) : null;
+  const oficial = bncc ? resolverCodigo(BNCC, bncc) : null;
   const linhaBncc = oficial
     ? `${oficial.c} — "${oficial.t}" (texto oficial da BNCC; componente: ${oficial.d})`
     : bncc
-    ? `${bncc}${habilidade ? ` — ${habilidade}` : ""} (código informado pelo professor, não localizado na BNCC nacional)`
+    ? `${bncc}${habilidade ? ` — ${habilidade}` : ""} (habilidade informada pelo docente, não localizada na BNCC nacional)`
     : "não informado";
 
   // Task 3.2 — nível de dificuldade / adaptação
@@ -55,7 +56,7 @@ export async function POST(request) {
 - Professor: ${professor || "não informado"}
 - Habilidade BNCC: ${linhaBncc}
 - Disciplina: ${disciplina}
-- Nível de Ensino: ${nivel}
+- Nível de Ensino: ${nivel}${typeof ano === "string" && ano ? `\n- Ano/Série: ${rotuloAno(ano)}` : ""}
 - Tema Principal: ${tema}
 - Orientações do professor: ${conteudo || "nenhuma"}
 
@@ -93,6 +94,7 @@ Regras:
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício e confira o resultado; a "resposta" deve trazer a alternativa correta e o cálculo/justificativa curta.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.
+- Consistência de unidades: comprimento em cm/m (1 dimensão), área em cm²/m² (2 dimensões), volume em cm³/dm³/m³ ou litros (3 dimensões). Nunca chame área de algo medido em unidade cúbica, nem volume de algo em unidade quadrada; revise isso nas respostas e no gabarito.
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
 
   // Aborta se passar do limite OU se o professor fechar a página
@@ -193,6 +195,7 @@ Regras:
           ? { codigo: bncc, texto: habilidade || "", verificada: false }
           : null;
         material.dificuldade = nivelDif.id;
+        material.alertas = verificarUnidades(material);
         enviar(ctrl, { tipo: "concluido", material });
       } catch (e) {
         const motivo = controller.signal.aborted

@@ -9,8 +9,10 @@ async function carregar(id) {
   if (!/^[\w-]{6,32}$/.test(id) || !process.env.BLOB_READ_WRITE_TOKEN) return null;
   try {
     const meta = await head(`materiais/${id}.json`);
-    const res = await fetch(meta.url, { cache: "force-cache" });
-    return res.ok ? res.json() : null;
+    const res = await fetch(meta.url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const { chaveHash, ...dados } = await res.json(); // o hash não vai para o navegador
+    return dados;
   } catch {
     return null;
   }

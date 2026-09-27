@@ -2,7 +2,7 @@
 import React, { forwardRef } from "react";
 import { BadgeCheck, GraduationCap, BookOpen, Gauge, Layers } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
-import { bnccDoMaterial, rodapeBncc } from "@/lib/material";
+import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
 
 // Capa escolar clara (padrão): fundo branco, economiza tinta. A ilustração
 // da IA aparece transparente ao fundo da metade de cima e em destaque numa
@@ -141,7 +141,7 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
             <BookOpen className="h-3.5 w-3.5" /> {form.disciplina}
           </span>
           <span className="flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-violet-700">
-            <Layers className="h-3.5 w-3.5" /> {form.nivel}
+            <Layers className="h-3.5 w-3.5" /> {linhaEtapa({ nivel: form.nivel, ano: form.ano })}
           </span>
           <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-sky-700">
             <Gauge className="h-3.5 w-3.5" /> Nível {nivel.curto}
@@ -158,7 +158,7 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
           <BadgeCheck className={`mt-0.5 h-5 w-5 flex-none ${bncc.verificada ? "text-indigo-500" : "text-slate-400"}`} />
           <p className="text-[12px] leading-[1.5] text-slate-600">
             <span className="font-extrabold text-indigo-700">
-              {bncc.verificada ? `Habilidade BNCC ${bncc.codigo}` : `Habilidade ${bncc.codigo} (currículo local)`}
+              {bncc.verificada ? `Habilidade BNCC ${bncc.codigo}` : `Habilidade informada pelo docente · ${bncc.codigo}`}
             </span>
             {bncc.texto ? ` — ${corta(bncc.texto, 230)}` : ""}
           </p>

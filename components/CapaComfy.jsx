@@ -2,7 +2,7 @@
 import React, { forwardRef } from "react";
 import { BadgeCheck, Target, Gauge, User, Sparkles, Play, GraduationCap } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
-import { slugify, rodapeBncc, bnccDoMaterial } from "@/lib/material";
+import { slugify, rodapeBncc, bnccDoMaterial, linhaEtapa } from "@/lib/material";
 
 // Capa A4 (página inteira, sem margem) no visual do ComfyUI: canvas escuro
 // quadriculado, "nós" de entrada (BNCC, Tema, Nível, Professor) ligados por
@@ -176,7 +176,7 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
       </No>
       <No {...ENTRADAS[2]} x={IN_X} w={IN_W} icone={ENTRADAS[2].icone} rotuloSaida={ENTRADAS[2].saida} socketSaida={FIO.nivel}>
         <Widget rotulo="dificuldade" valor={nivel.curto} />
-        <Widget rotulo="etapa" valor={corta(form.nivel, 26)} />
+        <Widget rotulo="etapa" valor={corta(linhaEtapa({ nivel: form.nivel, ano: form.ano }), 28)} />
       </No>
       <No {...ENTRADAS[3]} x={IN_X} w={IN_W} icone={ENTRADAS[3].icone} rotuloSaida={ENTRADAS[3].saida} socketSaida={FIO.prof}>
         <Widget rotulo="docente" valor={corta(form.professor || "—", 28)} />
@@ -227,7 +227,7 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
           {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
         </h1>
         <p className="mt-3 text-[14px] font-semibold text-[#d4d4dc]">
-          {form.disciplina} · {form.nivel} · Nível {nivel.curto}
+          {linhaEtapa(form)} · Nível {nivel.curto}
           {bncc?.codigo ? ` · BNCC ${bncc.codigo}` : ""}
         </p>
         {m.resumoPedagogico && (

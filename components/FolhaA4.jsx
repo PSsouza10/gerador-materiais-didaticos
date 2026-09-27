@@ -11,7 +11,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
-import { bnccDoMaterial, rodapeBncc } from "@/lib/material";
+import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
 // É a MESMA folha usada no live preview (escalada), na impressão, no PDF e
@@ -69,7 +69,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
               <p className="text-[15px] font-extrabold text-slate-800">{form.professor || "Professor(a)"}</p>
               <p className="text-[11.5px] text-slate-500">
                 {form.escola ? `${form.escola} · ` : ""}
-                {form.disciplina} · {form.nivel}
+                {linhaEtapa(form)}
               </p>
             </div>
           </div>
@@ -95,7 +95,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
           <BadgeCheck className={`mt-0.5 h-4 w-4 flex-none ${bncc.verificada ? "text-indigo-500" : "text-slate-400"}`} />
           <p className="text-[11px] leading-snug text-slate-600">
             <span className="font-extrabold text-indigo-600">
-              {bncc.verificada ? `BNCC ${bncc.codigo}` : `${bncc.codigo} (currículo local)`}
+              {bncc.verificada ? `BNCC ${bncc.codigo}` : `Habilidade informada pelo docente · ${bncc.codigo}`}
             </span>
             {bncc.texto ? <> — {bncc.texto}</> : null}
           </p>
@@ -209,13 +209,17 @@ const FolhaA4 = forwardRef(function FolhaA4(
               {ex.enunciado}
             </p>
             {ex.alternativas.length > 0 ? (
-              <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 pl-7 text-[12px]">
+              <ul
+                className={`mt-2 grid gap-x-4 gap-y-1 pl-7 text-[12px] ${
+                  ex.alternativas.every((a) => a.length <= 16) ? "grid-cols-4" : "grid-cols-2"
+                }`}
+              >
                 {ex.alternativas.map((a, j) => (
                   <li key={j}>{a}</li>
                 ))}
               </ul>
             ) : (
-              <div className="mt-1 space-y-5 pl-7 pt-3">
+              <div className="mt-1 space-y-4 pl-7 pt-2.5">
                 <div className="border-b border-slate-300" />
                 <div className="border-b border-slate-300" />
                 <div className="border-b border-slate-300" />
@@ -225,16 +229,18 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </div>
       ))}
 
+      {/* Gabarito compacto logo após os exercícios (sem forçar página nova);
+          como bloco único, só vai para a página seguinte se não couber inteiro */}
       {mostrarGabarito && exercicios.length > 0 && (
-        <section className="gabarito quebra-antes pt-1">
-          <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1.5">
-            <span className="text-[13px] font-extrabold uppercase tracking-wider text-slate-600">Gabarito</span>
-            <span className="text-[11px] font-semibold text-slate-500">Folha do professor · {form.tema}</span>
+        <section className="gabarito bloco-exercicio mt-5 rounded-xl border-2 border-dashed border-slate-300 p-3.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-extrabold uppercase tracking-wider text-slate-700">✂ Gabarito · folha do professor</span>
+            <span className="text-[11px] font-semibold text-slate-500">{form.tema}</span>
           </div>
-          <ol className="mt-3 space-y-2 text-[12px] text-slate-700">
+          <ol className="mt-2 grid grid-cols-1 gap-x-5 gap-y-1.5 text-[11.5px] leading-snug text-slate-700">
             {exercicios.map((ex, i) => (
-              <li key={i} className="bloco-exercicio flex gap-2">
-                <Numero n={i + 1} tamanho={18} cor="#64748b" />
+              <li key={i} className="flex gap-2">
+                <Numero n={i + 1} tamanho={16} cor="#64748b" />
                 <span>{ex.resposta || "—"}</span>
               </li>
             ))}

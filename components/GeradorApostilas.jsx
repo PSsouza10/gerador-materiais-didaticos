@@ -26,6 +26,9 @@ import {
   Info,
   PanelTop,
   Eye,
+  AlertTriangle,
+  CalendarRange,
+  ShieldCheck,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import CapaA4 from "@/components/CapaA4";
@@ -38,6 +41,8 @@ import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
+import { verificarUnidades } from "@/lib/unidades";
+import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
   CONFIG_PADRAO,
@@ -47,6 +52,9 @@ import {
   adicionarMaterial,
   removerMaterial,
   limparMateriais,
+  atualizarMaterial,
+  gerarBackup,
+  importarBackup,
 } from "@/lib/local";
 
 // ===== EXEMPLO (mostrado só até o professor gerar o primeiro material) =====
@@ -59,6 +67,7 @@ const EXEMPLO_FORM = {
   bnccVerificada: true,
   disciplina: "Matemática",
   nivel: "Ensino Fundamental",
+  ano: "7",
   tema: "Volume: medida de capacidade",
   estilo: "3D Pixar/Disney",
   dificuldade: "padrao",
@@ -99,7 +108,7 @@ const EXEMPLO = {
     {
       enunciado: "Um cubo tem aresta de 3 dm. Qual é o seu volume?",
       alternativas: ["a) 9 dm³", "b) 18 dm³", "c) 27 dm³", "d) 81 dm³"],
-      resposta: "c) 27 dm³ — V = 3 × 3 × 3 = 27 dm³ (9 dm³ seria a área de uma face).",
+      resposta: "c) 27 dm³ — V = 3 × 3 × 3 = 27 dm³ (9 dm² é a área de uma face, não o volume).",
     },
     {
       enunciado: "Explique, com suas palavras, a diferença entre volume e capacidade.",
@@ -125,6 +134,7 @@ const formDaConfig = (cfg) => ({
   bnccVerificada: false,
   disciplina: cfg.disciplina,
   nivel: cfg.nivel,
+  ano: "",
   tema: "",
   conteudo: "",
   estilo: cfg.estilo,
@@ -145,6 +155,7 @@ export default function GeradorApostilas() {
 
   const [config, setConfig] = useState(CONFIG_PADRAO);
   const [materiais, setMateriais] = useState([]);
+  const [paginacao, setPaginacao] = useState({ paginas: 1, paginasFolha: 1, capa: false });
 
   // Task 4.1 — link de compartilhamento
   const [compartilhar, setCompartilhar] = useState({ estado: "vazio", url: null, chave: null });
@@ -173,7 +184,13 @@ export default function GeradorApostilas() {
   const materialPreview = gerado ? material : EXEMPLO;
   const imagemPreview = gerado ? urlImagem : null;
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (e) =>
+    setForm((f) => {
+      const n = { ...f, [k]: e.target.value };
+      // ano/série só faz sentido dentro da etapa escolhida
+      if (k === "nivel" && !(ANOS_POR_NIVEL[n.nivel] || []).some((a) => a.valor === n.ano)) n.ano = "";
+      return n;
+    });
 
   const chaveAtual = useMemo(() => JSON.stringify([form, material, urlImagem]), [form, material, urlImagem]);
   const linkDesatualizado = compartilhar.url && compartilhar.chave !== chaveAtual;
@@ -197,7 +214,9 @@ export default function GeradorApostilas() {
           tema: dados.form.tema,
           disciplina: dados.form.disciplina,
           nivel: dados.form.nivel,
+          ano: dados.form.ano,
           dificuldade: dados.form.dificuldade,
+          chave: json.chave,
           bncc: dados.material.bncc?.verificada ? dados.material.bncc.codigo : null,
           criadoEm: new Date().toISOString(),
         })
@@ -320,6 +339,37 @@ export default function GeradorApostilas() {
     setForm((f) => ({ ...formDaConfig(cfg), tema: f.tema, conteudo: f.conteudo, bncc: f.bncc, habilidade: f.habilidade, bnccVerificada: f.bnccVerificada }));
   };
 
+  const revogarLink = async (m) => {
+    const res = await fetch(`/api/material/${m.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chave: m.chave }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || "Não foi possível revogar o link.");
+    setMateriais(atualizarMaterial(m.id, { revogado: true, chave: null }));
+    if (compartilhar.url === m.url) setCompartilhar({ estado: "vazio", url: null, chave: null });
+  };
+
+  const exportarBackup = () => {
+    const blob = new Blob([gerarBackup()], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `edugera-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  const importar = (texto) => {
+    const { importados, lista } = importarBackup(texto);
+    setMateriais(lista);
+    const cfg = lerConfig();
+    setConfig(cfg);
+    return importados;
+  };
+
+  const alertas = useMemo(() => verificarUnidades(materialPreview), [materialPreview]);
+
   const ocupado = loading || loadingImagem;
   const temExercicios = materialPreview.exercicios?.length > 0;
   const gabaritoVisivel = gabaritoForcado ?? mostrarGabarito;
@@ -420,7 +470,14 @@ export default function GeradorApostilas() {
         )}
         {active === "Minhas Apostilas" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <MinhasApostilas materiais={materiais} irPara={setActive} onRemover={(id) => setMateriais(removerMaterial(id))} />
+            <MinhasApostilas
+              materiais={materiais}
+              irPara={setActive}
+              onRemover={(id) => setMateriais(removerMaterial(id))}
+              onRevogar={revogarLink}
+              onExportar={exportarBackup}
+              onImportar={importar}
+            />
           </div>
         )}
         {active === "Configurações" && (
@@ -470,6 +527,21 @@ export default function GeradorApostilas() {
                 </select>
               </Field>
 
+              {ANOS_POR_NIVEL[form.nivel] && (
+                <div className="sm:col-span-2">
+                  <Field label="Ano / Série" icon={CalendarRange} optional>
+                    <select value={form.ano} onChange={set("ano")} className="ipt">
+                      <option value="">Não especificar (toda a etapa)</option>
+                      {ANOS_POR_NIVEL[form.nivel].map((a) => (
+                        <option key={a.valor} value={a.valor}>
+                          {a.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              )}
+
               {/* Task 3.1 — autocomplete BNCC com descrição oficial */}
               <div className="sm:col-span-2">
                 <SeletorBNCC
@@ -477,6 +549,7 @@ export default function GeradorApostilas() {
                   habilidade={form.habilidade}
                   disciplina={form.disciplina}
                   nivel={form.nivel}
+                  ano={form.ano}
                   onChange={(v) => setForm((f) => ({ ...f, ...v }))}
                 />
               </div>
@@ -534,8 +607,13 @@ export default function GeradorApostilas() {
                     rows={3}
                     className="ipt resize-none"
                     placeholder="Instruções específicas, resumos ou orientações da ficha..."
+                    aria-describedby="aviso-dados-alunos"
                   />
                 </Field>
+                <p id="aviso-dados-alunos" className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-slate-600">
+                  <ShieldCheck className="h-3.5 w-3.5 flex-none text-emerald-600" />
+                  Não escreva nomes ou dados pessoais de alunos: este texto é enviado à IA.
+                </p>
               </div>
 
               <Field label="Estilo das Ilustrações" icon={ImageIcon}>
@@ -623,6 +701,32 @@ export default function GeradorApostilas() {
               </div>
             </div>
 
+            {/* Verificação automática de unidades (área × volume × comprimento) */}
+            {alertas.length > 0 && (
+              <div role="alert" className="nao-imprimir mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-900">
+                <p className="flex items-center gap-1.5 font-bold">
+                  <AlertTriangle className="h-4 w-4" /> Revise antes de imprimir: possível erro de unidade
+                </p>
+                <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                  {alertas.map((a, i) => (
+                    <li key={i}>
+                      <b>{a.onde}:</b> &ldquo;{a.trecho}&rdquo; — {a.motivo}.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {form.capa !== "nenhuma" && paginacao.paginasFolha <= 1 && (
+              <div className="nao-imprimir mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-[12.5px] text-sky-900">
+                <Info className="h-4 w-4 flex-none" />
+                <span>Ficha curta: o conteúdo cabe em 1 página e a capa dobra o papel.</span>
+                <button onClick={() => setForm((f) => ({ ...f, capa: "nenhuma" }))} className="btn-prev ml-auto">
+                  Tirar a capa
+                </button>
+              </div>
+            )}
+
             {/* Exemplo claramente separado do material do professor */}
             {!gerado && (
               <div className="nao-imprimir mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-800">
@@ -663,8 +767,13 @@ export default function GeradorApostilas() {
                 </button>
               </div>
             )}
+            {gerado && (
+              <p className="nao-imprimir -mt-1 mb-3 px-1 text-[11.5px] text-slate-600">
+                Qualquer pessoa com o link vê o material (com seu nome e escola). Para desativar: Minhas Apostilas → Revogar link.
+              </p>
+            )}
 
-            <PreviewEscalado>
+            <PreviewEscalado onPaginas={setPaginacao}>
               <CapaA4
                 ref={capaRef}
                 variante={form.capa}

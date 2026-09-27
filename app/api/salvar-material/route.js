@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
+import { hashChave } from "@/lib/chave";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarCapa } from "@/lib/opcoes";
 import bnccDados from "@/data/bncc-habilidades.json";
-import { indexar, normalizarCodigo } from "@/lib/bncc";
+import { indexar, resolverCodigo } from "@/lib/bncc";
 
 const BNCC = indexar(bnccDados.habilidades);
 
@@ -40,6 +41,7 @@ export async function POST(request) {
         habilidade: str(form.habilidade, 800),
         disciplina: str(form.disciplina, 60),
         nivel: str(form.nivel, 60),
+        ano: str(form.ano, 6),
         tema: str(form.tema, 200),
         estilo: str(form.estilo, 60),
         dificuldade: obterNivel(form.dificuldade).id,
@@ -52,7 +54,7 @@ export async function POST(request) {
         bncc: (() => {
           const cod = material.bncc?.codigo || form.bncc;
           if (!cod) return null;
-          const h = BNCC.get(normalizarCodigo(cod));
+          const h = resolverCodigo(BNCC, cod);
           return h
             ? { codigo: h.c, texto: h.t, verificada: true }
             : { codigo: str(cod, 20), texto: str(material.bncc?.texto || form.habilidade, 800), verificada: false };
@@ -64,15 +66,20 @@ export async function POST(request) {
           : null,
     };
 
+    // id aleatório de 64 bits (difícil de adivinhar) + chave de revogação que
+    // só o navegador de quem gerou conhece; no registro fica apenas o hash dela
     const id = randomBytes(8).toString("base64url");
+    const chave = randomBytes(18).toString("base64url");
+    registro.chaveHash = hashChave(chave);
     await put(`materiais/${id}.json`, JSON.stringify(registro), {
       access: "public",
       contentType: "application/json",
       addRandomSuffix: false,
+      cacheControlMaxAge: 60, // após revogar, cópias em cache expiram em até 1 min
     });
 
     const origem = new URL(request.url).origin;
-    return NextResponse.json({ id, url: `${origem}/m/${id}` });
+    return NextResponse.json({ id, url: `${origem}/m/${id}`, chave });
   } catch (error) {
     console.error("Erro na rota salvar-material:", error);
     return NextResponse.json({ error: "Não foi possível salvar o material." }, { status: 500 });

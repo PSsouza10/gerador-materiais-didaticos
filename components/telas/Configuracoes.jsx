@@ -4,6 +4,7 @@ import { Save, Check, User, School, BookOpen, Layers, Image as ImageIcon, Gauge,
 import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { CONFIG_PADRAO } from "@/lib/local";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS } from "@/lib/opcoes";
+import Privacidade from "@/components/telas/Privacidade";
 
 const Campo = ({ icone: Icone, rotulo, ajuda, children }) => (
   <label className="block">
@@ -112,6 +113,8 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
           {salvo ? "Preferências guardadas neste navegador." : ""}
         </span>
       </div>
+
+      <Privacidade />
 
       <section className="rounded-3xl border border-rose-100 bg-rose-50/50 p-6">
         <h2 className="text-base font-bold text-rose-700">Lista de materiais</h2>
