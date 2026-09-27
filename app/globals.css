@@ -25,7 +25,7 @@ body {
 }
 
 /* Durante a exportação em PDF as margens de cima/baixo de cada página
-   vêm do próprio html2pdf (15 mm), então a folha não soma as suas. */
+   vêm do gerador de PDF (15 mm, lib/pdf.js), então a folha não soma as suas. */
 .folha-a4.exportando {
   padding-top: 0;
   padding-bottom: 0;

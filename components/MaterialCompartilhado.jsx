@@ -26,6 +26,9 @@ export default function MaterialCompartilhado({ dados }) {
       const base = `apostila-${slugify(form.tema) || "material"}`;
       await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
         capa: capa !== "nenhuma" ? capaRef.current : null,
+        titulo: material.tituloDidatico || form.tema,
+        assunto: [form.disciplina, form.tema].filter(Boolean).join(" · "),
+        autor: form.professor,
       });
     } finally {
       setGabaritoForcado(null);

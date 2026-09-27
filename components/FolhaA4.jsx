@@ -17,7 +17,7 @@ import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
 // É a MESMA folha usada no live preview (escalada), na impressão, no PDF e
 // na página pública compartilhada — o que o professor vê é o que sai.
 //
-// Classes de quebra de página (Task 1.2), usadas em globals.css e no html2pdf:
+// Classes de quebra de página (Task 1.2), usadas em globals.css, na prévia e no gerador de PDF (lib/pdf.js):
 //   .cabecalho-escola  .cartao-bncc  .bloco-exercicio
 
 const Rotulo = ({ icon: Icon, children, className = "" }) => (

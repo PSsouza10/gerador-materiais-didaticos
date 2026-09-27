@@ -377,6 +377,9 @@ export default function GeradorApostilas() {
       const base = `apostila-${slugify(formPreview.tema) || "material"}`;
       await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
         capa: form.capa !== "nenhuma" ? capaRef.current : null,
+        titulo: materialPreview.tituloDidatico || formPreview.tema,
+        assunto: [formPreview.disciplina, formPreview.tema].filter(Boolean).join(" · "),
+        autor: formPreview.professor,
       });
     } catch (e) {
       console.error("Erro ao gerar PDF:", e);
@@ -769,7 +772,7 @@ export default function GeradorApostilas() {
                     onClick={() => handleBaixarPdf("professor")}
                     disabled={!!baixandoPdf || loading}
                     className="btn-prev"
-                    title="Mesmo material + gabarito em página separada"
+                    title="Mesmo material + gabarito no final"
                   >
                     {baixandoPdf === "professor" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                     PDF do professor
