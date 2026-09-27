@@ -1,6 +1,7 @@
 import PaginaLegal, { H2, Lista, CONTATO } from "@/components/PaginaLegal";
 
 export const metadata = {
+  alternates: { canonical: "/termos" },
   title: "Termos de Uso · EduGera",
   description: "Regras de uso do EduGera, gerador de materiais didáticos alinhados à BNCC.",
 };

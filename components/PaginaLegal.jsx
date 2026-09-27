@@ -6,7 +6,7 @@ export const CONTATO = "pssouzasj@gmail.com";
 
 export default function PaginaLegal({ titulo, children }) {
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10 text-slate-800">
+    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-800">
       <article className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
         <Link href="/" className="text-sm font-bold text-indigo-600 hover:underline">
           ← EduGera · Apostilas BNCC
@@ -26,7 +26,7 @@ export default function PaginaLegal({ titulo, children }) {
           </a>
         </nav>
       </article>
-    </div>
+    </main>
   );
 }
 

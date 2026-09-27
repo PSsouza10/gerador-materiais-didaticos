@@ -9,10 +9,10 @@ function BarraBackup({ onExportar, onImportar, total, msg, setMsg }) {
   const arquivo = useRef(null);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={onExportar} disabled={!total} className="btn-prev">
+      <button type="button" onClick={onExportar} disabled={!total} className="btn-prev">
         <Download className="h-3.5 w-3.5" /> Exportar backup
       </button>
-      <button onClick={() => arquivo.current?.click()} className="btn-prev">
+      <button type="button" onClick={() => arquivo.current?.click()} className="btn-prev">
         <Upload className="h-3.5 w-3.5" /> Importar backup
       </button>
       <input
@@ -89,7 +89,7 @@ export default function MinhasApostilas({ materiais, onRemover, onRevogar, onExp
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
             Cada material que você gerar fica guardado com um link de compartilhamento para abrir, imprimir ou enviar a colegas.
           </p>
-          <button
+          <button type="button"
             onClick={() => irPara("Gerar Material")}
             className="mx-auto mt-5 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200"
           >
@@ -156,19 +156,19 @@ export default function MinhasApostilas({ materiais, onRemover, onRevogar, onExp
                   <a href={m.url} target="_blank" rel="noopener noreferrer" className="btn-prev">
                     <ExternalLink className="h-3.5 w-3.5" /> Abrir
                   </a>
-                  <button onClick={() => copiar(m)} className="btn-prev">
+                  <button type="button" onClick={() => copiar(m)} className="btn-prev">
                     {copiado === m.id ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
                     {copiado === m.id ? "Copiado!" : "Copiar link"}
                   </button>
                   {m.chave && (
-                    <button onClick={() => revogar(m)} disabled={revogando === m.id} className="btn-prev !text-rose-700" title="Apaga o material do servidor; o link deixa de funcionar">
+                    <button type="button" onClick={() => revogar(m)} disabled={revogando === m.id} className="btn-prev !text-rose-700" title="Apaga o material do servidor; o link deixa de funcionar">
                       {revogando === m.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />}
                       Revogar link
                     </button>
                   )}
                 </>
               )}
-              <button onClick={() => onRemover(m.id)} className="btn-prev ml-auto !text-slate-700" title="Tira só desta lista; o link continua funcionando">
+              <button type="button" onClick={() => onRemover(m.id)} className="btn-prev ml-auto !text-slate-700" title="Tira só desta lista; o link continua funcionando">
                 <Trash2 className="h-3.5 w-3.5" /> Tirar da lista
               </button>
             </div>

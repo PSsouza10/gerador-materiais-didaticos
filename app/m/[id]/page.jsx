@@ -23,6 +23,8 @@ export async function generateMetadata({ params }) {
   return {
     title: dados ? `${dados.material.tituloDidatico} · EduGera` : "Material não encontrado · EduGera",
     description: dados ? dados.material.resumoPedagogico : undefined,
+    // conteúdo de professor: acessível por link, mas fora dos buscadores
+    robots: { index: false, follow: false },
   };
 }
 

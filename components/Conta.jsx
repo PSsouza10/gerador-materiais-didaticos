@@ -40,7 +40,7 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
 
   if (!sessao?.user) {
     return (
-      <button
+      <button type="button"
         onClick={() => signIn("google")}
         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-50"
       >
@@ -54,7 +54,7 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
   const u = sessao.user;
   return (
     <div ref={ref} className="relative">
-      <button
+      <button type="button"
         onClick={() => setAberto((a) => !a)}
         aria-expanded={aberto}
         aria-haspopup="menu"
@@ -79,7 +79,7 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
             <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano grátis</p>
             <MedidorUso uso={uso} />
           </div>
-          <button
+          <button type="button"
             role="menuitem"
             onClick={() => signOut()}
             className="mt-3 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"

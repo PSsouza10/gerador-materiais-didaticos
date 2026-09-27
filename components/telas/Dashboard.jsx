@@ -43,7 +43,7 @@ export default function Dashboard({ materiais, config, irPara }) {
           <h2 className="mt-1 text-xl font-extrabold">Crie uma apostila alinhada à BNCC em poucos minutos</h2>
           <p className="mt-1 text-sm text-white/80">Escolha a habilidade, o tema e o nível; a IA escreve, você revisa e imprime.</p>
         </div>
-        <button
+        <button type="button"
           onClick={() => irPara("Gerar Material")}
           className="flex flex-none items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-indigo-600 shadow-sm transition-all hover:scale-[1.02]"
         >
@@ -67,7 +67,7 @@ export default function Dashboard({ materiais, config, irPara }) {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-800">Recentes</h2>
             {materiais.length > 0 && (
-              <button onClick={() => irPara("Minhas Apostilas")} className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
+              <button type="button" onClick={() => irPara("Minhas Apostilas")} className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
                 Ver todas <ArrowRight className="h-3.5 w-3.5" />
               </button>
             )}

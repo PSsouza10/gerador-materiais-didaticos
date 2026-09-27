@@ -45,6 +45,7 @@ import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
 import { verificarUnidades } from "@/lib/unidades";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
+import { LIMITES } from "@/lib/validacao";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
   CONFIG_PADRAO,
@@ -71,7 +72,7 @@ const EXEMPLO_FORM = {
   nivel: "Ensino Fundamental",
   ano: "7",
   tema: "Volume: medida de capacidade",
-  estilo: "3D Pixar/Disney",
+  estilo: "3D colorido",
   dificuldade: "padrao",
 };
 
@@ -150,6 +151,7 @@ export default function GeradorApostilas() {
   const [progresso, setProgresso] = useState(0);
   const [loadingImagem, setLoadingImagem] = useState(false);
   const [baixandoPdf, setBaixandoPdf] = useState(null);
+  const gerandoRef = useRef(false);
   const [erro, setErro] = useState(null);
   const [aviso, setAviso] = useState(null);
   const [mostrarGabarito, setMostrarGabarito] = useState(false);
@@ -249,10 +251,22 @@ export default function GeradorApostilas() {
 
   // ===== GERAÇÃO (conteúdo via streaming + imagem em paralelo) =====
   const handleGerarMaterial = async () => {
+    // trava contra duplo clique/Enter: uma única requisição por vez
+    if (gerandoRef.current) return;
     if (!form.disciplina || !form.nivel || !form.tema.trim()) {
       setErro("Preencha Disciplina, Nível de Ensino e Tema Principal.");
+      document.getElementById("campo-tema")?.focus();
       return;
     }
+    gerandoRef.current = true;
+    try {
+      await gerarMaterial();
+    } finally {
+      gerandoRef.current = false;
+    }
+  };
+
+  const gerarMaterial = async () => {
 
     setErro(null);
     setAviso(null);
@@ -435,7 +449,7 @@ export default function GeradorApostilas() {
           {NAV.map(({ name, icon: Icon }) => {
             const on = active === name;
             return (
-              <button
+              <button type="button"
                 key={name}
                 onClick={() => setActive(name)}
                 aria-current={on ? "page" : undefined}
@@ -534,12 +548,12 @@ export default function GeradorApostilas() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="sm:col-span-2">
-                <Field label="Identificação do Professor" icon={User}>
-                  <input value={form.professor} onChange={set("professor")} className="ipt" placeholder="Nome do docente (salve em Configurações)" />
+                <Field label="Identificação do Professor" icon={User} name="professor">
+                  <input value={form.professor} onChange={set("professor")} maxLength={LIMITES.professor} autoComplete="name" className="ipt" placeholder="Nome do docente (salve em Configurações)" />
                 </Field>
               </div>
 
-              <Field label="Disciplina" icon={BookOpen} required>
+              <Field label="Disciplina" icon={BookOpen} required name="disciplina">
                 <select value={form.disciplina} onChange={set("disciplina")} className="ipt">
                   {DISCIPLINAS.map((d) => (
                     <option key={d}>{d}</option>
@@ -547,7 +561,7 @@ export default function GeradorApostilas() {
                 </select>
               </Field>
 
-              <Field label="Nível de Ensino" icon={Layers} required>
+              <Field label="Nível de Ensino" icon={Layers} required name="nivel">
                 <select value={form.nivel} onChange={set("nivel")} className="ipt">
                   {NIVEIS.map((n) => (
                     <option key={n}>{n}</option>
@@ -557,7 +571,7 @@ export default function GeradorApostilas() {
 
               {ANOS_POR_NIVEL[form.nivel] && (
                 <div className="sm:col-span-2">
-                  <Field label="Ano / Série" icon={CalendarRange} optional>
+                  <Field label="Ano / Série" icon={CalendarRange} optional name="ano">
                     <select value={form.ano} onChange={set("ano")} className="ipt">
                       <option value="">Não especificar (toda a etapa)</option>
                       {ANOS_POR_NIVEL[form.nivel].map((a) => (
@@ -583,8 +597,8 @@ export default function GeradorApostilas() {
               </div>
 
               <div className="sm:col-span-2">
-                <Field label="Tema Principal" icon={Target} required>
-                  <input value={form.tema} onChange={set("tema")} className="ipt" placeholder='Ex.: "Volume: medida de capacidade"' />
+                <Field label="Tema Principal" icon={Target} required name="tema">
+                  <input value={form.tema} onChange={set("tema")} maxLength={LIMITES.tema} className="ipt" placeholder='Ex.: "Volume: medida de capacidade"' />
                 </Field>
               </div>
 
@@ -628,10 +642,11 @@ export default function GeradorApostilas() {
               </div>
 
               <div className="sm:col-span-2">
-                <Field label="Conteúdo ou Orientação" icon={Lightbulb} optional>
+                <Field label="Conteúdo ou Orientação" icon={Lightbulb} optional name="conteudo">
                   <textarea
                     value={form.conteudo}
                     onChange={set("conteudo")}
+                    maxLength={LIMITES.conteudo}
                     rows={3}
                     className="ipt resize-none"
                     placeholder="Instruções específicas, resumos ou orientações da ficha..."
@@ -644,7 +659,7 @@ export default function GeradorApostilas() {
                 </p>
               </div>
 
-              <Field label="Estilo das Ilustrações" icon={ImageIcon}>
+              <Field label="Estilo das Ilustrações" icon={ImageIcon} name="estilo">
                 <select value={form.estilo} onChange={set("estilo")} className="ipt">
                   {ESTILOS.map((s) => (
                     <option key={s}>{s}</option>
@@ -652,7 +667,7 @@ export default function GeradorApostilas() {
                 </select>
               </Field>
 
-              <Field label="Capa" icon={PanelTop}>
+              <Field label="Capa" icon={PanelTop} name="capa">
                 <select value={form.capa} onChange={set("capa")} className="ipt">
                   {CAPAS.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -688,7 +703,7 @@ export default function GeradorApostilas() {
             )}
 
             {conta.authConfigurado && statusSessao === "unauthenticated" ? (
-              <button
+              <button type="button"
                 onClick={() => signIn("google")}
                 className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
@@ -700,7 +715,7 @@ export default function GeradorApostilas() {
                 Primeira vez? A conta é criada automaticamente ao entrar — sem formulário nem senha.
               </p>
             ) : (
-            <button
+            <button type="button"
               onClick={handleGerarMaterial}
               disabled={ocupado || conta.authConfigurado === false || conta.uso?.restantes === 0}
               aria-busy={ocupado}
@@ -721,7 +736,7 @@ export default function GeradorApostilas() {
           </section>
 
           {/* ===== LIVE PREVIEW A4 ===== */}
-          <section className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
+          <section aria-label="Prévia do material" className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
             <div className="nao-imprimir mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-600">
                 <FileText className="h-4 w-4" />
@@ -730,7 +745,7 @@ export default function GeradorApostilas() {
 
               <div className="flex flex-wrap items-center gap-1.5">
                 {temExercicios && (
-                  <button
+                  <button type="button"
                     onClick={() => setMostrarGabarito((g) => !g)}
                     aria-pressed={mostrarGabarito}
                     className={`btn-prev ${mostrarGabarito ? "!bg-indigo-50" : ""}`}
@@ -738,15 +753,15 @@ export default function GeradorApostilas() {
                     <KeyRound className="h-3.5 w-3.5" /> {mostrarGabarito ? "Ocultar gabarito" : "Ver gabarito"}
                   </button>
                 )}
-                <button onClick={() => window.print()} disabled={loading} className="btn-prev">
+                <button type="button" onClick={() => window.print()} disabled={loading} className="btn-prev">
                   <Printer className="h-3.5 w-3.5" /> Imprimir
                 </button>
-                <button onClick={() => handleBaixarPdf("aluno")} disabled={!!baixandoPdf || loading} className="btn-prev">
+                <button type="button" onClick={() => handleBaixarPdf("aluno")} disabled={!!baixandoPdf || loading} className="btn-prev">
                   {baixandoPdf === "aluno" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                   PDF do aluno
                 </button>
                 {temExercicios && (
-                  <button
+                  <button type="button"
                     onClick={() => handleBaixarPdf("professor")}
                     disabled={!!baixandoPdf || loading}
                     className="btn-prev"
@@ -779,7 +794,7 @@ export default function GeradorApostilas() {
               <div className="nao-imprimir mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-[12.5px] text-sky-900">
                 <Info className="h-4 w-4 flex-none" />
                 <span>Ficha curta: o conteúdo cabe em 1 página e a capa dobra o papel.</span>
-                <button onClick={() => setForm((f) => ({ ...f, capa: "nenhuma" }))} className="btn-prev ml-auto">
+                <button type="button" onClick={() => setForm((f) => ({ ...f, capa: "nenhuma" }))} className="btn-prev ml-auto">
                   Tirar a capa
                 </button>
               </div>
@@ -809,7 +824,7 @@ export default function GeradorApostilas() {
                     ? "Você alterou o material — o link será atualizado ao copiar."
                     : "Salvando material para compartilhar..."}
                 </span>
-                <button
+                <button type="button"
                   onClick={handleCopiarLink}
                   disabled={compartilhar.estado === "salvando" || loading}
                   className="flex flex-none items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-60"
@@ -863,7 +878,7 @@ export default function GeradorApostilas() {
         {NAV.map(({ name, curto, icon: Icon }) => {
           const on = active === name;
           return (
-            <button
+            <button type="button"
               key={name}
               onClick={() => {
                 setActive(name);
@@ -913,9 +928,15 @@ export default function GeradorApostilas() {
   );
 }
 
-function Field({ label, icon: Icon, required, optional, children }) {
+// Rótulo associado por htmlFor/id; id e name estáveis; obrigatório de verdade
+function Field({ label, icon: Icon, required, optional, name, children }) {
+  const id = name ? `campo-${name}` : undefined;
+  const campo =
+    name && React.isValidElement(children)
+      ? React.cloneElement(children, { id, name, ...(required ? { required: true, "aria-required": true } : {}) })
+      : children;
   return (
-    <label className="block">
+    <label className="block" htmlFor={id}>
       <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
         {Icon && <Icon className="h-3.5 w-3.5 text-violet-400" />}
         {label}
@@ -926,7 +947,7 @@ function Field({ label, icon: Icon, required, optional, children }) {
         )}
         {optional && <span className="font-medium text-slate-500">(opcional)</span>}
       </span>
-      {children}
+      {campo}
     </label>
   );
 }

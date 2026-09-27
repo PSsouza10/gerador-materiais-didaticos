@@ -1,6 +1,7 @@
 import PaginaLegal, { H2, Lista, CONTATO } from "@/components/PaginaLegal";
 
 export const metadata = {
+  alternates: { canonical: "/privacidade" },
   title: "Política de Privacidade · EduGera",
   description: "Como o EduGera trata os dados de professores e professoras, em conformidade com a LGPD.",
 };
@@ -32,7 +33,7 @@ export default function PoliticaPrivacidade() {
         </li>
         <li>
           <b>O que você escreve no formulário:</b> tema, habilidade da BNCC, orientações, disciplina e nível. Esse texto é enviado
-          ao serviço de IA para gerar o material.
+          ao serviço de IA para gerar o material. Seu nome e o da escola <b>não</b> são enviados à IA.
         </li>
         <li>
           <b>Materiais compartilhados:</b> quando você cria um link de compartilhamento, guardamos o conteúdo da apostila, a

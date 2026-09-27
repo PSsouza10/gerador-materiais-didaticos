@@ -5,7 +5,7 @@ import { hashChave } from "@/lib/chave";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
-import { normalizarCapa } from "@/lib/opcoes";
+import { normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 
@@ -43,12 +43,12 @@ export async function POST(request) {
       form: {
         professor: str(form.professor, 120),
         bncc: str(form.bncc, 20),
-        habilidade: str(form.habilidade, 800),
+        habilidade: str(form.habilidade, 2000),
         disciplina: str(form.disciplina, 60),
         nivel: str(form.nivel, 60),
         ano: str(form.ano, 6),
         tema: str(form.tema, 200),
-        estilo: str(form.estilo, 60),
+        estilo: normalizarEstilo(form.estilo),
         dificuldade: obterNivel(form.dificuldade).id,
         escola: str(form.escola, 120),
         capa: normalizarCapa(form.capa),
@@ -62,7 +62,7 @@ export async function POST(request) {
           const h = resolverCodigo(BNCC, cod);
           return h
             ? { codigo: h.c, texto: h.t, verificada: true }
-            : { codigo: str(cod, 20), texto: str(material.bncc?.texto || form.habilidade, 800), verificada: false };
+            : { codigo: str(cod, 20), texto: str(material.bncc?.texto || form.habilidade, 2000), verificada: false };
         })(),
       },
       urlImagem:

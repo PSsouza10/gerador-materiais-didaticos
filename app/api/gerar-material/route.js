@@ -6,6 +6,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarMaterial } from "@/lib/material";
+import { validarPedido } from "@/lib/validacao";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
@@ -30,11 +31,10 @@ export async function POST(request) {
     return erroJson("Requisição inválida.", 400);
   }
 
-  const { professor, bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade } = body;
-
-  if (!disciplina || !nivel || !tema?.trim()) {
-    return erroJson("Disciplina, Nível de Ensino e Tema Principal são obrigatórios.", 400);
-  }
+  // Validação no servidor (não confia no navegador): obrigatórios, limites, controle
+  const v = validarPedido(body);
+  if (!v.ok) return erroJson(v.erro, 400);
+  const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade } = v.dados;
   if (!process.env.OPENAI_API_KEY) {
     return erroJson("Chave da OpenAI não configurada no servidor.", 500);
   }
@@ -74,7 +74,6 @@ export async function POST(request) {
 
   const userPrompt = `Gere o conteúdo de uma apostila visual com base nestes parâmetros:
 
-- Professor: ${professor || "não informado"}
 - Habilidade BNCC: ${linhaBncc}
 - Disciplina: ${disciplina}
 - Nível de Ensino: ${nivel}${typeof ano === "string" && ano ? `\n- Ano/Série: ${rotuloAno(ano)}` : ""}

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirImagem } from "@/lib/uso";
+import { consumirImagem, devolverImagem } from "@/lib/uso";
+import { normalizarEstilo } from "@/lib/opcoes";
+import { limparTexto, LIMITES } from "@/lib/validacao";
 
 export const runtime = "nodejs";
 // Task 1.1 — geração de imagem costuma levar 20–40 s: usa o teto do plano Hobby.
@@ -12,8 +14,9 @@ const LIMITE_IMAGEM_MS = 50_000;
 
 // Mapeia o estilo escolhido no formulário para uma direção visual rica
 const ESTILOS = {
-  "3D Pixar/Disney":
-    "estilo 3D render no estilo Pixar/Disney, personagens fofos, iluminação suave, cores vibrantes, alta qualidade",
+  // Estilo descritivo, sem imitar estúdios ou personagens de terceiros
+  "3D colorido":
+    "ilustração 3D colorida e original, formas arredondadas e amigáveis, iluminação suave, cores vibrantes, alta qualidade",
   Isométrico:
     "ilustração isométrica limpa, perspectiva 3D em ângulo, cores planas e modernas, estilo infográfico educacional",
   "Vetor Ilustrado":
@@ -22,11 +25,14 @@ const ESTILOS = {
     "ilustração realista detalhada, iluminação natural, fotorrealismo educacional, alta definição",
 };
 
-export async function POST(request) {
+async function processar(request, ctx) {
   try {
-    const { tema, estilo, disciplina } = await request.json();
+    const body = await request.json();
+    const tema = limparTexto(body.tema).slice(0, LIMITES.tema);
+    const disciplina = limparTexto(body.disciplina).slice(0, 60);
+    const estilo = normalizarEstilo(body.estilo);
 
-    if (!tema?.trim()) {
+    if (!tema) {
       return NextResponse.json(
         { error: "O tema é obrigatório para gerar a imagem." },
         { status: 400 }
@@ -46,6 +52,7 @@ export async function POST(request) {
     const usuario = await usuarioAtual();
     if (!usuario) return NextResponse.json({ error: "Entre com sua conta para gerar ilustrações." }, { status: 401 });
     const img = await consumirImagem(usuario.email);
+    if (img?.ok) ctx.consumidoPor = usuario.email;
     if (!img?.ok) {
       return NextResponse.json({ error: "A ilustração acompanha uma geração de material; gere o material primeiro." }, { status: 429 });
     }
@@ -148,4 +155,13 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+// Se a ilustração falhar depois de reservada, devolve a vaga: o professor pode
+// tentar de novo sem precisar gastar outra geração de material.
+export async function POST(request) {
+  const ctx = { consumidoPor: null };
+  const res = await processar(request, ctx);
+  if (res.status >= 400 && ctx.consumidoPor) await devolverImagem(ctx.consumidoPor);
+  return res;
 }

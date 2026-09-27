@@ -47,19 +47,19 @@ export default function MaterialCompartilhado({ dados }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {temExercicios && (
-            <button onClick={() => setGabarito((g) => !g)} aria-pressed={gabarito} className="botao-sec">
+            <button type="button" onClick={() => setGabarito((g) => !g)} aria-pressed={gabarito} className="botao-sec">
               <KeyRound className="h-3.5 w-3.5" /> {gabarito ? "Ocultar gabarito" : "Ver gabarito"}
             </button>
           )}
-          <button onClick={() => window.print()} className="botao-sec">
+          <button type="button" onClick={() => window.print()} className="botao-sec">
             <Printer className="h-3.5 w-3.5" /> Imprimir
           </button>
-          <button onClick={() => baixar("aluno")} disabled={!!baixando} className="botao-sec">
+          <button type="button" onClick={() => baixar("aluno")} disabled={!!baixando} className="botao-sec">
             {baixando === "aluno" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             PDF do aluno
           </button>
           {temExercicios && (
-            <button onClick={() => baixar("professor")} disabled={!!baixando} className="botao-sec">
+            <button type="button" onClick={() => baixar("professor")} disabled={!!baixando} className="botao-sec">
               {baixando === "professor" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
               PDF do professor
             </button>
