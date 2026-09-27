@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 
 // Cabeçalhos de segurança (auditoria pública, P1).
-// A CSP começa em modo "Report-Only": o navegador só avisa no console o que
-// seria bloqueado, sem quebrar o login do Google, a prévia ou o PDF. Depois de
-// alguns dias sem violações, trocar a chave para "Content-Security-Policy".
+// A CSP é bloqueante. Antes de ativar, os fluxos públicos (prévia, PDF do aluno
+// e do professor, telas, páginas legais, login) rodaram sem nenhuma violação em
+// modo Report-Only. Regressão: npm run test:publico (tests/publico.e2e.mjs).
 // Exceções documentadas:
 //  - 'unsafe-inline' em script-src: o Next 13 injeta scripts inline de hidratação.
 //  - 'unsafe-inline' em style-src: estilos inline do React (capas, prévia A4).
@@ -24,7 +24,7 @@ const CSP = [
 ].join("; ");
 
 const HEADERS = [
-  { key: "Content-Security-Policy-Report-Only", value: CSP },
+  { key: "Content-Security-Policy", value: CSP },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -46,7 +46,13 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@vercel/blob"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: HEADERS }];
+    return [
+      { source: "/:path*", headers: HEADERS },
+      // A CDN da Vercel envia "Access-Control-Allow-Origin: *" nas páginas estáticas.
+      // O site não precisa de CORS: fixa a própria origem nas páginas e nada nas APIs
+      // (APIs autenticadas nunca respondem a outras origens com cookies).
+      { source: "/((?!api/).*)", headers: [{ key: "Access-Control-Allow-Origin", value: "https://edugera.vercel.app" }] },
+    ];
   },
 };
 

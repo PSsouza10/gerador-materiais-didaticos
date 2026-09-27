@@ -603,43 +603,32 @@ export default function GeradorApostilas() {
               </div>
 
               {/* Task 3.2 — nível de dificuldade / adaptação */}
-              <div className="sm:col-span-2">
-                <span id="rotulo-dificuldade" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                  <Gauge className="h-3.5 w-3.5 text-violet-400" />
+              <fieldset className="sm:col-span-2">
+                <legend className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                  <Gauge className="h-3.5 w-3.5 text-violet-400" aria-hidden="true" />
                   Nível de Dificuldade / Adaptação
-                </span>
-                <div role="radiogroup" aria-labelledby="rotulo-dificuldade" className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {NIVEIS_DIFICULDADE.map((n) => {
-                    const on = form.dificuldade === n.id;
-                    return (
-                      <button
-                        key={n.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        tabIndex={on ? 0 : -1}
-                        onClick={() => setForm((f) => ({ ...f, dificuldade: n.id }))}
-                        onKeyDown={(e) => {
-                          const passo = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-                          if (!passo) return;
-                          e.preventDefault();
-                          const i = NIVEIS_DIFICULDADE.findIndex((x) => x.id === n.id);
-                          const prox = NIVEIS_DIFICULDADE[(i + passo + NIVEIS_DIFICULDADE.length) % NIVEIS_DIFICULDADE.length];
-                          setForm((f) => ({ ...f, dificuldade: prox.id }));
-                          e.currentTarget.parentElement.querySelector(`[data-nivel="${prox.id}"]`)?.focus();
-                        }}
-                        data-nivel={n.id}
-                        className={`rounded-xl border-[1.5px] px-3 py-2.5 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
-                          on ? "border-indigo-300 bg-indigo-50 shadow-sm" : "border-[#ECEAF4] bg-[#FAFAFE] hover:border-indigo-200"
-                        }`}
-                      >
-                        <span className={`block text-[13px] font-bold ${on ? "text-indigo-700" : "text-slate-600"}`}>{n.rotulo}</span>
+                </legend>
+                {/* rádios nativos: setas, Tab e leitores de tela funcionam sem ARIA extra */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {NIVEIS_DIFICULDADE.map((n) => (
+                    <label key={n.id} className="block cursor-pointer">
+                      <input
+                        type="radio"
+                        name="dificuldade"
+                        id={`dificuldade-${n.id}`}
+                        value={n.id}
+                        checked={form.dificuldade === n.id}
+                        onChange={() => setForm((f) => ({ ...f, dificuldade: n.id }))}
+                        className="peer sr-only"
+                      />
+                      <span className="block h-full rounded-xl border-[1.5px] border-[#ECEAF4] bg-[#FAFAFE] px-3 py-2.5 text-left transition-all hover:border-indigo-200 peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-indigo-400 [&>b]:peer-checked:text-indigo-700">
+                        <b className="block text-[13px] font-bold text-slate-600">{n.rotulo}</b>
                         <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-700">{n.descricao}</span>
-                      </button>
-                    );
-                  })}
+                      </span>
+                    </label>
+                  ))}
                 </div>
-              </div>
+              </fieldset>
 
               <div className="sm:col-span-2">
                 <Field label="Conteúdo ou Orientação" icon={Lightbulb} optional name="conteudo">

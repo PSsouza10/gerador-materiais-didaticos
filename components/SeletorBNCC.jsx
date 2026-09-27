@@ -135,14 +135,17 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, ano
 
   return (
     <div className="relative">
-      <span id="rotulo-bncc" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
+      <label id="rotulo-bncc" htmlFor="campo-bncc" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
         <Hash className="h-3.5 w-3.5 text-violet-400" />
         Habilidade da BNCC
         <span className="font-medium text-slate-500">(opcional)</span>
-      </span>
+      </label>
 
       <div className="relative">
         <input
+          id="campo-bncc"
+          name="bncc"
+          maxLength={20}
           value={codigo}
           onChange={(e) => digitar(e.target.value)}
           onFocus={() => {
@@ -154,7 +157,6 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, ano
           className="ipt pr-9 font-mono uppercase"
           placeholder="Código (EF08MA02) ou palavra-chave (frações, volume...)"
           role="combobox"
-          aria-labelledby="rotulo-bncc"
           aria-controls="lista-bncc"
           aria-expanded={aberto && resultados.length > 0}
           aria-activedescendant={aberto && resultados[ativo] ? `bncc-opcao-${resultados[ativo].c}` : undefined}

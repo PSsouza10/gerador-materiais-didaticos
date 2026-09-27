@@ -103,9 +103,9 @@ const FolhaA4 = forwardRef(function FolhaA4(
       )}
 
       {/* Título */}
-      <h1 className="mt-4 text-center text-[26px] font-black leading-tight text-indigo-600">
+      <h2 className="mt-4 text-center text-[26px] font-black leading-tight text-indigo-600">
         {form.tema ? m.tituloDidatico : "Tema Principal"}
-      </h1>
+      </h2>
 
       {/* Imagem (só quando existe ou está sendo gerada) */}
       {mostrarImagem && (

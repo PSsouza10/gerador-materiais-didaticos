@@ -2,6 +2,7 @@ import PaginaLegal, { H2, Lista, CONTATO } from "@/components/PaginaLegal";
 
 export const metadata = {
   alternates: { canonical: "/privacidade" },
+  openGraph: { type: "article", locale: "pt_BR", siteName: "EduGera", url: "/privacidade", title: "Política de Privacidade · EduGera" },
   title: "Política de Privacidade · EduGera",
   description: "Como o EduGera trata os dados de professores e professoras, em conformidade com a LGPD.",
 };

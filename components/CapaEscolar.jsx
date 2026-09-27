@@ -133,9 +133,9 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
       {/* Título */}
       <div className="absolute inset-x-12 top-[520px]">
         <div className="mb-3 h-1.5 w-20 rounded-full bg-gradient-to-r from-violet-400 to-sky-400" />
-        <h1 className="text-[44px] font-black leading-[1.06] tracking-tight text-indigo-950">
+        <h2 className="text-[44px] font-black leading-[1.06] tracking-tight text-indigo-950">
           {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
-        </h1>
+        </h2>
         <div className="mt-4 flex flex-wrap gap-2 text-[12px] font-bold">
           <span className="flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">
             <BookOpen className="h-3.5 w-3.5" /> {form.disciplina}

@@ -223,9 +223,9 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
       {/* 6) Título e identificação */}
       <div className="absolute inset-x-10 bottom-[64px]">
         <div className="mb-4 h-1 w-24 rounded-full bg-gradient-to-r from-[#B39DDB] via-[#FFA931] to-[#64B5F6]" />
-        <h1 className="text-[46px] font-black leading-[1.05] tracking-tight text-white">
+        <h2 className="text-[46px] font-black leading-[1.05] tracking-tight text-white">
           {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
-        </h1>
+        </h2>
         <p className="mt-3 text-[14px] font-semibold text-[#d4d4dc]">
           {linhaEtapa(form)} · Nível {nivel.curto}
           {bncc?.codigo ? ` · BNCC ${bncc.codigo}` : ""}
