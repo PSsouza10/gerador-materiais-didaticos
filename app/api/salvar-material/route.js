@@ -3,6 +3,11 @@ import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
+import { normalizarCapa } from "@/lib/opcoes";
+import bnccDados from "@/data/bncc-habilidades.json";
+import { indexar, normalizarCodigo } from "@/lib/bncc";
+
+const BNCC = indexar(bnccDados.habilidades);
 
 // Task 4.1 — Salva o material gerado no Vercel Blob e devolve o link público
 // de compartilhamento (página /m/<id>, que renderiza a mesma folha A4).
@@ -38,11 +43,20 @@ export async function POST(request) {
         tema: str(form.tema, 200),
         estilo: str(form.estilo, 60),
         dificuldade: obterNivel(form.dificuldade).id,
-        capa: form.capa !== false,
+        escola: str(form.escola, 120),
+        capa: normalizarCapa(form.capa),
       },
       material: {
         ...normalizarMaterial(material, form.tema),
-        bncc: material.bncc ? { codigo: str(material.bncc.codigo, 20), texto: str(material.bncc.texto, 800) } : null,
+        // o servidor confere o código na base oficial (não confia no navegador)
+        bncc: (() => {
+          const cod = material.bncc?.codigo || form.bncc;
+          if (!cod) return null;
+          const h = BNCC.get(normalizarCodigo(cod));
+          return h
+            ? { codigo: h.c, texto: h.t, verificada: true }
+            : { codigo: str(cod, 20), texto: str(material.bncc?.texto || form.habilidade, 800), verificada: false };
+        })(),
       },
       urlImagem:
         typeof urlImagem === "string" && /^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//.test(urlImagem)

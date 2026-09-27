@@ -7,11 +7,11 @@ import {
   Lightbulb,
   Boxes,
   Loader2,
-  Image as ImageIcon,
   PencilLine,
   BadgeCheck,
 } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
+import { bnccDoMaterial, rodapeBncc } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
 // É a MESMA folha usada no live preview (escalada), na impressão, no PDF e
@@ -46,12 +46,14 @@ const CORES_NIVEL = {
 };
 
 const FolhaA4 = forwardRef(function FolhaA4(
-  { form, material, urlImagem, loadingImagem = false, mostrarGabarito = false },
+  { form, material, urlImagem, loadingImagem = false, mostrarGabarito = false, exemplo = false, imagemNaCapa = false },
   ref
 ) {
   const m = material || {};
   const nivel = obterNivel(form.dificuldade);
-  const bncc = m.bncc?.codigo === form.bncc ? m.bncc : form.bncc ? { codigo: form.bncc, texto: form.habilidade } : null;
+  const bncc = bnccDoMaterial(form, m);
+  // Sem imagem pronta não imprime um quadro vazio; se a ilustração já está na capa, não repete.
+  const mostrarImagem = loadingImagem || (urlImagem && !imagemNaCapa);
   const exercicios = m.exercicios || [];
 
   return (
@@ -64,15 +66,21 @@ const FolhaA4 = forwardRef(function FolhaA4(
               <GraduationCap className="h-6 w-6 text-indigo-500" />
             </div>
             <div>
-              <p className="text-[15px] font-extrabold text-slate-800">{form.professor || "Professor"}</p>
+              <p className="text-[15px] font-extrabold text-slate-800">{form.professor || "Professor(a)"}</p>
               <p className="text-[11.5px] text-slate-500">
+                {form.escola ? `${form.escola} · ` : ""}
                 {form.disciplina} · {form.nivel}
               </p>
             </div>
           </div>
-          <span className={`rounded-full px-3 py-1 text-[10.5px] font-bold ring-1 ${CORES_NIVEL[nivel.id]}`}>
-            Nível {nivel.curto}
-          </span>
+          <div className="flex flex-none items-center gap-1.5">
+            {exemplo && (
+              <span className="rounded-md bg-amber-400 px-2 py-1 text-[10.5px] font-black tracking-widest text-amber-950">EXEMPLO</span>
+            )}
+            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ring-1 ${CORES_NIVEL[nivel.id]}`}>
+              Nível {nivel.curto}
+            </span>
+          </div>
         </div>
         <div className="mt-3 grid grid-cols-[1fr_120px_110px] gap-4 text-[11px] text-slate-500">
           <span className="border-b border-slate-300 pb-1">Nome:</span>
@@ -84,41 +92,40 @@ const FolhaA4 = forwardRef(function FolhaA4(
       {/* Cartão BNCC */}
       {bncc && (
         <section className="cartao-bncc mt-3 flex gap-3 rounded-xl bg-indigo-50/70 px-4 py-2.5">
-          <BadgeCheck className="mt-0.5 h-4 w-4 flex-none text-indigo-500" />
+          <BadgeCheck className={`mt-0.5 h-4 w-4 flex-none ${bncc.verificada ? "text-indigo-500" : "text-slate-400"}`} />
           <p className="text-[11px] leading-snug text-slate-600">
-            <span className="font-extrabold text-indigo-600">BNCC {bncc.codigo}</span>
+            <span className="font-extrabold text-indigo-600">
+              {bncc.verificada ? `BNCC ${bncc.codigo}` : `${bncc.codigo} (currículo local)`}
+            </span>
             {bncc.texto ? <> — {bncc.texto}</> : null}
           </p>
         </section>
       )}
 
       {/* Título */}
-      <h1 className="mt-5 text-center text-[28px] font-black leading-tight text-indigo-600">
+      <h1 className="mt-4 text-center text-[26px] font-black leading-tight text-indigo-600">
         {form.tema ? m.tituloDidatico : "Tema Principal"}
       </h1>
 
-      {/* Imagem */}
-      <div className="bloco-exercicio mt-4 flex h-[230px] items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-        {loadingImagem ? (
-          <div className="flex flex-col items-center gap-2 text-indigo-300">
-            <Loader2 className="h-9 w-9 animate-spin" />
-            <span className="text-[12px] font-semibold">Gerando ilustração...</span>
-          </div>
-        ) : urlImagem ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={urlImagem} crossOrigin="anonymous" alt="Ilustração gerada por IA" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex flex-col items-center gap-2 text-slate-400">
-            <ImageIcon className="h-9 w-9" />
-            <span className="text-[12px] font-semibold">Imagem IA · {form.estilo}</span>
-          </div>
-        )}
-      </div>
+      {/* Imagem (só quando existe ou está sendo gerada) */}
+      {mostrarImagem && (
+        <div className="bloco-exercicio mt-3 flex h-[190px] items-center justify-center overflow-hidden rounded-2xl bg-slate-50">
+          {loadingImagem ? (
+            <div className="nao-imprimir flex flex-col items-center gap-2 text-indigo-300">
+              <Loader2 className="h-9 w-9 animate-spin" />
+              <span className="text-[12px] font-semibold">Gerando ilustração...</span>
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={urlImagem} crossOrigin="anonymous" alt="Ilustração gerada por IA" className="h-full w-full object-cover" />
+          )}
+        </div>
+      )}
 
-      {m.resumoPedagogico && <p className="mt-4 text-justify text-[13px] text-slate-600">{m.resumoPedagogico}</p>}
+      {m.resumoPedagogico && <p className="mt-3 text-justify text-[13px] text-slate-600">{m.resumoPedagogico}</p>}
 
       {/* Conceitos e fórmulas */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-3">
         <section className="bloco-exercicio rounded-xl border border-slate-100 bg-slate-50/70 p-3.5">
           <Rotulo icon={BookOpen} className="text-indigo-600">Conceitos-chave</Rotulo>
           <ul className="mt-2 space-y-1.5">
@@ -187,50 +194,56 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </section>
       )}
 
-      {/* Exercícios */}
-      {exercicios.length > 0 && (
-        <>
-          <div className="mt-6 flex items-center gap-2 border-b-2 border-indigo-100 pb-1.5 text-indigo-600">
-            <PencilLine className="h-4 w-4" />
-            <span className="text-[13px] font-extrabold uppercase tracking-wider">Exercícios</span>
-          </div>
-          {exercicios.map((ex, i) => (
-            <section key={i} className="bloco-exercicio mt-3 rounded-xl border border-slate-200 p-3.5">
-              <p className="text-[12.5px]">
-                <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
-                {ex.enunciado}
-              </p>
-              {ex.alternativas.length > 0 ? (
-                <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 pl-7 text-[12px]">
-                  {ex.alternativas.map((a, j) => (
-                    <li key={j}>{a}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="mt-2 space-y-4 pl-7 pt-2">
-                  <div className="border-b border-slate-300" />
-                  <div className="border-b border-slate-300" />
-                  <div className="border-b border-slate-300" />
-                </div>
-              )}
-            </section>
-          ))}
-        </>
-      )}
+      {/* Exercícios — o título vai no mesmo bloco do 1º exercício para nunca ficar sozinho no pé da página */}
+      {exercicios.map((ex, i) => (
+        <div key={i} className="bloco-exercicio">
+          {i === 0 && (
+            <div className="mt-5 flex items-center gap-2 border-b-2 border-indigo-100 pb-1.5 text-indigo-600">
+              <PencilLine className="h-4 w-4" />
+              <span className="text-[13px] font-extrabold uppercase tracking-wider">Exercícios</span>
+            </div>
+          )}
+          <section className="mt-2.5 rounded-xl border border-slate-200 px-3.5 py-3">
+            <p className="text-[12.5px]">
+              <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
+              {ex.enunciado}
+            </p>
+            {ex.alternativas.length > 0 ? (
+              <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 pl-7 text-[12px]">
+                {ex.alternativas.map((a, j) => (
+                  <li key={j}>{a}</li>
+                ))}
+              </ul>
+            ) : (
+              <div className="mt-1 space-y-5 pl-7 pt-3">
+                <div className="border-b border-slate-300" />
+                <div className="border-b border-slate-300" />
+                <div className="border-b border-slate-300" />
+              </div>
+            )}
+          </section>
+        </div>
+      ))}
 
       {mostrarGabarito && exercicios.length > 0 && (
-        <section className="bloco-exercicio mt-5 rounded-xl bg-slate-50 p-3.5">
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Gabarito</p>
-          <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-[11.5px] text-slate-600">
+        <section className="gabarito quebra-antes pt-1">
+          <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1.5">
+            <span className="text-[13px] font-extrabold uppercase tracking-wider text-slate-600">Gabarito</span>
+            <span className="text-[11px] font-semibold text-slate-400">Folha do professor · {form.tema}</span>
+          </div>
+          <ol className="mt-3 space-y-2 text-[12px] text-slate-700">
             {exercicios.map((ex, i) => (
-              <li key={i}>{ex.resposta || "—"}</li>
+              <li key={i} className="bloco-exercicio flex gap-2">
+                <Numero n={i + 1} tamanho={18} cor="#64748b" />
+                <span>{ex.resposta || "—"}</span>
+              </li>
             ))}
           </ol>
         </section>
       )}
 
-      <footer className="mt-6 border-t border-slate-100 pt-2 text-center text-[9.5px] text-slate-400">
-        Material gerado com EduGera · alinhado à BNCC
+      <footer className="mt-5 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-400">
+        {rodapeBncc(bncc, exemplo)}
       </footer>
     </article>
   );

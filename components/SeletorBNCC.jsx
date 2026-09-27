@@ -56,7 +56,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
     : "desconhecido";
 
   const escolher = (h) => {
-    onChange({ bncc: h.c, habilidade: h.t });
+    onChange({ bncc: h.c, habilidade: h.t, bnccVerificada: true });
     setAberto(false);
   };
 
@@ -64,7 +64,11 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
     // Atualiza o campo de forma síncrona (input controlado não perde teclas)
     const h = base?.mapa.get(normalizarCodigo(valor));
     // Código completo e válido digitado → preenche a descrição oficial na hora
-    onChange({ bncc: h ? h.c : valor.toUpperCase(), habilidade: h ? h.t : oficial ? "" : habilidade });
+    onChange({
+      bncc: h ? h.c : valor.toUpperCase(),
+      habilidade: h ? h.t : oficial ? "" : habilidade,
+      bnccVerificada: !!h,
+    });
     setAberto(true);
     setAtivo(0);
     if (!base) garantirBase();
@@ -74,7 +78,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
   useEffect(() => {
     if (!base || !codigo) return;
     const h = base.mapa.get(normalizarCodigo(codigo));
-    if (h && (h.c !== codigo || h.t !== habilidade)) onChange({ bncc: h.c, habilidade: h.t });
+    onChange({ bncc: h ? h.c : codigo, habilidade: h ? h.t : habilidade, bnccVerificada: !!h });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base]);
 
@@ -189,7 +193,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
               Se for de um currículo estadual/municipal, descreva a habilidade abaixo:
               <textarea
                 value={habilidade}
-                onChange={(e) => onChange({ bncc: codigo, habilidade: e.target.value })}
+                onChange={(e) => onChange({ bncc: codigo, habilidade: e.target.value, bnccVerificada: false })}
                 rows={2}
                 className="ipt mt-1.5 resize-none bg-white text-xs"
                 placeholder="Descrição da habilidade"
@@ -199,7 +203,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
           {codigo && (
             <button
               type="button"
-              onClick={() => onChange({ bncc: "", habilidade: "" })}
+              onClick={() => onChange({ bncc: "", habilidade: "", bnccVerificada: false })}
               className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600"
             >
               <X className="h-3 w-3" /> limpar

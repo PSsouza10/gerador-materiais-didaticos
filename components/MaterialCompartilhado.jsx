@@ -1,27 +1,35 @@
 "use client";
 import React, { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Download, Printer, Loader2, GraduationCap, KeyRound } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
+import { normalizarCapa } from "@/lib/opcoes";
 
 export default function MaterialCompartilhado({ dados }) {
   const folhaRef = useRef(null);
   const capaRef = useRef(null);
-  const [baixando, setBaixando] = useState(false);
+  const [baixando, setBaixando] = useState(null);
   const [gabarito, setGabarito] = useState(false);
+  const [gabaritoForcado, setGabaritoForcado] = useState(null);
   const { form, material, urlImagem } = dados;
+  const capa = normalizarCapa(form.capa);
+  const temExercicios = material.exercicios?.length > 0;
 
-  const baixar = async () => {
-    setBaixando(true);
+  const baixar = async (tipo) => {
+    setBaixando(tipo);
+    flushSync(() => setGabaritoForcado(tipo === "professor"));
     try {
-      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`, {
-        capa: form.capa ? capaRef.current : null,
+      const base = `apostila-${slugify(form.tema) || "material"}`;
+      await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
+        capa: capa !== "nenhuma" ? capaRef.current : null,
       });
     } finally {
-      setBaixando(false);
+      setGabaritoForcado(null);
+      setBaixando(null);
     }
   };
 
@@ -34,29 +42,42 @@ export default function MaterialCompartilhado({ dados }) {
           </div>
           <div className="leading-tight">
             <p className="text-sm font-extrabold text-slate-800">EduGera</p>
-            <p className="text-[11px] text-slate-400">Material compartilhado</p>
+            <p className="text-[11px] text-slate-500">Material compartilhado</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {material.exercicios?.length > 0 && (
-            <button onClick={() => setGabarito((g) => !g)} className="botao-sec">
-              <KeyRound className="h-3.5 w-3.5" /> {gabarito ? "Ocultar gabarito" : "Gabarito"}
+        <div className="flex flex-wrap items-center gap-2">
+          {temExercicios && (
+            <button onClick={() => setGabarito((g) => !g)} aria-pressed={gabarito} className="botao-sec">
+              <KeyRound className="h-3.5 w-3.5" /> {gabarito ? "Ocultar gabarito" : "Ver gabarito"}
             </button>
           )}
           <button onClick={() => window.print()} className="botao-sec">
             <Printer className="h-3.5 w-3.5" /> Imprimir
           </button>
-          <button onClick={baixar} disabled={baixando} className="botao-sec">
-            {baixando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            {baixando ? "Gerando..." : "Baixar PDF"}
+          <button onClick={() => baixar("aluno")} disabled={!!baixando} className="botao-sec">
+            {baixando === "aluno" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            PDF do aluno
           </button>
+          {temExercicios && (
+            <button onClick={() => baixar("professor")} disabled={!!baixando} className="botao-sec">
+              {baixando === "professor" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+              PDF do professor
+            </button>
+          )}
         </div>
       </div>
 
       <div className="mx-auto max-w-[794px]">
         <PreviewEscalado>
-          {form.capa && <CapaA4 ref={capaRef} form={form} material={material} urlImagem={urlImagem} />}
-          <FolhaA4 ref={folhaRef} form={form} material={material} urlImagem={urlImagem} mostrarGabarito={gabarito} />
+          <CapaA4 ref={capaRef} variante={capa} form={form} material={material} urlImagem={urlImagem} />
+          <FolhaA4
+            ref={folhaRef}
+            form={form}
+            material={material}
+            urlImagem={urlImagem}
+            mostrarGabarito={gabaritoForcado ?? gabarito}
+            imagemNaCapa={capa !== "nenhuma"}
+          />
         </PreviewEscalado>
       </div>
 
@@ -65,6 +86,7 @@ export default function MaterialCompartilhado({ dados }) {
           padding:.45rem .8rem;font-size:.75rem;font-weight:700;color:#4f46e5;box-shadow:0 1px 2px rgba(0,0,0,.05);
           outline:1px solid #e0e7ff;transition:all .15s}
         .botao-sec:hover{background:#eef2ff}
+        .botao-sec:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
         .botao-sec:disabled{opacity:.6;cursor:not-allowed}
       `}</style>
     </div>

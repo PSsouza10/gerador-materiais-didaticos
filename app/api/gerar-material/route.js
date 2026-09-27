@@ -89,6 +89,10 @@ Regras:
 - Entre 3 e 5 dicas.
 - Entre 2 e 4 exemplos práticos.
 - Entre 4 e 6 exercícios; misture questões abertas ("alternativas": []) e de múltipla escolha.
+- Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
+- Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
+- Antes de responder, RESOLVA cada exercício e confira o resultado; a "resposta" deve trazer a alternativa correta e o cálculo/justificativa curta.
+- Números e contextos adequados à faixa etária; unidades sempre explícitas.
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
 
   // Aborta se passar do limite OU se o professor fechar a página
@@ -183,7 +187,11 @@ Regras:
           throw new Error("json");
         }
         const material = normalizarMaterial(parsed, tema);
-        material.bncc = oficial ? { codigo: oficial.c, texto: oficial.t } : bncc ? { codigo: bncc, texto: habilidade || "" } : null;
+        material.bncc = oficial
+          ? { codigo: oficial.c, texto: oficial.t, verificada: true }
+          : bncc
+          ? { codigo: bncc, texto: habilidade || "", verificada: false }
+          : null;
         material.dificuldade = nivelDif.id;
         enviar(ctrl, { tipo: "concluido", material });
       } catch (e) {

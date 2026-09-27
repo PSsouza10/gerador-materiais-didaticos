@@ -1,5 +1,6 @@
 "use client";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   LayoutDashboard,
   Sparkles,
@@ -24,39 +25,70 @@ import {
   Gauge,
   Info,
   PanelTop,
+  Eye,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import SeletorBNCC from "@/components/SeletorBNCC";
-import { NIVEIS_DIFICULDADE, NIVEL_PADRAO } from "@/lib/niveis";
+import Dashboard from "@/components/telas/Dashboard";
+import MinhasApostilas from "@/components/telas/MinhasApostilas";
+import Configuracoes from "@/components/telas/Configuracoes";
+import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
+import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
+import {
+  CONFIG_PADRAO,
+  lerConfig,
+  salvarConfig,
+  lerMateriais,
+  adicionarMaterial,
+  removerMaterial,
+  limparMateriais,
+} from "@/lib/local";
+
+// ===== EXEMPLO (mostrado só até o professor gerar o primeiro material) =====
+const EXEMPLO_FORM = {
+  professor: "Prof.ª Ana Souza",
+  escola: "Escola Exemplo",
+  bncc: "EF07MA30",
+  habilidade:
+    "Resolver e elaborar problemas de cálculo de medida do volume de blocos retangulares, envolvendo as unidades usuais (metro cúbico, decímetro cúbico e centímetro cúbico).",
+  bnccVerificada: true,
+  disciplina: "Matemática",
+  nivel: "Ensino Fundamental",
+  tema: "Volume: medida de capacidade",
+  estilo: "3D Pixar/Disney",
+  dificuldade: "padrao",
+};
 
 const EXEMPLO = {
-  tituloDidatico: "Volume: O Guia Completo de Capacidade",
+  tituloDidatico: "Volume e Capacidade no Dia a Dia",
   resumoPedagogico:
-    "O estudo do volume e da capacidade fundamenta-se em entender o espaço ocupado por um corpo e a quantidade de fluido que ele pode conter.",
+    "Volume é o espaço que um objeto ocupa; capacidade é o quanto cabe dentro dele. Nesta ficha você vai calcular o volume de blocos retangulares e converter entre m³, dm³, cm³ e litros.",
   conceitos: [
     { termo: "Volume", definicao: "Espaço tridimensional ocupado por um corpo." },
-    { termo: "Capacidade", definicao: "Quantidade de líquido ou material que um objeto pode conter." },
-    { termo: "Litro", definicao: "Unidade de medida de capacidade equivalente a 1 dm³." },
+    { termo: "Capacidade", definicao: "Quantidade de líquido ou material que um recipiente pode conter." },
+    { termo: "Bloco retangular", definicao: "Sólido com 6 faces retangulares (paralelepípedo)." },
+    { termo: "Litro", definicao: "Unidade de capacidade equivalente a 1 dm³." },
   ],
   formulas: [
-    { nome: "Volume do cubo", expressao: "V = a × a × a", descricao: "onde a é a medida da aresta" },
-    { nome: "Conversão", expressao: "1 dm³ = 1 L = 1000 cm³", descricao: "relação entre volume e capacidade" },
+    { nome: "Bloco retangular (geral)", expressao: "V = c × l × h", descricao: "comprimento × largura × altura, na mesma unidade" },
+    { nome: "Cubo (caso particular)", expressao: "V = a × a × a = a³", descricao: "quando as três arestas medem a" },
+    { nome: "Conversão", expressao: "1 dm³ = 1 L = 1000 cm³", descricao: "e 1 m³ = 1000 L" },
   ],
   dicas: [
-    "Converta sempre para a mesma unidade antes de iniciar qualquer cálculo.",
-    "Desenhe a figura e identifique altura, largura e profundidade antes de multiplicar.",
+    "Converta todas as medidas para a mesma unidade antes de multiplicar.",
+    "Desenhe o sólido e marque comprimento, largura e altura.",
+    "Para litros, calcule em dm³: o número é o mesmo.",
   ],
-  lembreteImportante:
-    "Capacidade mede o quanto cabe dentro de um objeto; volume mede o espaço que o objeto ocupa.",
+  lembreteImportante: "V = a³ vale só para o cubo; para qualquer bloco retangular use V = c × l × h.",
   aplicacaoPratica: {
     titulo: "Caixa-d'água em casa",
-    situacao: "Uma caixa-d'água tem 2 m de altura, 1,5 m de largura e 1 m de profundidade.",
-    exemplos: ["Quantos litros ela comporta?", "V = 2 × 1,5 × 1 = 3 m³ = 3000 L"],
+    situacao: "Uma caixa-d'água em forma de bloco retangular mede 2 m de comprimento, 1,5 m de largura e 1 m de altura.",
+    exemplos: ["V = 2 × 1,5 × 1 = 3 m³", "3 m³ = 3000 L"],
   },
   exercicios: [
     {
@@ -65,23 +97,54 @@ const EXEMPLO = {
       resposta: "b) 60 L — 50 × 30 × 40 = 60 000 cm³ = 60 dm³ = 60 L.",
     },
     {
+      enunciado: "Um cubo tem aresta de 3 dm. Qual é o seu volume?",
+      alternativas: ["a) 9 dm³", "b) 18 dm³", "c) 27 dm³", "d) 81 dm³"],
+      resposta: "c) 27 dm³ — V = 3 × 3 × 3 = 27 dm³ (9 dm³ seria a área de uma face).",
+    },
+    {
       enunciado: "Explique, com suas palavras, a diferença entre volume e capacidade.",
       alternativas: [],
       resposta: "Volume é o espaço ocupado pelo objeto; capacidade é o quanto cabe dentro dele.",
     },
   ],
-  bncc: null,
+  bncc: { codigo: EXEMPLO_FORM.bncc, texto: EXEMPLO_FORM.habilidade, verificada: true },
 };
+
+const NAV = [
+  { name: "Dashboard", curto: "Início", icon: LayoutDashboard, descricao: "Visão geral dos seus materiais." },
+  { name: "Gerar Material", curto: "Gerar", icon: Sparkles, descricao: "Crie apostilas e fichas de estudo alinhadas à BNCC." },
+  { name: "Minhas Apostilas", curto: "Apostilas", icon: BookMarked, descricao: "Materiais gerados neste navegador." },
+  { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
+];
+
+const formDaConfig = (cfg) => ({
+  professor: cfg.professor,
+  escola: cfg.escola,
+  bncc: "",
+  habilidade: "",
+  bnccVerificada: false,
+  disciplina: cfg.disciplina,
+  nivel: cfg.nivel,
+  tema: "",
+  conteudo: "",
+  estilo: cfg.estilo,
+  dificuldade: cfg.dificuldade,
+  capa: normalizarCapa(cfg.capa),
+});
 
 export default function GeradorApostilas() {
   const [active, setActive] = useState("Gerar Material");
   const [loading, setLoading] = useState(false);
   const [progresso, setProgresso] = useState(0);
   const [loadingImagem, setLoadingImagem] = useState(false);
-  const [baixandoPdf, setBaixandoPdf] = useState(false);
+  const [baixandoPdf, setBaixandoPdf] = useState(null);
   const [erro, setErro] = useState(null);
   const [aviso, setAviso] = useState(null);
   const [mostrarGabarito, setMostrarGabarito] = useState(false);
+  const [gabaritoForcado, setGabaritoForcado] = useState(null); // usado só durante a exportação
+
+  const [config, setConfig] = useState(CONFIG_PADRAO);
+  const [materiais, setMateriais] = useState([]);
 
   // Task 4.1 — link de compartilhamento
   const [compartilhar, setCompartilhar] = useState({ estado: "vazio", url: null, chave: null });
@@ -89,28 +152,29 @@ export default function GeradorApostilas() {
   const folhaRef = useRef(null);
   const capaRef = useRef(null);
 
-  // ===== ESTADO DO FORMULÁRIO =====
-  const [form, setForm] = useState({
-    professor: "Nome do professor",
-    bncc: "",
-    habilidade: "",
-    disciplina: "Matemática",
-    nivel: "Ensino Fundamental",
-    tema: "Volume: medida de capacidade",
-    conteudo: "",
-    estilo: "3D Pixar/Disney",
-    dificuldade: NIVEL_PADRAO,
-    capa: true,
-  });
+  // ===== FORMULÁRIO =====
+  const [form, setForm] = useState(() => formDaConfig(CONFIG_PADRAO));
+
+  // Preferências e lista salvas no navegador
+  useEffect(() => {
+    const cfg = lerConfig();
+    setConfig(cfg);
+    setForm(formDaConfig(cfg));
+    setMateriais(lerMateriais());
+  }, []);
 
   // ===== RESULTADO DA IA =====
-  const [material, setMaterial] = useState(EXEMPLO);
+  const [material, setMaterial] = useState(null);
   const [urlImagem, setUrlImagem] = useState(null);
-  const [gerado, setGerado] = useState(false);
+  const gerado = !!material;
+
+  // O preview mostra o EXEMPLO (rotulado) até existir um material do professor
+  const formPreview = gerado ? form : { ...EXEMPLO_FORM, capa: form.capa };
+  const materialPreview = gerado ? material : EXEMPLO;
+  const imagemPreview = gerado ? urlImagem : null;
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  // Chave que muda sempre que o conteúdo visível muda → link desatualizado
   const chaveAtual = useMemo(() => JSON.stringify([form, material, urlImagem]), [form, material, urlImagem]);
   const linkDesatualizado = compartilhar.url && compartilhar.chave !== chaveAtual;
 
@@ -125,6 +189,19 @@ export default function GeradorApostilas() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setCompartilhar({ estado: "pronto", url: json.url, chave: JSON.stringify([dados.form, dados.material, dados.urlImagem]) });
+      setMateriais(
+        adicionarMaterial({
+          id: json.id,
+          url: json.url,
+          titulo: dados.material.tituloDidatico || dados.form.tema,
+          tema: dados.form.tema,
+          disciplina: dados.form.disciplina,
+          nivel: dados.form.nivel,
+          dificuldade: dados.form.dificuldade,
+          bncc: dados.material.bncc?.verificada ? dados.material.bncc.codigo : null,
+          criadoEm: new Date().toISOString(),
+        })
+      );
       return json.url;
     } catch (e) {
       console.error(e);
@@ -164,12 +241,11 @@ export default function GeradorApostilas() {
     let novoMaterial = null;
     let novaImagem = null;
 
-    // --- Conteúdo (GPT-4o, streaming SSE) ---
     try {
       const res = await conteudoPromise;
       novoMaterial = await lerStreamMaterial(res, { onProgresso: setProgresso });
       setMaterial(novoMaterial);
-      setGerado(true);
+      setUrlImagem(null);
     } catch (e) {
       console.error(e);
       setErro(
@@ -181,7 +257,6 @@ export default function GeradorApostilas() {
       setLoading(false);
     }
 
-    // --- Imagem (gpt-image-2) ---
     try {
       const res = await imagemPromise;
       const data = await res.json().catch(() => ({}));
@@ -191,7 +266,7 @@ export default function GeradorApostilas() {
         );
       }
       novaImagem = data.urlImagem;
-      setUrlImagem(novaImagem);
+      if (novoMaterial) setUrlImagem(novaImagem);
     } catch (e) {
       console.error(e);
       if (novoMaterial) setAviso(`${e.message} O material foi criado sem ilustração.`);
@@ -199,13 +274,11 @@ export default function GeradorApostilas() {
       setLoadingImagem(false);
     }
 
-    // --- Task 4.1: salva no Vercel Blob e prepara o link ---
     if (novoMaterial) {
       await salvarMaterial({ form: formEnviado, material: novoMaterial, urlImagem: novaImagem });
     }
   };
 
-  // ===== COPIAR LINK =====
   const handleCopiarLink = async () => {
     let url = compartilhar.url;
     if (!url || linkDesatualizado) {
@@ -221,54 +294,50 @@ export default function GeradorApostilas() {
     setTimeout(() => setCompartilhar((c) => (c.estado === "copiado" ? { ...c, estado: "pronto" } : c)), 2200);
   };
 
-  // ===== EXPORTAÇÃO EM PDF =====
-  const handleBaixarPdf = async () => {
+  // ===== EXPORTAÇÃO EM PDF: aluno (sem gabarito) ou professor (gabarito em página própria) =====
+  const handleBaixarPdf = async (tipo) => {
     if (!folhaRef.current) return;
-    setBaixandoPdf(true);
+    setBaixandoPdf(tipo);
+    flushSync(() => setGabaritoForcado(tipo === "professor"));
     try {
-      await exportarPdf(folhaRef.current, `apostila-${slugify(form.tema) || "material"}.pdf`, {
-        capa: form.capa ? capaRef.current : null,
+      const base = `apostila-${slugify(formPreview.tema) || "material"}`;
+      await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
+        capa: form.capa !== "nenhuma" ? capaRef.current : null,
       });
     } catch (e) {
       console.error("Erro ao gerar PDF:", e);
       setErro("Não foi possível gerar o PDF. Tente novamente.");
     } finally {
-      setBaixandoPdf(false);
+      setGabaritoForcado(null);
+      setBaixandoPdf(null);
     }
   };
 
-  const nav = [
-    { name: "Dashboard", icon: LayoutDashboard },
-    { name: "Gerar Material", icon: Sparkles },
-    { name: "Minhas Apostilas", icon: BookMarked },
-    { name: "Configurações", icon: Settings },
-  ];
-
-  const disciplinas = [
-    "Matemática",
-    "Informática",
-    "Português",
-    "Ciências",
-    "História",
-    "Geografia",
-    "Arte",
-    "Educação Física",
-    "Língua Inglesa",
-    "Ensino Religioso",
-  ];
-  const niveis = ["Ensino Fundamental", "Ensino Médio", "EJA", "Concurso", "Curso Livre"];
-  const estilos = ["3D Pixar/Disney", "Isométrico", "Vetor Ilustrado", "Realista"];
+  const salvarPreferencias = (cfg) => {
+    salvarConfig(cfg);
+    setConfig(cfg);
+    // aplica ao formulário sem apagar o que já foi digitado no tema/BNCC
+    setForm((f) => ({ ...formDaConfig(cfg), tema: f.tema, conteudo: f.conteudo, bncc: f.bncc, habilidade: f.habilidade, bnccVerificada: f.bnccVerificada }));
+  };
 
   const ocupado = loading || loadingImagem;
-  const textoBotaoLink = {
-    salvando: "Salvando...",
-    copiado: "Link copiado!",
-    erro: "Tentar salvar de novo",
-  }[compartilhar.estado] || (linkDesatualizado ? "Atualizar e copiar link" : "Copiar link de compartilhamento");
+  const temExercicios = materialPreview.exercicios?.length > 0;
+  const gabaritoVisivel = gabaritoForcado ?? mostrarGabarito;
+  const textoBotaoLink =
+    { salvando: "Salvando...", copiado: "Link copiado!", erro: "Tentar salvar de novo" }[compartilhar.estado] ||
+    (linkDesatualizado ? "Atualizar e copiar link" : "Copiar link de compartilhamento");
+  const statusGeracao = loading
+    ? progresso > 0
+      ? `Escrevendo o material... ${(progresso / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil caracteres`
+      : "Conectando à IA..."
+    : loadingImagem
+    ? "Gerando ilustração..."
+    : "";
+  const tela = NAV.find((n) => n.name === active) || NAV[1];
 
   return (
     <div className="flex min-h-screen w-full bg-[#F6F5FB] font-sans text-slate-700">
-      {/* ===== MENU LATERAL ===== */}
+      {/* ===== MENU LATERAL (desktop) ===== */}
       <aside className="nao-imprimir hidden md:flex w-64 flex-none flex-col bg-white border-r border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-100">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-400 shadow-lg shadow-indigo-200">
@@ -280,21 +349,25 @@ export default function GeradorApostilas() {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-5 space-y-1">
-          {nav.map(({ name, icon: Icon }) => {
+        <nav aria-label="Seções" className="flex-1 px-3 py-5 space-y-1">
+          {NAV.map(({ name, icon: Icon }) => {
             const on = active === name;
             return (
               <button
                 key={name}
                 onClick={() => setActive(name)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                aria-current={on ? "page" : undefined}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
                   on
                     ? "bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-600 shadow-sm"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                 }`}
               >
-                <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} />
-                {name}
+                <Icon className="h-[18px] w-[18px] flex-none" strokeWidth={2.2} />
+                <span className="whitespace-nowrap">{name}</span>
+                {name === "Minhas Apostilas" && materiais.length > 0 && (
+                  <span className="ml-auto rounded-full bg-indigo-100 px-2 text-[11px] font-bold text-indigo-600">{materiais.length}</span>
+                )}
               </button>
             );
           })}
@@ -302,31 +375,67 @@ export default function GeradorApostilas() {
 
         <div className="m-3 rounded-2xl bg-gradient-to-br from-amber-50 to-rose-50 p-4 border border-amber-100">
           <p className="text-xs font-bold text-amber-700">Dica pedagógica</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-amber-600/80">
+          <p className="mt-1 text-[11px] leading-relaxed text-amber-700/80">
             Busque a habilidade da BNCC pelo código ou por palavra-chave: a descrição oficial entra no material.
           </p>
         </div>
       </aside>
 
       {/* ===== CONTEÚDO ===== */}
-      <main className="min-w-0 flex-1">
-        <header className="nao-imprimir flex items-center justify-between px-6 md:px-8 py-5">
+      <main className="min-w-0 flex-1 pb-20 md:pb-0">
+        {/* Barra superior no celular */}
+        <div className="nao-imprimir flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3 md:hidden">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-400">
+            <GraduationCap className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-sm font-extrabold text-slate-800">EduGera</span>
+        </div>
+
+        <header className="nao-imprimir flex items-center justify-between px-4 sm:px-6 md:px-8 py-5">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-800">Gerar Material Visual</h1>
-            <p className="text-sm text-slate-400">Crie apostilas e fichas de estudo alinhadas à BNCC.</p>
+            <h1 className="text-2xl font-extrabold text-slate-800">{active === "Gerar Material" ? "Gerar Material Visual" : active}</h1>
+            <p className="text-sm text-slate-500">{tela.descricao}</p>
           </div>
-          <div className="hidden sm:flex items-center gap-3 rounded-full bg-white px-4 py-2 shadow-sm border border-slate-100">
+          <button
+            onClick={() => setActive("Configurações")}
+            className="hidden sm:flex items-center gap-3 rounded-full bg-white px-4 py-2 shadow-sm border border-slate-100 hover:border-indigo-200"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 font-bold text-sm">
-              {(form.professor || "P").trim()[0]?.toUpperCase()}
+              {(config.professor || "P").trim()[0]?.toUpperCase()}
             </div>
-            <span className="text-sm font-semibold text-slate-600">{form.professor.split(" - ")[0]}</span>
-          </div>
+            <span className="text-sm font-semibold text-slate-600">{config.professor || "Definir meu nome"}</span>
+          </button>
         </header>
 
+        {active === "Dashboard" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <Dashboard materiais={materiais} config={config} irPara={setActive} />
+          </div>
+        )}
+        {active === "Minhas Apostilas" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <MinhasApostilas materiais={materiais} irPara={setActive} onRemover={(id) => setMateriais(removerMaterial(id))} />
+          </div>
+        )}
+        {active === "Configurações" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <Configuracoes
+              key={JSON.stringify(config)}
+              config={config}
+              onSalvar={salvarPreferencias}
+              totalMateriais={materiais.length}
+              onLimparLista={() => {
+                limparMateriais();
+                setMateriais([]);
+              }}
+            />
+          </div>
+        )}
+
         {/* Task 2.1 — split-screen: controles à esquerda, live preview à direita */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 px-6 md:px-8 pb-10">
+        <div className={`${active === "Gerar Material" ? "grid" : "hidden"} grid-cols-1 xl:grid-cols-2 gap-6 px-4 sm:px-6 md:px-8 pb-10`}>
           {/* ===== FORMULÁRIO ===== */}
-          <section className="nao-imprimir self-start rounded-3xl bg-white p-6 md:p-7 shadow-sm border border-slate-100">
+          <section className="nao-imprimir self-start rounded-3xl bg-white p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
             <div className="mb-6 flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-violet-400" />
               <h2 className="text-lg font-bold text-slate-800">Configuração da criação</h2>
@@ -335,13 +444,13 @@ export default function GeradorApostilas() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="sm:col-span-2">
                 <Field label="Identificação do Professor" icon={User}>
-                  <input value={form.professor} onChange={set("professor")} className="ipt" placeholder="Nome do docente" />
+                  <input value={form.professor} onChange={set("professor")} className="ipt" placeholder="Nome do docente (salve em Configurações)" />
                 </Field>
               </div>
 
               <Field label="Disciplina" icon={BookOpen} required>
                 <select value={form.disciplina} onChange={set("disciplina")} className="ipt">
-                  {disciplinas.map((d) => (
+                  {DISCIPLINAS.map((d) => (
                     <option key={d}>{d}</option>
                   ))}
                 </select>
@@ -349,7 +458,7 @@ export default function GeradorApostilas() {
 
               <Field label="Nível de Ensino" icon={Layers} required>
                 <select value={form.nivel} onChange={set("nivel")} className="ipt">
-                  {niveis.map((n) => (
+                  {NIVEIS.map((n) => (
                     <option key={n}>{n}</option>
                   ))}
                 </select>
@@ -368,22 +477,17 @@ export default function GeradorApostilas() {
 
               <div className="sm:col-span-2">
                 <Field label="Tema Principal" icon={Target} required>
-                  <input
-                    value={form.tema}
-                    onChange={set("tema")}
-                    className="ipt"
-                    placeholder='Ex: "Volume: medida de capacidade"'
-                  />
+                  <input value={form.tema} onChange={set("tema")} className="ipt" placeholder='Ex.: "Volume: medida de capacidade"' />
                 </Field>
               </div>
 
               {/* Task 3.2 — nível de dificuldade / adaptação */}
               <div className="sm:col-span-2">
-                <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                <span id="rotulo-dificuldade" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
                   <Gauge className="h-3.5 w-3.5 text-violet-400" />
                   Nível de Dificuldade / Adaptação
                 </span>
-                <div role="radiogroup" className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div role="radiogroup" aria-labelledby="rotulo-dificuldade" className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {NIVEIS_DIFICULDADE.map((n) => {
                     const on = form.dificuldade === n.id;
                     return (
@@ -393,16 +497,12 @@ export default function GeradorApostilas() {
                         role="radio"
                         aria-checked={on}
                         onClick={() => setForm((f) => ({ ...f, dificuldade: n.id }))}
-                        className={`rounded-xl border-[1.5px] px-3 py-2.5 text-left transition-all ${
-                          on
-                            ? "border-indigo-300 bg-indigo-50 shadow-sm"
-                            : "border-[#ECEAF4] bg-[#FAFAFE] hover:border-indigo-200"
+                        className={`rounded-xl border-[1.5px] px-3 py-2.5 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
+                          on ? "border-indigo-300 bg-indigo-50 shadow-sm" : "border-[#ECEAF4] bg-[#FAFAFE] hover:border-indigo-200"
                         }`}
                       >
-                        <span className={`block text-[13px] font-bold ${on ? "text-indigo-700" : "text-slate-600"}`}>
-                          {n.rotulo}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] leading-snug text-slate-400">{n.descricao}</span>
+                        <span className={`block text-[13px] font-bold ${on ? "text-indigo-700" : "text-slate-600"}`}>{n.rotulo}</span>
+                        <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-500">{n.descricao}</span>
                       </button>
                     );
                   })}
@@ -421,15 +521,23 @@ export default function GeradorApostilas() {
                 </Field>
               </div>
 
-              <div className="sm:col-span-2">
-                <Field label="Estilo Visual das Imagens" icon={ImageIcon}>
-                  <select value={form.estilo} onChange={set("estilo")} className="ipt">
-                    {estilos.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
+              <Field label="Estilo das Ilustrações" icon={ImageIcon}>
+                <select value={form.estilo} onChange={set("estilo")} className="ipt">
+                  {ESTILOS.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Capa" icon={PanelTop}>
+                <select value={form.capa} onChange={set("capa")} className="ipt">
+                  {CAPAS.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
 
             {erro && (
@@ -439,7 +547,7 @@ export default function GeradorApostilas() {
               </div>
             )}
             {aviso && !erro && (
-              <div className="mt-5 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-700">
+              <div role="status" className="mt-5 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-700">
                 <Info className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>{aviso}</span>
               </div>
@@ -448,62 +556,72 @@ export default function GeradorApostilas() {
             <button
               onClick={handleGerarMaterial}
               disabled={ocupado}
-              className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed"
+              aria-busy={ocupado}
+              className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
               <Sparkles className={`h-5 w-5 ${ocupado ? "animate-spin" : ""}`} />
-              {loading
-                ? progresso > 0
-                  ? `Escrevendo o material... ${(progresso / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil caracteres`
-                  : "Conectando à IA..."
-                : loadingImagem
-                ? "Gerando ilustração (gpt-image-2)..."
-                : "Gerar Material Visual"}
+              {statusGeracao || (gerado ? "Gerar novamente" : "Gerar Material Visual")}
             </button>
+            <p className="sr-only" aria-live="polite">
+              {statusGeracao}
+            </p>
           </section>
 
           {/* ===== LIVE PREVIEW A4 ===== */}
           <section className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
             <div className="nao-imprimir mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-slate-500">
                 <FileText className="h-4 w-4" />
-                <span className="text-xs font-bold uppercase tracking-wide">
-                  Live preview · A4 {!gerado && <span className="normal-case font-medium">(exemplo)</span>}
-                </span>
+                <span className="text-xs font-bold uppercase tracking-wide">{gerado ? "Seu material · A4" : "Prévia A4"}</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  onClick={() => setForm((f) => ({ ...f, capa: !f.capa }))}
-                  aria-pressed={form.capa}
-                  title="Capa estilo ComfyUI com a ilustração ao fundo"
-                  className={`btn-prev ${form.capa ? "!bg-indigo-50" : ""}`}
-                >
-                  <PanelTop className="h-3.5 w-3.5" /> Capa
-                </button>
-                {material.exercicios?.length > 0 && (
+                {temExercicios && (
                   <button
                     onClick={() => setMostrarGabarito((g) => !g)}
                     aria-pressed={mostrarGabarito}
                     className={`btn-prev ${mostrarGabarito ? "!bg-indigo-50" : ""}`}
                   >
-                    <KeyRound className="h-3.5 w-3.5" /> Gabarito
+                    <KeyRound className="h-3.5 w-3.5" /> {mostrarGabarito ? "Ocultar gabarito" : "Ver gabarito"}
                   </button>
                 )}
                 <button onClick={() => window.print()} disabled={loading} className="btn-prev">
                   <Printer className="h-3.5 w-3.5" /> Imprimir
                 </button>
-                <button onClick={handleBaixarPdf} disabled={baixandoPdf || loading} className="btn-prev">
-                  {baixandoPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                  {baixandoPdf ? "Gerando..." : "Baixar PDF"}
+                <button onClick={() => handleBaixarPdf("aluno")} disabled={!!baixandoPdf || loading} className="btn-prev">
+                  {baixandoPdf === "aluno" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                  PDF do aluno
                 </button>
+                {temExercicios && (
+                  <button
+                    onClick={() => handleBaixarPdf("professor")}
+                    disabled={!!baixandoPdf || loading}
+                    className="btn-prev"
+                    title="Mesmo material + gabarito em página separada"
+                  >
+                    {baixandoPdf === "professor" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                    PDF do professor
+                  </button>
+                )}
               </div>
             </div>
+
+            {/* Exemplo claramente separado do material do professor */}
+            {!gerado && (
+              <div className="nao-imprimir mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-800">
+                <Eye className="mt-0.5 h-4 w-4 flex-none" />
+                <span>
+                  <b>Isto é um exemplo</b> de como o material fica. Preencha o formulário e clique em <b>Gerar</b>: o seu material
+                  substitui o exemplo aqui.
+                </span>
+              </div>
+            )}
 
             {/* Task 4.1 — link de compartilhamento */}
             {gerado && (
               <div className="nao-imprimir mb-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
                 <Link2 className="h-4 w-4 flex-none text-indigo-400" />
-                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-400">
+                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-500">
                   {compartilhar.url && !linkDesatualizado
                     ? compartilhar.url
                     : compartilhar.estado === "erro"
@@ -530,25 +648,58 @@ export default function GeradorApostilas() {
             )}
 
             <PreviewEscalado>
-              {form.capa && <CapaA4 ref={capaRef} form={form} material={material} urlImagem={urlImagem} />}
+              <CapaA4
+                ref={capaRef}
+                variante={form.capa}
+                form={formPreview}
+                material={materialPreview}
+                urlImagem={imagemPreview}
+                exemplo={!gerado}
+              />
               <FolhaA4
                 ref={folhaRef}
-                form={form}
-                material={material}
-                urlImagem={urlImagem}
-                loadingImagem={loadingImagem}
-                mostrarGabarito={mostrarGabarito}
+                form={formPreview}
+                material={materialPreview}
+                urlImagem={imagemPreview}
+                loadingImagem={gerado && loadingImagem}
+                mostrarGabarito={gabaritoVisivel}
+                exemplo={!gerado}
+                imagemNaCapa={form.capa !== "nenhuma"}
               />
             </PreviewEscalado>
           </section>
         </div>
       </main>
 
+      {/* ===== NAVEGAÇÃO INFERIOR (celular) ===== */}
+      <nav
+        aria-label="Seções"
+        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200 bg-white/95 md:hidden"
+      >
+        {NAV.map(({ name, curto, icon: Icon }) => {
+          const on = active === name;
+          return (
+            <button
+              key={name}
+              onClick={() => {
+                setActive(name);
+                window.scrollTo({ top: 0 });
+              }}
+              aria-current={on ? "page" : undefined}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold ${on ? "text-indigo-600" : "text-slate-500"}`}
+            >
+              <Icon className="h-5 w-5" />
+              {curto}
+            </button>
+          );
+        })}
+      </nav>
+
       <style>{`
         .ipt {
           width: 100%;
           border-radius: 0.85rem;
-          border: 1.5px solid #ECEAF4;
+          border: 1.5px solid #E2E0EE;
           background: #FAFAFE;
           padding: 0.65rem 0.85rem;
           font-size: 0.875rem;
@@ -556,10 +707,11 @@ export default function GeradorApostilas() {
           outline: none;
           transition: all .15s;
         }
+        .ipt::placeholder { color: #94a3b8; }
         .ipt:focus {
-          border-color: #A5B4FC;
+          border-color: #818CF8;
           background: #fff;
-          box-shadow: 0 0 0 3px rgba(165,180,252,.25);
+          box-shadow: 0 0 0 3px rgba(129,140,248,.3);
         }
         .btn-prev {
           display: inline-flex; align-items: center; gap: .375rem;
@@ -570,6 +722,7 @@ export default function GeradorApostilas() {
         }
         .btn-prev:hover { background: #eef2ff; }
         .btn-prev:active { transform: scale(.95); }
+        .btn-prev:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
         .btn-prev:disabled { opacity: .6; cursor: not-allowed; }
       `}</style>
     </div>
@@ -582,8 +735,12 @@ function Field({ label, icon: Icon, required, optional, children }) {
       <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
         {Icon && <Icon className="h-3.5 w-3.5 text-violet-400" />}
         {label}
-        {required && <span className="text-rose-400">*</span>}
-        {optional && <span className="font-medium text-slate-300">(opcional)</span>}
+        {required && (
+          <span className="text-rose-500" aria-hidden="true">
+            *
+          </span>
+        )}
+        {optional && <span className="font-medium text-slate-400">(opcional)</span>}
       </span>
       {children}
     </label>

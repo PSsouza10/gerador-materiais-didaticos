@@ -40,6 +40,12 @@ body {
   break-after: page;
 }
 
+/* Gabarito sempre em página própria (folha do professor) */
+.quebra-antes {
+  page-break-before: always;
+  break-before: page;
+}
+
 /* Task 1.2 — nenhum bloco é cortado ao meio entre duas páginas */
 .cabecalho-escola,
 .cartao-bncc,
