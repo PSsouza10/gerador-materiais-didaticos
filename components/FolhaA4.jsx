@@ -1,5 +1,6 @@
 "use client";
 import React, { forwardRef } from "react";
+import Chip from "@/components/Chip";
 import {
   GraduationCap,
   BookOpen,
@@ -75,11 +76,11 @@ const FolhaA4 = forwardRef(function FolhaA4(
           </div>
           <div className="flex flex-none items-center gap-1.5">
             {exemplo && (
-              <span className="rounded-md bg-amber-400 px-2 py-1 text-[10.5px] font-black tracking-widest text-amber-950">EXEMPLO</span>
+              <Chip forma="etiqueta" espacado altura={22} className="bg-amber-400 !px-2 text-[10.5px] font-black text-amber-950">EXEMPLO</Chip>
             )}
-            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ring-1 ${CORES_NIVEL[nivel.id]}`}>
+            <Chip altura={22} className={`text-[11px] font-bold ring-1 ${CORES_NIVEL[nivel.id]}`}>
               Nível {nivel.curto}
-            </span>
+            </Chip>
           </div>
         </div>
         <div className="mt-3 grid grid-cols-[1fr_120px_110px] gap-4 text-[11px] text-slate-500">

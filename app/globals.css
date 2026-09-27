@@ -119,3 +119,11 @@ body {
     display: none !important;
   }
 }
+
+/* Exportação em PDF: o html2canvas desenha o texto ~2 px abaixo do lugar
+   (arredondamento interno da linha de base). Nas etiquetas, que são justas,
+   isso aparece; compensa só no palco de exportação (lib/pdf.js). */
+.palco-pdf .chip-texto {
+  position: relative;
+  top: -2px;
+}

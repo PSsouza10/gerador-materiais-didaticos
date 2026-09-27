@@ -1,5 +1,6 @@
 "use client";
 import React, { forwardRef } from "react";
+import Chip from "@/components/Chip";
 import { BadgeCheck, Target, Gauge, User, Sparkles, Play, GraduationCap } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
 import { slugify, rodapeBncc, bnccDoMaterial, linhaEtapa } from "@/lib/material";
@@ -241,9 +242,9 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
       </div>
 
       {exemplo && (
-        <div className="absolute right-10 top-[66px] rounded-md bg-amber-400 px-3 py-1 text-[11px] font-black tracking-widest text-amber-950">
+        <Chip forma="etiqueta" espacado altura={24} className="absolute right-10 top-[66px] bg-amber-400 text-[11px] font-black text-amber-950">
           EXEMPLO
-        </div>
+        </Chip>
       )}
 
       <div className="absolute inset-x-10 bottom-6 flex justify-between text-[10px] text-[#7c7c86]">

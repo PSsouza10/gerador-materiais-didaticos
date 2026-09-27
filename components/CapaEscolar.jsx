@@ -1,5 +1,6 @@
 "use client";
 import React, { forwardRef } from "react";
+import Chip from "@/components/Chip";
 import { BadgeCheck, GraduationCap, BookOpen, Gauge, Layers } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
@@ -103,11 +104,11 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
           </div>
         </div>
         {exemplo ? (
-          <span className="rounded-md bg-amber-400 px-3 py-1 text-[11px] font-black tracking-widest text-amber-950">EXEMPLO</span>
+          <Chip forma="etiqueta" espacado altura={24} className="bg-amber-400 text-[11px] font-black text-amber-950">EXEMPLO</Chip>
         ) : (
-          <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-indigo-600 ring-1 ring-indigo-200">
+          <Chip altura={24} className="bg-white text-[11px] font-bold text-indigo-600 ring-1 ring-indigo-200">
             {form.disciplina}
-          </span>
+          </Chip>
         )}
       </div>
 
@@ -137,15 +138,15 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
           {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
         </h2>
         <div className="mt-4 flex flex-wrap gap-2 text-[12px] font-bold">
-          <span className="flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">
-            <BookOpen className="h-3.5 w-3.5" /> {form.disciplina}
-          </span>
-          <span className="flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-violet-700">
-            <Layers className="h-3.5 w-3.5" /> {linhaEtapa({ nivel: form.nivel, ano: form.ano })}
-          </span>
-          <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-sky-700">
-            <Gauge className="h-3.5 w-3.5" /> Nível {nivel.curto}
-          </span>
+          <Chip icone={BookOpen} altura={26} className="bg-indigo-50 text-indigo-700">
+            {form.disciplina}
+          </Chip>
+          <Chip icone={Layers} altura={26} className="bg-violet-50 text-violet-700">
+            {linhaEtapa({ nivel: form.nivel, ano: form.ano })}
+          </Chip>
+          <Chip icone={Gauge} altura={26} className="bg-sky-50 text-sky-700">
+            Nível {nivel.curto}
+          </Chip>
         </div>
         {m.resumoPedagogico && (
           <p className="mt-4 max-w-[640px] text-[13.5px] leading-[1.6] text-slate-600">{corta(m.resumoPedagogico, 240)}</p>
