@@ -1,5 +1,6 @@
 "use client";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
+import { useAjusteAoCaber, tamanhoTitulo } from "@/lib/ajuste";
 import Chip from "@/components/Chip";
 import { BadgeCheck, GraduationCap, BookOpen, Gauge, Layers } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
@@ -10,7 +11,6 @@ import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
 // moldura. Sem ilustração, entra uma composição de símbolos pedagógicos.
 // Só usa recursos que o html2canvas desenha bem (sem blur/backdrop-filter).
 
-const corta = (s = "", n) => (s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s);
 
 function Simbolos() {
   const itens = [
@@ -67,6 +67,11 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
   const m = material || {};
   const nivel = obterNivel(form.dificuldade);
   const bncc = bnccDoMaterial(form, m);
+  const titulo = form.tema ? m.tituloDidatico || form.tema : "Tema Principal";
+  // Sem cortar texto: se não couber, a capa simplifica (1: sem resumo, 2: BNCC só
+  // com o código, 3: título menor). O texto completo está nas páginas de conteúdo.
+  const caixa = useRef(null);
+  const ajuste = useAjusteAoCaber(caixa, `${titulo}|${m.resumoPedagogico || ""}|${bncc?.texto || ""}`);
 
   return (
     <section
@@ -99,8 +104,8 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div className="leading-tight">
-            <p className="text-[14px] font-extrabold text-slate-800">{corta(form.escola || "Material didático", 48)}</p>
-            <p className="text-[11.5px] text-slate-500">{corta(form.professor || "Professor(a)", 48)}</p>
+            <p className="max-w-[520px] break-words text-[14px] font-extrabold text-slate-800">{form.escola || "Material didático"}</p>
+            <p className="max-w-[520px] break-words text-[11.5px] text-slate-500">{form.professor || "Professor(a)"}</p>
           </div>
         </div>
         {exemplo ? (
@@ -131,13 +136,16 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
         )}
       </div>
 
-      {/* Título */}
-      <div className="absolute inset-x-12 top-[520px]">
-        <div className="mb-3 h-1.5 w-20 rounded-full bg-gradient-to-r from-violet-400 to-sky-400" />
-        <h2 className="text-[44px] font-black leading-[1.06] tracking-tight text-indigo-950">
-          {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
+      {/* Título, etiquetas, resumo e BNCC em fluxo: crescem com o texto e empurram o que vem depois */}
+      <div ref={caixa} className="absolute inset-x-12 top-[520px] bottom-[192px] flex flex-col overflow-hidden">
+        <div className="mb-3 h-1.5 w-20 flex-none rounded-full bg-gradient-to-r from-violet-400 to-sky-400" />
+        <h2
+          className="flex-none break-words font-black leading-[1.06] tracking-tight text-indigo-950"
+          style={{ fontSize: tamanhoTitulo(titulo, 44, ajuste >= 3) }}
+        >
+          {titulo}
         </h2>
-        <div className="mt-4 flex flex-wrap gap-2 text-[12px] font-bold">
+        <div className="mt-4 flex flex-none flex-wrap gap-2 text-[12px] font-bold">
           <Chip icone={BookOpen} altura={26} className="bg-indigo-50 text-indigo-700">
             {form.disciplina}
           </Chip>
@@ -148,23 +156,23 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
             Nível {nivel.curto}
           </Chip>
         </div>
-        {m.resumoPedagogico && (
-          <p className="mt-4 max-w-[640px] text-[13.5px] leading-[1.6] text-slate-600">{corta(m.resumoPedagogico, 240)}</p>
+        {m.resumoPedagogico && ajuste < 1 && (
+          <p className="mt-4 max-w-[640px] flex-none text-[13.5px] leading-[1.6] text-slate-600">{m.resumoPedagogico}</p>
+        )}
+
+        {/* Habilidade BNCC — só aparece como "alinhado" quando conferida */}
+        {bncc?.codigo && (
+          <div className="mt-auto flex flex-none gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+            <BadgeCheck className={`mt-0.5 h-5 w-5 flex-none ${bncc.verificada ? "text-indigo-500" : "text-slate-400"}`} />
+            <p className="text-[12px] leading-[1.5] text-slate-600">
+              <span className="font-extrabold text-indigo-700">
+                {bncc.verificada ? `Habilidade BNCC ${bncc.codigo}` : `Habilidade informada pelo docente · ${bncc.codigo}`}
+              </span>
+              {bncc.texto ? (ajuste < 2 ? ` — ${bncc.texto}` : " — descrição completa na página seguinte.") : ""}
+            </p>
+          </div>
         )}
       </div>
-
-      {/* Habilidade BNCC — só aparece como "alinhado" quando conferida */}
-      {bncc?.codigo && (
-        <div className="absolute inset-x-12 top-[800px] flex gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-          <BadgeCheck className={`mt-0.5 h-5 w-5 flex-none ${bncc.verificada ? "text-indigo-500" : "text-slate-400"}`} />
-          <p className="text-[12px] leading-[1.5] text-slate-600">
-            <span className="font-extrabold text-indigo-700">
-              {bncc.verificada ? `Habilidade BNCC ${bncc.codigo}` : `Habilidade informada pelo docente · ${bncc.codigo}`}
-            </span>
-            {bncc.texto ? ` — ${corta(bncc.texto, 230)}` : ""}
-          </p>
-        </div>
-      )}
 
       {/* Identificação do aluno */}
       <div className="absolute inset-x-12 bottom-[70px] rounded-2xl border-2 border-slate-200 p-5">

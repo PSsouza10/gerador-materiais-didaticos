@@ -1,5 +1,6 @@
 "use client";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
+import { useAjusteAoCaber, tamanhoTitulo } from "@/lib/ajuste";
 import Chip from "@/components/Chip";
 import { BadgeCheck, Target, Gauge, User, Sparkles, Play, GraduationCap } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
@@ -79,6 +80,9 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
   const m = material || {};
   const nivel = obterNivel(form.dificuldade);
   const bncc = bnccDoMaterial(form, m);
+  const titulo = form.tema ? m.tituloDidatico || form.tema : "Tema Principal";
+  const caixa = useRef(null);
+  const ajuste = useAjusteAoCaber(caixa, `${titulo}|${m.resumoPedagogico || ""}`);
   const nEx = m.exercicios?.length || 0;
   const arquivo = `apostila_${slugify(form.tema || "material").replace(/-/g, "_") || "material"}.json`;
 
@@ -168,7 +172,11 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
       <No {...ENTRADAS[0]} x={IN_X} w={IN_W} icone={ENTRADAS[0].icone} rotuloSaida={ENTRADAS[0].saida} socketSaida={FIO.bncc}>
         <Widget rotulo="código" valor={bncc?.codigo || "—"} mono />
         <p className="mt-2 px-1 text-[10.5px] leading-[1.45] text-[#b9b9c2]">
-          {bncc?.texto ? corta(bncc.texto, 190) : "Nenhuma habilidade selecionada."}
+          {bncc?.texto
+            ? bncc.texto.length <= 190
+              ? bncc.texto
+              : "Descrição completa da habilidade na página seguinte."
+            : "Nenhuma habilidade selecionada."}
         </p>
       </No>
       <No {...ENTRADAS[1]} x={IN_X} w={IN_W} icone={ENTRADAS[1].icone} rotuloSaida={ENTRADAS[1].saida} socketSaida={FIO.tema}>
@@ -221,20 +229,25 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
         </div>
       </div>
 
-      {/* 6) Título e identificação */}
-      <div className="absolute inset-x-10 bottom-[64px]">
-        <div className="mb-4 h-1 w-24 rounded-full bg-gradient-to-r from-[#B39DDB] via-[#FFA931] to-[#64B5F6]" />
-        <h2 className="text-[46px] font-black leading-[1.05] tracking-tight text-white">
-          {corta(form.tema ? m.tituloDidatico || form.tema : "Tema Principal", 70)}
+      {/* 6) Título e identificação — em fluxo, ancorado embaixo; se não couber
+          abaixo do grafo, simplifica em vez de cortar (1: sem resumo, 3: título menor) */}
+      <div ref={caixa} className="absolute inset-x-10 top-[672px] bottom-[64px] flex flex-col overflow-hidden">
+        {/* mt-auto (e não justify-end): o excesso vai para baixo, onde a medição enxerga */}
+        <div className="mb-4 mt-auto h-1 w-24 flex-none rounded-full bg-gradient-to-r from-[#B39DDB] via-[#FFA931] to-[#64B5F6]" />
+        <h2
+          className="flex-none break-words font-black leading-[1.05] tracking-tight text-white"
+          style={{ fontSize: tamanhoTitulo(titulo, 46, ajuste >= 3) }}
+        >
+          {titulo}
         </h2>
-        <p className="mt-3 text-[14px] font-semibold text-[#d4d4dc]">
+        <p className="mt-3 flex-none text-[14px] font-semibold text-[#d4d4dc]">
           {linhaEtapa(form)} · Nível {nivel.curto}
           {bncc?.codigo ? ` · BNCC ${bncc.codigo}` : ""}
         </p>
-        {m.resumoPedagogico && (
-          <p className="mt-3 max-w-[640px] text-[12.5px] leading-[1.55] text-[#a9a9b3]">{corta(m.resumoPedagogico, 230)}</p>
+        {m.resumoPedagogico && ajuste < 1 && (
+          <p className="mt-3 max-w-[640px] flex-none text-[12.5px] leading-[1.55] text-[#a9a9b3]">{m.resumoPedagogico}</p>
         )}
-        <div className="mt-8 grid grid-cols-[1fr_130px_130px] gap-5 text-[11px] text-[#c9c9d1]">
+        <div className="mt-8 grid flex-none grid-cols-[1fr_130px_130px] gap-5 text-[11px] text-[#c9c9d1]">
           <span className="border-b border-white/30 pb-1">Nome:</span>
           <span className="border-b border-white/30 pb-1">Turma:</span>
           <span className="border-b border-white/30 pb-1">Data: ___/___/___</span>

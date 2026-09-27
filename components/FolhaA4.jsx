@@ -12,7 +12,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
-import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
+import { bnccDoMaterial, rodapeBncc, linhaEtapa, linhasResposta } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
 // É a MESMA folha usada no live preview (escalada), na impressão, no PDF e
@@ -220,10 +220,11 @@ const FolhaA4 = forwardRef(function FolhaA4(
                 ))}
               </ul>
             ) : (
+              // quantidade de linhas conforme o tipo (explique, calcule...) e o tamanho da questão
               <div className="mt-1 space-y-4 pl-7 pt-2.5">
-                <div className="border-b border-slate-300" />
-                <div className="border-b border-slate-300" />
-                <div className="border-b border-slate-300" />
+                {Array.from({ length: linhasResposta(ex.enunciado) }, (_, k) => (
+                  <div key={k} className="border-b border-slate-300" />
+                ))}
               </div>
             )}
           </section>
@@ -249,7 +250,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </section>
       )}
 
-      <footer className="mt-5 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-500">
+      <footer className="rodape-material mt-5 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-500">
         {rodapeBncc(bncc, exemplo)}
       </footer>
     </article>
