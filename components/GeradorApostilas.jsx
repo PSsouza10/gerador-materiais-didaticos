@@ -186,6 +186,12 @@ export default function GeradorApostilas() {
   // ===== FORMULÁRIO =====
   const [form, setForm] = useState(() => formDaConfig(CONFIG_PADRAO));
 
+  // Primeiro acesso logado: se o nome do professor está vazio, usa o da conta Google
+  useEffect(() => {
+    const nome = sessao?.user?.name;
+    if (nome) setForm((f) => (f.professor?.trim() ? f : { ...f, professor: nome }));
+  }, [sessao?.user?.name]);
+
   // Preferências e lista salvas no navegador
   useEffect(() => {
     const cfg = lerConfig();
@@ -200,7 +206,16 @@ export default function GeradorApostilas() {
   const gerado = !!material;
 
   // O preview mostra o EXEMPLO (rotulado) até existir um material do professor
-  const formPreview = gerado ? form : { ...EXEMPLO_FORM, capa: form.capa };
+  // No exemplo, o nome e a escola são os do professor (formulário, Configurações ou conta Google)
+  const nomeProfessor = form.professor?.trim() || sessao?.user?.name || "";
+  const formPreview = gerado
+    ? form
+    : {
+        ...EXEMPLO_FORM,
+        capa: form.capa,
+        professor: nomeProfessor || EXEMPLO_FORM.professor,
+        escola: form.escola?.trim() || (nomeProfessor ? "" : EXEMPLO_FORM.escola),
+      };
   const materialPreview = gerado ? material : EXEMPLO;
   const imagemPreview = gerado ? urlImagem : null;
 
