@@ -688,8 +688,13 @@ export default function GeradorApostilas() {
                 onClick={() => signIn("google")}
                 className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
-                <Sparkles className="h-5 w-5" /> Entrar com Google para gerar
+                <Sparkles className="h-5 w-5" /> Entrar ou criar conta com Google para gerar
               </button>
+            ) : null}
+            {conta.authConfigurado && statusSessao === "unauthenticated" ? (
+              <p className="mt-2 text-center text-[12px] text-slate-600">
+                Primeira vez? A conta é criada automaticamente ao entrar — sem formulário nem senha.
+              </p>
             ) : (
             <button
               onClick={handleGerarMaterial}

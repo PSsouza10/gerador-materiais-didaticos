@@ -44,7 +44,9 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
         onClick={() => signIn("google")}
         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-50"
       >
-        <LogIn className="h-4 w-4" /> Entrar com Google
+        <LogIn className="h-4 w-4 flex-none" />
+        <span className="whitespace-nowrap sm:hidden">Entrar / criar conta</span>
+        <span className="hidden whitespace-nowrap sm:inline">Entrar ou criar conta com Google</span>
       </button>
     );
   }
