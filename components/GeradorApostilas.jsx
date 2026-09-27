@@ -337,6 +337,12 @@ export default function GeradorApostilas() {
 
   return (
     <div className="flex min-h-screen w-full bg-[#F6F5FB] font-sans text-slate-700">
+      <a
+        href="#conteudo"
+        className="nao-imprimir sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+      >
+        Pular para o conteúdo
+      </a>
       {/* ===== MENU LATERAL (desktop) ===== */}
       <aside className="nao-imprimir hidden md:flex w-64 flex-none flex-col bg-white border-r border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-100">
@@ -345,7 +351,7 @@ export default function GeradorApostilas() {
           </div>
           <div className="leading-tight">
             <p className="text-base font-extrabold text-slate-800">EduGera</p>
-            <p className="text-[11px] font-medium text-slate-400">Apostilas BNCC</p>
+            <p className="text-[11px] font-medium text-slate-500">Apostilas BNCC</p>
           </div>
         </div>
 
@@ -360,7 +366,7 @@ export default function GeradorApostilas() {
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
                   on
                     ? "bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-700"
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] flex-none" strokeWidth={2.2} />
@@ -382,7 +388,7 @@ export default function GeradorApostilas() {
       </aside>
 
       {/* ===== CONTEÚDO ===== */}
-      <main className="min-w-0 flex-1 pb-20 md:pb-0">
+      <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 pb-20 outline-none md:pb-0">
         {/* Barra superior no celular */}
         <div className="nao-imprimir flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3 md:hidden">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-400">
@@ -394,7 +400,7 @@ export default function GeradorApostilas() {
         <header className="nao-imprimir flex items-center justify-between px-4 sm:px-6 md:px-8 py-5">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-800">{active === "Gerar Material" ? "Gerar Material Visual" : active}</h1>
-            <p className="text-sm text-slate-500">{tela.descricao}</p>
+            <p className="text-sm text-slate-700">{tela.descricao}</p>
           </div>
           <button
             onClick={() => setActive("Configurações")}
@@ -496,13 +502,24 @@ export default function GeradorApostilas() {
                         type="button"
                         role="radio"
                         aria-checked={on}
+                        tabIndex={on ? 0 : -1}
                         onClick={() => setForm((f) => ({ ...f, dificuldade: n.id }))}
+                        onKeyDown={(e) => {
+                          const passo = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+                          if (!passo) return;
+                          e.preventDefault();
+                          const i = NIVEIS_DIFICULDADE.findIndex((x) => x.id === n.id);
+                          const prox = NIVEIS_DIFICULDADE[(i + passo + NIVEIS_DIFICULDADE.length) % NIVEIS_DIFICULDADE.length];
+                          setForm((f) => ({ ...f, dificuldade: prox.id }));
+                          e.currentTarget.parentElement.querySelector(`[data-nivel="${prox.id}"]`)?.focus();
+                        }}
+                        data-nivel={n.id}
                         className={`rounded-xl border-[1.5px] px-3 py-2.5 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
                           on ? "border-indigo-300 bg-indigo-50 shadow-sm" : "border-[#ECEAF4] bg-[#FAFAFE] hover:border-indigo-200"
                         }`}
                       >
                         <span className={`block text-[13px] font-bold ${on ? "text-indigo-700" : "text-slate-600"}`}>{n.rotulo}</span>
-                        <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-500">{n.descricao}</span>
+                        <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-700">{n.descricao}</span>
                       </button>
                     );
                   })}
@@ -570,7 +587,7 @@ export default function GeradorApostilas() {
           {/* ===== LIVE PREVIEW A4 ===== */}
           <section className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
             <div className="nao-imprimir mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-slate-500">
+              <div className="flex items-center gap-2 text-slate-600">
                 <FileText className="h-4 w-4" />
                 <span className="text-xs font-bold uppercase tracking-wide">{gerado ? "Seu material · A4" : "Prévia A4"}</span>
               </div>
@@ -621,7 +638,7 @@ export default function GeradorApostilas() {
             {gerado && (
               <div className="nao-imprimir mb-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
                 <Link2 className="h-4 w-4 flex-none text-indigo-400" />
-                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-500">
+                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-600">
                   {compartilhar.url && !linkDesatualizado
                     ? compartilhar.url
                     : compartilhar.estado === "erro"
@@ -633,7 +650,7 @@ export default function GeradorApostilas() {
                 <button
                   onClick={handleCopiarLink}
                   disabled={compartilhar.estado === "salvando" || loading}
-                  className="flex flex-none items-center gap-1.5 rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-600 active:scale-95 disabled:opacity-60"
+                  className="flex flex-none items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-60"
                 >
                   {compartilhar.estado === "salvando" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -686,7 +703,7 @@ export default function GeradorApostilas() {
                 window.scrollTo({ top: 0 });
               }}
               aria-current={on ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold ${on ? "text-indigo-600" : "text-slate-500"}`}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold ${on ? "text-indigo-600" : "text-slate-600"}`}
             >
               <Icon className="h-5 w-5" />
               {curto}
@@ -740,7 +757,7 @@ function Field({ label, icon: Icon, required, optional, children }) {
             *
           </span>
         )}
-        {optional && <span className="font-medium text-slate-400">(opcional)</span>}
+        {optional && <span className="font-medium text-slate-500">(opcional)</span>}
       </span>
       {children}
     </label>

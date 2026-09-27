@@ -29,9 +29,9 @@ export default function MinhasApostilas({ materiais, onRemover, irPara }) {
   if (materiais.length === 0) {
     return (
       <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center shadow-sm">
-        <BookMarked className="mx-auto h-10 w-10 text-slate-300" />
+        <BookMarked className="mx-auto h-10 w-10 text-slate-500" />
         <h2 className="mt-3 text-lg font-bold text-slate-700">Nenhuma apostila por aqui ainda</h2>
-        <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">
+        <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
           Cada material que você gerar fica guardado com um link de compartilhamento para abrir, imprimir ou enviar a colegas.
         </p>
         <button
@@ -49,7 +49,7 @@ export default function MinhasApostilas({ materiais, onRemover, irPara }) {
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="relative flex-1">
           <span className="sr-only">Buscar</span>
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -68,7 +68,7 @@ export default function MinhasApostilas({ materiais, onRemover, irPara }) {
         </label>
       </div>
 
-      <p className="text-xs text-slate-400" aria-live="polite">
+      <p className="text-xs text-slate-600" aria-live="polite">
         {lista.length} de {materiais.length} {materiais.length === 1 ? "material" : "materiais"}
       </p>
 
@@ -77,11 +77,11 @@ export default function MinhasApostilas({ materiais, onRemover, irPara }) {
           <li key={m.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
               <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-600">{m.disciplina}</span>
-              <span className="rounded-full bg-slate-50 px-2 py-0.5 text-slate-500">{obterNivel(m.dificuldade).curto}</span>
+              <span className="rounded-full bg-slate-50 px-2 py-0.5 text-slate-600">{obterNivel(m.dificuldade).curto}</span>
               {m.bncc && <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-emerald-700">{m.bncc}</span>}
             </div>
-            <h3 className="mt-2 text-base font-extrabold leading-snug text-slate-800">{m.titulo}</h3>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <h2 className="mt-2 text-base font-extrabold leading-snug text-slate-800">{m.titulo}</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
               {m.tema} · {m.nivel} ·{" "}
               {new Date(m.criadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
             </p>
@@ -95,7 +95,7 @@ export default function MinhasApostilas({ materiais, onRemover, irPara }) {
               </button>
               <button
                 onClick={() => onRemover(m.id)}
-                className="btn-prev ml-auto !text-rose-500"
+                className="btn-prev ml-auto !text-rose-600"
                 title="Remove só desta lista; o link continua funcionando"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Remover

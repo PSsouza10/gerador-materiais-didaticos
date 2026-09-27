@@ -35,14 +35,14 @@ export default function MaterialCompartilhado({ dados }) {
 
   return (
     <div className="min-h-screen bg-[#F6F5FB] px-4 py-6 font-sans text-slate-700">
-      <div className="nao-imprimir mx-auto mb-4 flex max-w-[794px] flex-wrap items-center justify-between gap-3">
+      <header className="nao-imprimir mx-auto mb-4 flex max-w-[794px] flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-400">
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div className="leading-tight">
             <p className="text-sm font-extrabold text-slate-800">EduGera</p>
-            <p className="text-[11px] text-slate-500">Material compartilhado</p>
+            <p className="text-[11px] text-slate-600">Material compartilhado</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -65,9 +65,10 @@ export default function MaterialCompartilhado({ dados }) {
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="mx-auto max-w-[794px]">
+      <main className="mx-auto max-w-[794px]">
+        <h1 className="sr-only">{material.tituloDidatico || form.tema}</h1>
         <PreviewEscalado>
           <CapaA4 ref={capaRef} variante={capa} form={form} material={material} urlImagem={urlImagem} />
           <FolhaA4
@@ -79,7 +80,7 @@ export default function MaterialCompartilhado({ dados }) {
             imagemNaCapa={capa !== "nenhuma"}
           />
         </PreviewEscalado>
-      </div>
+      </main>
 
       <style>{`
         .botao-sec{display:inline-flex;align-items:center;gap:.375rem;border-radius:.6rem;background:#fff;

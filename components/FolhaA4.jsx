@@ -156,7 +156,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
       {/* Dicas */}
       {(m.dicas || []).length > 0 && (
         <section className="bloco-exercicio mt-3 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3.5">
-          <Rotulo icon={Lightbulb} className="text-amber-600">Dicas de resolução</Rotulo>
+          <Rotulo icon={Lightbulb} className="text-amber-700">Dicas de resolução</Rotulo>
           <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
             {m.dicas.map((d, i) => (
               <div key={i} className="flex items-start gap-2 text-[12px] leading-snug text-amber-800">
@@ -170,7 +170,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
 
       {m.lembreteImportante && (
         <section className="bloco-exercicio mt-3 rounded-xl bg-emerald-50 p-3.5">
-          <Rotulo icon={Boxes} className="text-emerald-600">Lembre-se</Rotulo>
+          <Rotulo icon={Boxes} className="text-emerald-700">Lembre-se</Rotulo>
           <p className="mt-1.5 text-[12px] text-emerald-800">{m.lembreteImportante}</p>
         </section>
       )}
@@ -229,7 +229,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
         <section className="gabarito quebra-antes pt-1">
           <div className="flex items-center justify-between border-b-2 border-slate-200 pb-1.5">
             <span className="text-[13px] font-extrabold uppercase tracking-wider text-slate-600">Gabarito</span>
-            <span className="text-[11px] font-semibold text-slate-400">Folha do professor · {form.tema}</span>
+            <span className="text-[11px] font-semibold text-slate-500">Folha do professor · {form.tema}</span>
           </div>
           <ol className="mt-3 space-y-2 text-[12px] text-slate-700">
             {exercicios.map((ex, i) => (
@@ -242,7 +242,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </section>
       )}
 
-      <footer className="mt-5 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-400">
+      <footer className="mt-5 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-500">
         {rodapeBncc(bncc, exemplo)}
       </footer>
     </article>

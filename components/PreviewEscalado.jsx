@@ -52,13 +52,13 @@ export default function PreviewEscalado({ children, larguraMax = 794 }) {
               className="nao-imprimir pointer-events-none absolute inset-x-0 border-t border-dashed border-rose-300"
               style={{ top: p * ALTURA_A4_PX * escala }}
             >
-              <span className="absolute right-1 -top-4 rounded bg-rose-50 px-1 text-[9px] font-semibold text-rose-400">
+              <span className="absolute right-1 -top-4 rounded bg-rose-50 px-1 text-[10px] font-semibold text-rose-700">
                 fim da pág. {p}
               </span>
             </div>
           ))}
       </div>
-      <p className="nao-imprimir mt-2 text-center text-[11px] text-slate-400">
+      <p className="nao-imprimir mt-2 text-center text-[11px] text-slate-600">
         A4 · {escala >= 1 ? "100%" : `${Math.round(escala * 100)}%`} · ≈ {paginas.toLocaleString("pt-BR")}{" "}
         {paginas > 1 ? "páginas" : "página"}
       </p>

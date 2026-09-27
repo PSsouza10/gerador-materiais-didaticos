@@ -15,12 +15,12 @@ const dataCurta = (iso) =>
 function Cartao({ icone: Icone, rotulo, valor, detalhe }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2 text-slate-400">
+      <div className="flex items-center gap-2 text-slate-500">
         <Icone className="h-4 w-4" />
         <span className="text-xs font-bold uppercase tracking-wide">{rotulo}</span>
       </div>
       <p className="mt-2 text-3xl font-extrabold text-slate-800">{valor}</p>
-      {detalhe && <p className="mt-1 text-xs text-slate-400">{detalhe}</p>}
+      {detalhe && <p className="mt-1 text-xs text-slate-500">{detalhe}</p>}
     </div>
   );
 }
@@ -65,7 +65,7 @@ export default function Dashboard({ materiais, config, irPara }) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800">Recentes</h3>
+            <h2 className="text-base font-bold text-slate-800">Recentes</h2>
             {materiais.length > 0 && (
               <button onClick={() => irPara("Minhas Apostilas")} className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
                 Ver todas <ArrowRight className="h-3.5 w-3.5" />
@@ -74,9 +74,9 @@ export default function Dashboard({ materiais, config, irPara }) {
           </div>
           {materiais.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
-              <BookMarked className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 text-sm font-semibold text-slate-500">Você ainda não gerou nenhum material.</p>
-              <p className="text-xs text-slate-400">Os materiais que você gerar aparecem aqui, com o link de compartilhamento.</p>
+              <BookMarked className="mx-auto h-8 w-8 text-slate-500" />
+              <p className="mt-2 text-sm font-semibold text-slate-600">Você ainda não gerou nenhum material.</p>
+              <p className="text-xs text-slate-500">Os materiais que você gerar aparecem aqui, com o link de compartilhamento.</p>
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">
@@ -84,7 +84,7 @@ export default function Dashboard({ materiais, config, irPara }) {
                 <li key={m.id} className="flex items-center gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-slate-700">{m.titulo}</p>
-                    <p className="truncate text-xs text-slate-400">
+                    <p className="truncate text-xs text-slate-500">
                       {m.disciplina} · {obterNivel(m.dificuldade).curto}
                       {m.bncc ? ` · ${m.bncc}` : ""} · {dataCurta(m.criadoEm)}
                     </p>
@@ -99,11 +99,11 @@ export default function Dashboard({ materiais, config, irPara }) {
         </section>
 
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+          <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
             <Layers className="h-4 w-4 text-violet-400" /> Por disciplina
-          </h3>
+          </h2>
           {porDisciplina.length === 0 ? (
-            <p className="text-xs text-slate-400">Sem dados ainda.</p>
+            <p className="text-xs text-slate-500">Sem dados ainda.</p>
           ) : (
             <ul className="space-y-2.5">
               {porDisciplina.map(([d, n]) => (

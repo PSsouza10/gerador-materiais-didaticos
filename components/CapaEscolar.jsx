@@ -175,7 +175,7 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
         </div>
       </div>
 
-      <div className="absolute inset-x-12 bottom-7 flex justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400">
+      <div className="absolute inset-x-12 bottom-7 flex justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500">
         <span>{form.professor}</span>
         <span>{rodapeBncc(bncc, exemplo)}</span>
       </div>

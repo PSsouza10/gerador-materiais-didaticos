@@ -11,7 +11,7 @@ const Campo = ({ icone: Icone, rotulo, ajuda, children }) => (
       <Icone className="h-3.5 w-3.5 text-violet-400" /> {rotulo}
     </span>
     {children}
-    {ajuda && <span className="mt-1 block text-[11px] text-slate-400">{ajuda}</span>}
+    {ajuda && <span className="mt-1 block text-[11px] text-slate-500">{ajuda}</span>}
   </label>
 );
 
@@ -33,7 +33,7 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
     <form onSubmit={salvar} className="max-w-3xl space-y-6">
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <h2 className="text-base font-bold text-slate-800">Seus dados</h2>
-        <p className="mb-5 text-xs text-slate-400">Aparecem no cabeçalho e na capa de todo material novo.</p>
+        <p className="mb-5 text-xs text-slate-500">Aparecem no cabeçalho e na capa de todo material novo.</p>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Campo icone={User} rotulo="Nome do(a) professor(a)">
             <input value={cfg.professor} onChange={set("professor")} className="ipt" placeholder="Ex.: Prof. Paulo Souza" />
@@ -46,7 +46,7 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
 
       <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <h2 className="text-base font-bold text-slate-800">Padrões do formulário</h2>
-        <p className="mb-5 text-xs text-slate-400">O formulário de geração já abre com estas escolhas.</p>
+        <p className="mb-5 text-xs text-slate-500">O formulário de geração já abre com estas escolhas.</p>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Campo icone={BookOpen} rotulo="Disciplina">
             <select value={cfg.disciplina} onChange={set("disciplina")} className="ipt">
@@ -108,14 +108,14 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
         >
           Restaurar padrões
         </button>
-        <span className="text-xs text-slate-400" aria-live="polite">
+        <span className="text-xs text-slate-500" aria-live="polite">
           {salvo ? "Preferências guardadas neste navegador." : ""}
         </span>
       </div>
 
       <section className="rounded-3xl border border-rose-100 bg-rose-50/50 p-6">
         <h2 className="text-base font-bold text-rose-700">Lista de materiais</h2>
-        <p className="mt-1 text-xs text-rose-600/80">
+        <p className="mt-1 text-xs text-rose-700">
           {totalMateriais} {totalMateriais === 1 ? "material salvo" : "materiais salvos"} neste navegador. Limpar a lista não apaga
           os links já compartilhados.
         </p>

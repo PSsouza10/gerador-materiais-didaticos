@@ -104,10 +104,10 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
 
   return (
     <div className="relative">
-      <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
+      <span id="rotulo-bncc" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
         <Hash className="h-3.5 w-3.5 text-violet-400" />
         Habilidade da BNCC
-        <span className="font-medium text-slate-300">(opcional)</span>
+        <span className="font-medium text-slate-500">(opcional)</span>
       </span>
 
       <div className="relative">
@@ -123,14 +123,17 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
           className="ipt pr-9 font-mono uppercase"
           placeholder="Código (EF08MA02) ou palavra-chave (frações, volume...)"
           role="combobox"
+          aria-labelledby="rotulo-bncc"
           aria-controls="lista-bncc"
-          aria-expanded={aberto}
+          aria-expanded={aberto && resultados.length > 0}
+          aria-activedescendant={aberto && resultados[ativo] ? `bncc-opcao-${resultados[ativo].c}` : undefined}
+          aria-describedby={oficial ? "bncc-descricao" : undefined}
           aria-autocomplete="list"
           autoComplete="off"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           {carregando || status === "carregando" ? (
-            <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
+            <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
           ) : status === "valido" ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           ) : status === "desconhecido" ? (
@@ -148,6 +151,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
             {resultados.map((h, i) => (
               <li
                 key={h.c}
+                id={`bncc-opcao-${h.c}`}
                 role="option"
                 aria-selected={i === ativo}
                 onMouseDown={(e) => {
@@ -159,7 +163,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
               >
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-indigo-600">{h.c}</span>
-                  <span className="text-[10px] font-semibold text-slate-400">
+                  <span className="text-[10px] font-semibold text-slate-500">
                     {h.d}
                     {h.a ? ` · ${h.a}º ano` : ""}
                   </span>
@@ -183,7 +187,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
           {status === "valido" ? (
             <>
               <span className="font-bold text-emerald-700">Descrição oficial · {oficial.c}</span>
-              <p className="mt-0.5">{oficial.t}</p>
+              <p id="bncc-descricao" className="mt-0.5">{oficial.t}</p>
             </>
           ) : status === "desconhecido" ? (
             <>
@@ -204,7 +208,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, onC
             <button
               type="button"
               onClick={() => onChange({ bncc: "", habilidade: "", bnccVerificada: false })}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-600"
             >
               <X className="h-3 w-3" /> limpar
             </button>
