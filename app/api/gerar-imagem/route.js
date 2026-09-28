@@ -12,6 +12,12 @@ export const dynamic = "force-dynamic";
 
 const LIMITE_IMAGEM_MS = 50_000;
 
+// Qualidade da ilustração (custo aproximado por imagem 1024×1024 no gpt-image-2):
+// low ~US$0,006 · medium ~US$0,05 · high ~US$0,21. Na folha a ilustração ocupa
+// um quadro pequeno, então "medium" é o padrão. Troque com a variável
+// QUALIDADE_IMAGEM na Vercel, sem mexer no código.
+const QUALIDADE = ["low", "medium", "high"].includes(process.env.QUALIDADE_IMAGEM) ? process.env.QUALIDADE_IMAGEM : "medium";
+
 // Mapeia o estilo escolhido no formulário para uma direção visual rica
 const ESTILOS = {
   // Estilo descritivo, sem imitar estúdios ou personagens de terceiros
@@ -92,7 +98,7 @@ async function processar(request, ctx) {
             model: "gpt-image-2",
             prompt,
             size: "1024x1024",
-            quality: "high",
+            quality: QUALIDADE,
           }),
         }
       );

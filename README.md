@@ -23,6 +23,7 @@ Abra http://localhost:3000.
 | `NEXTAUTH_URL` | sim | Endereço público do site, ex.: `https://edugera.vercel.app` |
 | `LIMITE_GERACOES_MES` | não | Gerações por mês no plano grátis (padrão 5) |
 | `ADMIN_EMAILS` | não | E-mails sem limite de geração, separados por vírgula |
+| `QUALIDADE_IMAGEM` | não | Qualidade da ilustração: `low`, `medium` (padrão) ou `high`. Custo aproximado por imagem: US$ 0,006 / 0,05 / 0,21 |
 
 **Login e limite:** gerar, ilustrar e salvar exigem login. Sem as variáveis do Google o site funciona (exemplo, prévia, PDF), mas a geração fica desativada — isso protege o crédito da OpenAI. Cada conta tem `LIMITE_GERACOES_MES` gerações por mês; se a IA falhar, a geração é devolvida. O registro de uso fica no Vercel Blob sem e-mail nem nome (caminho = HMAC do e-mail com o segredo da sessão).
 
