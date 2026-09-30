@@ -207,14 +207,14 @@ const FolhaA4 = forwardRef(function FolhaA4(
               <span className="text-[13px] font-extrabold uppercase tracking-wider">Exercícios</span>
             </div>
           )}
-          <section className="mt-2.5 rounded-xl border border-slate-200 px-3.5 py-3">
+          <section className="mt-3.5 rounded-xl border border-slate-200 px-3.5 py-3">
             <p className="text-[12.5px]">
               <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
               <Tx>{ex.enunciado}</Tx>
             </p>
             {ex.alternativas.length > 0 ? (
               <ul
-                className={`mt-2 grid gap-x-4 gap-y-1 pl-7 text-[12px] ${
+                className={`mt-2.5 grid gap-x-4 gap-y-1.5 pl-7 text-[12px] ${
                   ex.alternativas.every((a) => a.length <= 16) ? "grid-cols-4" : "grid-cols-2"
                 }`}
               >
@@ -224,7 +224,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
               </ul>
             ) : (
               // quantidade de linhas conforme o tipo (explique, calcule...) e o tamanho da questão
-              <div className="mt-1 space-y-4 pl-7 pt-2.5">
+              <div className="mt-1 space-y-5 pl-7 pt-3">
                 {Array.from({ length: linhasResposta(ex.enunciado) }, (_, k) => (
                   <div key={k} className="border-b border-slate-300" />
                 ))}
@@ -237,15 +237,15 @@ const FolhaA4 = forwardRef(function FolhaA4(
       {/* Gabarito compacto logo após os exercícios (sem forçar página nova);
           como bloco único, só vai para a página seguinte se não couber inteiro */}
       {mostrarGabarito && exercicios.length > 0 && (
-        <section className="gabarito bloco-exercicio mt-5 rounded-xl border-2 border-dashed border-slate-300 p-3.5">
+        <section className="gabarito bloco-exercicio mt-6 rounded-xl border-2 border-dashed border-slate-300 p-4">
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-extrabold uppercase tracking-wider text-slate-700">✂ Gabarito · folha do professor</span>
             <span className="text-[11px] font-semibold text-slate-500">{form.tema}</span>
           </div>
-          <ol className="mt-2 grid grid-cols-1 gap-x-5 gap-y-1.5 text-[11.5px] leading-snug text-slate-700">
+          <ol className="mt-2.5 grid grid-cols-1 gap-x-5 gap-y-2 text-[12px] leading-relaxed text-slate-700">
             {exercicios.map((ex, i) => (
               <li key={i} className="flex gap-2">
-                <Numero n={i + 1} tamanho={16} cor="#64748b" />
+                <Numero n={i + 1} tamanho={18} cor="#64748b" />
                 <span><Tx>{ex.resposta || "—"}</Tx></span>
               </li>
             ))}
