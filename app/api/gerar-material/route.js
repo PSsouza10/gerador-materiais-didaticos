@@ -115,6 +115,7 @@ Regras:
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
 - Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
+- Notação científica: use SEMPRE a convenção N × 10^n, com 1 ≤ N < 10 e n inteiro, na teoria, nas fórmulas, nos exemplos, nos exercícios e no gabarito. Nunca escreva "N = a × 10^n" nem use outra letra para a mantissa.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.
 - Consistência de unidades: comprimento em cm/m (1 dimensão), área em cm²/m² (2 dimensões), volume em cm³/dm³/m³ ou litros (3 dimensões). Nunca chame área de algo medido em unidade cúbica, nem volume de algo em unidade quadrada; revise isso nas respostas e no gabarito.
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;

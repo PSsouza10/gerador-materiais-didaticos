@@ -372,6 +372,17 @@ export default function GeradorApostilas() {
   // ===== EXPORTAÇÃO EM PDF: aluno (sem gabarito) ou professor (gabarito em página própria) =====
   const handleBaixarPdf = async (tipo) => {
     if (!folhaRef.current) return;
+    // pontos que o professor precisa conferir (correções automáticas não bloqueiam)
+    const pendentes = alertas.filter((a) => a.tipo !== "corrigido");
+    if (
+      pendentes.length > 0 &&
+      !window.confirm(
+        `Há ${pendentes.length} ponto(s) para conferir antes de imprimir:\n\n` +
+          pendentes.map((a) => `• ${a.onde}: ${String(a.motivo).replace(/\.$/, "")}`).join("\n") +
+          "\n\nBaixar o PDF mesmo assim?"
+      )
+    )
+      return;
     setBaixandoPdf(tipo);
     flushSync(() => setGabaritoForcado(tipo === "professor"));
     try {
