@@ -52,7 +52,7 @@ export default function Dashboard({ materiais, config, irPara }) {
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Cartao icone={BookMarked} rotulo="Materiais" valor={materiais.length} detalhe="gerados neste navegador" />
+        <Cartao icone={BookMarked} rotulo="Materiais" valor={materiais.length} detalhe="na sua lista" />
         <Cartao icone={CalendarDays} rotulo="Últimos 7 dias" valor={daSemana} />
         <Cartao
           icone={BadgeCheck}
@@ -121,7 +121,7 @@ export default function Dashboard({ materiais, config, irPara }) {
           )}
           <div className="mt-6 flex gap-2 rounded-xl bg-amber-50 p-3 text-[11.5px] leading-relaxed text-amber-700">
             <CircleAlert className="mt-0.5 h-4 w-4 flex-none" />
-            A lista fica salva neste navegador. Em outro computador, use os links de compartilhamento.
+            Com login, a lista é a mesma no computador e no celular.
           </div>
         </section>
       </div>

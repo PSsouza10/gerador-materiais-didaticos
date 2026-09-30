@@ -119,13 +119,13 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
       <section className="rounded-3xl border border-rose-100 bg-rose-50/50 p-6">
         <h2 className="text-base font-bold text-rose-700">Lista de materiais</h2>
         <p className="mt-1 text-xs text-rose-700">
-          {totalMateriais} {totalMateriais === 1 ? "material salvo" : "materiais salvos"} neste navegador. Limpar a lista não apaga
+          {totalMateriais} {totalMateriais === 1 ? "material salvo" : "materiais salvos"} na sua lista (sincronizada com a conta). Limpar a lista não apaga
           os links já compartilhados.
         </p>
         <button
           type="button"
           disabled={!totalMateriais}
-          onClick={() => window.confirm("Limpar a lista de materiais deste navegador?") && onLimparLista()}
+          onClick={() => window.confirm("Limpar a lista de materiais? Ela some também dos outros aparelhos da sua conta.") && onLimparLista()}
           className="btn-prev mt-3 !text-rose-600"
         >
           <Trash2 className="h-3.5 w-3.5" /> Limpar lista

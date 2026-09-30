@@ -59,6 +59,7 @@ import {
   atualizarMaterial,
   gerarBackup,
   importarBackup,
+  sincronizarComConta,
 } from "@/lib/local";
 
 // ===== EXEMPLO (mostrado só até o professor gerar o primeiro material) =====
@@ -201,6 +202,15 @@ export default function GeradorApostilas() {
     setMateriais(lerMateriais());
   }, []);
 
+  // Logado: junta a lista deste aparelho com a da conta (a mesma no computador e no celular)
+  const sincronizar = (mudancas) =>
+    statusSessao === "authenticated" &&
+    sincronizarComConta(mudancas).then((lista) => lista && setMateriais(lista));
+  useEffect(() => {
+    if (statusSessao === "authenticated") sincronizar({ itens: lerMateriais() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusSessao]);
+
   // ===== RESULTADO DA IA =====
   const [material, setMaterial] = useState(null);
   const [urlImagem, setUrlImagem] = useState(null);
@@ -242,8 +252,7 @@ export default function GeradorApostilas() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setCompartilhar({ estado: "pronto", url: json.url, chave: JSON.stringify([dados.form, dados.material, dados.urlImagem]) });
-      setMateriais(
-        adicionarMaterial({
+      const item = {
           id: json.id,
           url: json.url,
           titulo: dados.material.tituloDidatico || dados.form.tema,
@@ -255,8 +264,9 @@ export default function GeradorApostilas() {
           chave: json.chave,
           bncc: dados.material.bncc?.verificada ? dados.material.bncc.codigo : null,
           criadoEm: new Date().toISOString(),
-        })
-      );
+      };
+      setMateriais(adicionarMaterial(item));
+      sincronizar({ itens: [item] });
       return json.url;
     } catch (e) {
       console.error(e);
@@ -418,6 +428,7 @@ export default function GeradorApostilas() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || "Não foi possível revogar o link.");
     setMateriais(atualizarMaterial(m.id, { revogado: true, chave: null }));
+    sincronizar({ itens: [{ ...m, revogado: true, chave: null }] });
     if (compartilhar.url === m.url) setCompartilhar({ estado: "vazio", url: null, chave: null });
   };
 
@@ -433,6 +444,7 @@ export default function GeradorApostilas() {
   const importar = (texto) => {
     const { importados, lista } = importarBackup(texto);
     setMateriais(lista);
+    sincronizar({ itens: lista });
     const cfg = lerConfig();
     setConfig(cfg);
     return importados;
@@ -550,7 +562,10 @@ export default function GeradorApostilas() {
             <MinhasApostilas
               materiais={materiais}
               irPara={setActive}
-              onRemover={(id) => setMateriais(removerMaterial(id))}
+              onRemover={(id) => {
+                setMateriais(removerMaterial(id));
+                sincronizar({ removidos: [id] });
+              }}
               onRevogar={revogarLink}
               onExportar={exportarBackup}
               onImportar={importar}
@@ -565,8 +580,10 @@ export default function GeradorApostilas() {
               onSalvar={salvarPreferencias}
               totalMateriais={materiais.length}
               onLimparLista={() => {
+                const ids = materiais.map((m) => m.id);
                 limparMateriais();
                 setMateriais([]);
+                sincronizar({ removidos: ids });
               }}
             />
           </div>

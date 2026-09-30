@@ -41,8 +41,12 @@ export default function PoliticaPrivacidade() {
           ilustração e, se preenchidos, seu nome e o da escola, exatamente como aparecem na folha.
         </li>
         <li>
-          <b>No seu navegador:</b> preferências e a lista &ldquo;Minhas Apostilas&rdquo; ficam só no seu aparelho (armazenamento
-          local) e não são enviadas ao servidor.
+          <b>No seu navegador:</b> as preferências ficam só no seu aparelho (armazenamento local).
+        </li>
+        <li>
+          <b>Lista &ldquo;Minhas Apostilas&rdquo;:</b> com login, é guardada também no servidor para aparecer em todos os seus
+          aparelhos: título, tema, disciplina, código BNCC, data, link e chave de revogação de cada material. O arquivo não
+          contém seu e-mail nem seu nome; é identificado por um código derivado da conta.
         </li>
       </Lista>
 
@@ -65,7 +69,7 @@ export default function PoliticaPrivacidade() {
       <p>Usamos poucos fornecedores, apenas para o serviço funcionar:</p>
       <Lista>
         <li><b>Google</b>: autenticação (login).</li>
-        <li><b>Vercel</b>: hospedagem do site e armazenamento das ilustrações, dos links compartilhados e do contador de uso.</li>
+        <li><b>Vercel</b>: hospedagem do site e armazenamento das ilustrações, dos links compartilhados, da lista &ldquo;Minhas Apostilas&rdquo; e do contador de uso.</li>
         <li><b>OpenAI</b>: geração do texto e da ilustração a partir do que você preencheu. Pela política da API da OpenAI, os dados enviados não são usados para treinar modelos.</li>
       </Lista>
       <p>
@@ -108,7 +112,7 @@ export default function PoliticaPrivacidade() {
       <H2>10. Segurança</H2>
       <p>
         O site usa conexão criptografada (HTTPS), a sessão é assinada, o registro de uso não contém e-mail nem nome e cada link
-        compartilhado tem uma chave de revogação que só o seu navegador conhece.
+        compartilhado tem uma chave de revogação que só você (seus aparelhos com login) conhece.
       </p>
 
       <H2>11. Mudanças nesta política</H2>

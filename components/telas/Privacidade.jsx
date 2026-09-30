@@ -11,14 +11,14 @@ export default function Privacidade({ compacto = false }) {
       </h2>
       <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-slate-700">
         <li>
-          <b>Neste navegador:</b> suas preferências e a lista &ldquo;Minhas Apostilas&rdquo;. Elas não são sincronizadas com a sua conta. Elas se
-          perdem se você limpar os dados do navegador, e não aparecem em outro navegador ou aparelho. Use{" "}
-          <b>Exportar backup</b> para guardar uma cópia e <b>Importar</b> para restaurar.
+          <b>Neste navegador:</b> suas preferências. A lista &ldquo;Minhas Apostilas&rdquo; também fica aqui e, com login, é
+          sincronizada com a sua conta: a mesma lista aparece no computador e no celular. Use <b>Exportar backup</b> para
+          guardar uma cópia e <b>Importar</b> para restaurar.
         </li>
         <li>
           <b>Sua conta:</b> o login é feito pelo Google. O site recebe seu nome, e-mail e foto só para identificar a sessão
-          (um cookie neste navegador, válido por 30 dias). No servidor fica apenas um contador de gerações, sem seu e-mail nem
-          seu nome. Use <b>Sair</b> no menu da conta em computadores compartilhados.
+          (um cookie neste navegador, válido por 30 dias). No servidor ficam o contador de gerações e a lista
+          &ldquo;Minhas Apostilas&rdquo; (títulos, links e chaves de revogação), guardados sem seu e-mail nem seu nome. Use <b>Sair</b> no menu da conta em computadores compartilhados.
         </li>
         <li>
           <b>Computador compartilhado:</b> quem usar este navegador depois verá sua lista e poderá revogar seus links. Exporte o
