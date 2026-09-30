@@ -1,5 +1,5 @@
 "use client";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import Chip from "@/components/Chip";
 import Tx from "@/components/Tx";
 import {
@@ -13,6 +13,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
+import { conferirGabarito } from "@/lib/gabarito";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa, linhasResposta } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
@@ -51,7 +52,8 @@ const FolhaA4 = forwardRef(function FolhaA4(
   { form, material, urlImagem, loadingImagem = false, mostrarGabarito = false, exemplo = false, imagemNaCapa = false },
   ref
 ) {
-  const m = material || {};
+  // o gabarito é conferido sempre que a folha é exibida (inclui materiais antigos e links)
+  const m = useMemo(() => conferirGabarito(material || {}).material, [material]);
   const nivel = obterNivel(form.dificuldade);
   const bncc = bnccDoMaterial(form, m);
   // Sem imagem pronta não imprime um quadro vazio; se a ilustração já está na capa, não repete.

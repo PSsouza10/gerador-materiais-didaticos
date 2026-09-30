@@ -45,7 +45,8 @@ test("números: milhar, decimal, científica e sobrescritos", () => {
   assert.equal(valorNumerico("0,5"), 0.5);
   assert.ok(Math.abs(valorNumerico("1,67 × 10^-26 kg") - 1.67e-26) < 1e-35);
   assert.ok(Math.abs(valorNumerico("5,2 × 10⁻⁴") - 5.2e-4) < 1e-12);
-  assert.equal(valorNumerico("2^6"), null);
+  assert.equal(valorNumerico("2^6"), 64);
+  assert.equal(valorNumerico("2^6 + 1"), null);
   assert.equal(letraMarcada("Alternativa c"), "c");
   assert.equal(resultadoFinal("5^5 = 3125."), 3125);
 });
@@ -60,4 +61,16 @@ test("expoentes: 3^4 → 3⁴ e 10^-27 → 10⁻²⁷; complexos viram sup", () 
   assert.deepEqual(partesComExpoentes("Calcule 3^4."), [{ tipo: "texto", valor: "Calcule 3⁴." }]);
   assert.equal(partesComExpoentes("1,67 × 10^-27 kg")[0].valor, "1,67 × 10⁻²⁷ kg");
   assert.deepEqual(partesComExpoentes("a^(m+n)"), [{ tipo: "texto", valor: "a" }, { tipo: "sup", valor: "m+n" }]);
+});
+
+test("alternativas escritas como potência (5⁴, 5⁵) também são conferidas", () => {
+  const r = conferirExercicio({ enunciado: "x", alternativas: ["a) 5⁴", "b) 5⁵", "c) 5⁶", "d) 5¹"], resposta: "a) 5⁴. Pois 5² × 5³ = 5⁵" }, 1);
+  assert.match(r.exercicio.resposta, /^b\) 5⁵/);
+  assert.equal(valorNumerico("5⁵"), 3125);
+  assert.equal(valorNumerico("2^(6)"), 64);
+});
+
+test("gabarito já certo não gera aviso ao ser conferido de novo", () => {
+  const { material } = conferirGabarito({ exercicios: [{ enunciado: "x", alternativas: alts, resposta: "b) 625. 5^5 = 3125" }] });
+  assert.equal(conferirGabarito(material).avisos.length, 0);
 });
