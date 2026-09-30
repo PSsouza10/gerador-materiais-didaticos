@@ -310,7 +310,7 @@ export default function GeradorApostilas() {
         imagemPromise = fetch("/api/gerar-imagem", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina }),
+          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina, capa: form.capa }),
         });
       }
       novoMaterial = await lerStreamMaterial(res, {

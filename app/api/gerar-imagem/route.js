@@ -37,6 +37,7 @@ async function processar(request, ctx) {
     const tema = limparTexto(body.tema).slice(0, LIMITES.tema);
     const disciplina = limparTexto(body.disciplina).slice(0, 60);
     const estilo = normalizarEstilo(body.estilo);
+    const mascote = body.capa === "infografico";
 
     if (!tema) {
       return NextResponse.json(
@@ -73,9 +74,12 @@ async function processar(request, ctx) {
     const direcaoVisual =
       ESTILOS[estilo] || "ilustração educacional colorida e amigável";
 
-    const prompt = `Ilustração educacional sobre o tema "${tema}"${
-      disciplina ? ` da disciplina de ${disciplina}` : ""
-    }, voltada para material didático escolar brasileiro. ${direcaoVisual}. Sem texto, sem letras e sem números na imagem. Composição central, fundo limpo.`;
+    const sobre = `o tema "${tema}"${disciplina ? ` da disciplina de ${disciplina}` : ""}`;
+    // Capa infográfico: só o mascote; título, fórmulas e contas são texto real
+    // na capa (a IA de imagem erra texto e matemática).
+    const prompt = mascote
+      ? `Personagem mascote original e simpático para uma capa de material didático escolar brasileiro sobre ${sobre}: um(a) estudante com óculos ou um robozinho amigável, o que combinar melhor com o tema. Corpo inteiro, sorrindo, virado levemente para a direita e apontando com a mão para a direita, com 2 ou 3 objetos 3D relacionados ao tema ao redor. Animação 3D colorida e original (não imite personagens existentes), formas arredondadas, iluminação suave de estúdio, alta qualidade. Fundo liso lilás bem claro (#EEF0FB), sem cenário. Sem texto, sem letras e sem números na imagem.`
+      : `Ilustração educacional sobre ${sobre}, voltada para material didático escolar brasileiro. ${direcaoVisual}. Sem texto, sem letras e sem números na imagem. Composição central, fundo limpo.`;
 
     // 1) Gera a imagem com gpt-image-2 (upgrade do dall-e-3: modelo de
     // imagem atual da OpenAI, mesma família usada no protótipo "Criador
