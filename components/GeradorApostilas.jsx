@@ -426,7 +426,10 @@ export default function GeradorApostilas() {
     return importados;
   };
 
-  const alertas = useMemo(() => verificarUnidades(materialPreview), [materialPreview]);
+  const alertas = useMemo(
+    () => [...verificarUnidades(materialPreview), ...(materialPreview.avisosGabarito || [])],
+    [materialPreview]
+  );
 
   const ocupado = loading || loadingImagem;
   const temExercicios = materialPreview.exercicios?.length > 0;
@@ -781,16 +784,16 @@ export default function GeradorApostilas() {
               </div>
             </div>
 
-            {/* Verificação automática de unidades (área × volume × comprimento) */}
+            {/* Verificações automáticas: unidades (área × volume × comprimento) e gabarito */}
             {alertas.length > 0 && (
               <div role="alert" className="nao-imprimir mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-900">
                 <p className="flex items-center gap-1.5 font-bold">
-                  <AlertTriangle className="h-4 w-4" /> Revise antes de imprimir: possível erro de unidade
+                  <AlertTriangle className="h-4 w-4" /> Revise antes de imprimir
                 </p>
                 <ul className="mt-1 list-disc space-y-0.5 pl-5">
                   {alertas.map((a, i) => (
                     <li key={i}>
-                      <b>{a.onde}:</b> &ldquo;{a.trecho}&rdquo; — {a.motivo}.
+                      <b>{a.onde}:</b> &ldquo;{a.trecho}&rdquo; — {String(a.motivo).replace(/\.$/, "")}.
                     </li>
                   ))}
                 </ul>

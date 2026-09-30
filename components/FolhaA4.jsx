@@ -1,6 +1,7 @@
 "use client";
 import React, { forwardRef } from "react";
 import Chip from "@/components/Chip";
+import Tx from "@/components/Tx";
 import {
   GraduationCap,
   BookOpen,
@@ -123,7 +124,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </div>
       )}
 
-      {m.resumoPedagogico && <p className="mt-3 text-justify text-[13px] text-slate-600">{m.resumoPedagogico}</p>}
+      {m.resumoPedagogico && <p className="mt-3 text-justify text-[13px] text-slate-600"><Tx>{m.resumoPedagogico}</Tx></p>}
 
       {/* Conceitos e fórmulas */}
       <div className="mt-3 grid grid-cols-2 gap-3">
@@ -132,7 +133,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
           <ul className="mt-2 space-y-1.5">
             {(m.conceitos || []).map((c, i) => (
               <li key={i} className="text-[12px] leading-snug">
-                <span className="font-bold text-indigo-600">{c.termo}:</span> {c.definicao}
+                <span className="font-bold text-indigo-600">{c.termo}:</span> <Tx>{c.definicao}</Tx>
               </li>
             ))}
           </ul>
@@ -143,10 +144,10 @@ const FolhaA4 = forwardRef(function FolhaA4(
           <div className="mt-2 space-y-2">
             {(m.formulas || []).map((f, i) => (
               <div key={i} className="rounded-lg bg-white/90 px-2.5 py-1.5">
-                <div className="font-mono text-[13px] font-bold text-violet-700">{f.expressao}</div>
+                <div className="font-mono text-[13px] font-bold text-violet-700"><Tx>{f.expressao}</Tx></div>
                 <div className="text-[11px] leading-tight text-slate-500">
                   {f.nome ? <b className="text-slate-600">{f.nome}: </b> : null}
-                  {f.descricao}
+                  <Tx>{f.descricao}</Tx>
                 </div>
               </div>
             ))}
@@ -162,7 +163,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
             {m.dicas.map((d, i) => (
               <div key={i} className="flex items-start gap-2 text-[12px] leading-snug text-amber-800">
                 <Numero n={i + 1} tamanho={16} cor="#fbbf24" redondo className="mt-0.5" />
-                <span>{d}</span>
+                <span><Tx>{d}</Tx></span>
               </div>
             ))}
           </div>
@@ -172,7 +173,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
       {m.lembreteImportante && (
         <section className="bloco-exercicio mt-3 rounded-xl bg-emerald-50 p-3.5">
           <Rotulo icon={Boxes} className="text-emerald-700">Lembre-se</Rotulo>
-          <p className="mt-1.5 text-[12px] text-emerald-800">{m.lembreteImportante}</p>
+          <p className="mt-1.5 text-[12px] text-emerald-800"><Tx>{m.lembreteImportante}</Tx></p>
         </section>
       )}
 
@@ -182,12 +183,12 @@ const FolhaA4 = forwardRef(function FolhaA4(
           <Rotulo icon={Target} className="text-indigo-600">
             {m.aplicacaoPratica.titulo || "Aplicação prática no cotidiano"}
           </Rotulo>
-          <p className="mt-1.5 text-[12px] font-medium text-slate-700">{m.aplicacaoPratica.situacao}</p>
+          <p className="mt-1.5 text-[12px] font-medium text-slate-700"><Tx>{m.aplicacaoPratica.situacao}</Tx></p>
           {m.aplicacaoPratica.exemplos?.length > 0 && (
             <ul className="mt-2 grid grid-cols-2 gap-1.5">
               {m.aplicacaoPratica.exemplos.map((ex, i) => (
                 <li key={i} className="rounded-md bg-white/80 px-2.5 py-1 text-[11.5px] font-medium text-indigo-700">
-                  → {ex}
+                  → <Tx>{ex}</Tx>
                 </li>
               ))}
             </ul>
@@ -207,7 +208,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
           <section className="mt-2.5 rounded-xl border border-slate-200 px-3.5 py-3">
             <p className="text-[12.5px]">
               <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
-              {ex.enunciado}
+              <Tx>{ex.enunciado}</Tx>
             </p>
             {ex.alternativas.length > 0 ? (
               <ul
@@ -216,7 +217,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
                 }`}
               >
                 {ex.alternativas.map((a, j) => (
-                  <li key={j}>{a}</li>
+                  <li key={j}><Tx>{a}</Tx></li>
                 ))}
               </ul>
             ) : (
@@ -243,7 +244,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
             {exercicios.map((ex, i) => (
               <li key={i} className="flex gap-2">
                 <Numero n={i + 1} tamanho={16} cor="#64748b" />
-                <span>{ex.resposta || "—"}</span>
+                <span><Tx>{ex.resposta || "—"}</Tx></span>
               </li>
             ))}
           </ol>

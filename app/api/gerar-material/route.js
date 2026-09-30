@@ -7,6 +7,7 @@ import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarMaterial } from "@/lib/material";
 import { validarPedido } from "@/lib/validacao";
+import { conferirGabarito } from "@/lib/gabarito";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
@@ -100,7 +101,7 @@ Retorne um JSON com esta estrutura EXATA:
     "exemplos": ["exemplo prático curto", "..."]
   },
   "exercicios": [
-    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "resposta": "resposta correta com breve justificativa" }
+    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, terminando em = resultado", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
   ]
 }
 
@@ -112,7 +113,8 @@ Regras:
 - Entre 4 e 6 exercícios; misture questões abertas ("alternativas": []) e de múltipla escolha.
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
-- Antes de responder, RESOLVA cada exercício e confira o resultado; a "resposta" deve trazer a alternativa correta e o cálculo/justificativa curta.
+- Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
+- Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.
 - Consistência de unidades: comprimento em cm/m (1 dimensão), área em cm²/m² (2 dimensões), volume em cm³/dm³/m³ ou litros (3 dimensões). Nunca chame área de algo medido em unidade cúbica, nem volume de algo em unidade quadrada; revise isso nas respostas e no gabarito.
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
@@ -210,14 +212,16 @@ Regras:
         } catch {
           throw new Error("json");
         }
-        const material = normalizarMaterial(parsed, tema);
+        // confere letra × resolução do gabarito (corrige quando a própria resolução prova o erro)
+        const { material, avisos: avisosGabarito } = conferirGabarito(normalizarMaterial(parsed, tema));
         material.bncc = oficial
           ? { codigo: oficial.c, texto: oficial.t, verificada: true }
           : bncc
           ? { codigo: bncc, texto: habilidade || "", verificada: false }
           : null;
         material.dificuldade = nivelDif.id;
-        material.alertas = verificarUnidades(material);
+        material.avisosGabarito = avisosGabarito;
+        material.alertas = [...verificarUnidades(material), ...avisosGabarito];
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
