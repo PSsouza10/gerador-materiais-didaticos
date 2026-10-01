@@ -46,6 +46,10 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@vercel/blob"],
   },
   async headers() {
+    // Em desenvolvimento o preview roda num iframe — os cabeçalhos de segurança
+    // (X-Frame-Options, CSP frame-ancestors) bloqueariam o embedding. Em produção
+    // todos os cabeçalhos continuam ativos.
+    if (process.env.NODE_ENV !== "production") return [];
     return [
       { source: "/:path*", headers: HEADERS },
       // A CDN da Vercel envia "Access-Control-Allow-Origin: *" nas páginas estáticas.

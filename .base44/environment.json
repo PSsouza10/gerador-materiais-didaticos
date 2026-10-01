@@ -1,0 +1,32 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "OPENAI_API_KEY",
+      "description": "OpenAI API key for GPT-4o content generation and image generation. Get it from https://platform.openai.com/api-keys.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "BLOB_READ_WRITE_TOKEN",
+      "description": "Vercel Blob read/write token for storing illustrations and shared materials. Created automatically when connecting a Blob Store to the project on Vercel.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "GOOGLE_CLIENT_ID",
+      "description": "Google OAuth client ID for login. Get it from Google Cloud Console → Credentials → OAuth client ID (Web application type).",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "GOOGLE_CLIENT_SECRET",
+      "description": "Google OAuth client secret for login. Get it from Google Cloud Console → Credentials → OAuth client ID.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "NEXTAUTH_SECRET",
+      "description": "Secret that signs the session. Optional — if omitted, it is derived from BLOB_READ_WRITE_TOKEN.",
+      "requiredAtBoot": false
+    }
+  ]
+}
