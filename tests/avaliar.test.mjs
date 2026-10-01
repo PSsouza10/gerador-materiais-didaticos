@@ -71,3 +71,13 @@ test("notação científica: 'N = a × 10^n' vira 'N × 10^n' com 1 ≤ N < 10",
   const ok = conferirNotacao({ formulas: [{ nome: "Notação científica", expressao: "N × 10^n", descricao: "1 ≤ N < 10" }] });
   assert.equal(ok.avisos.length, 0);
 });
+
+test("fração sozinha no enunciado não vira conta (falso alerta do 1/4 de hora)", async () => {
+  const { extrairExpressao } = await import("../lib/avaliar.js");
+  const { conferirExercicio } = await import("../lib/gabarito.js");
+  assert.equal(extrairExpressao("Quantos minutos tem 1/4 de hora?"), null);
+  assert.equal(extrairExpressao("Localize 1/4 na reta numérica."), null);
+  assert.ok(extrairExpressao("Calcule 1/4 + 1/4.")); // conta de verdade continua conferida
+  const r = conferirExercicio({ enunciado: "Quantos minutos tem 1/4 de hora?", alternativas: [], resposta: "15 minutos" }, 4);
+  assert.equal(r.avisos.length, 0);
+});
