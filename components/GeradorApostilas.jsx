@@ -48,6 +48,7 @@ import { verificarUnidades } from "@/lib/unidades";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { LIMITES, QUANTIDADES } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
+import { conferirCoerencia } from "@/lib/coerencia";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
   CONFIG_PADRAO,
@@ -456,8 +457,10 @@ export default function GeradorApostilas() {
     // avisos do servidor (geração nova) + conferência local (materiais antigos reabertos)
     const gab = [...(materialPreview.avisosGabarito || []), ...conferirGabarito(materialPreview).avisos];
     const vistos = new Set();
-    return [...verificarUnidades(materialPreview), ...gab.filter((a) => !vistos.has(a.onde) && vistos.add(a.onde))];
-  }, [materialPreview]);
+    const coerencia = gerado ? conferirCoerencia(formPreview, materialPreview) : [];
+    return [...coerencia, ...verificarUnidades(materialPreview), ...gab.filter((a) => !vistos.has(a.onde) && vistos.add(a.onde))];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialPreview, gerado, formPreview.nivel, formPreview.bncc]);
 
   const ocupado = loading || loadingImagem;
   const temExercicios = materialPreview.exercicios?.length > 0;

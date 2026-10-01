@@ -1,3 +1,4 @@
+import { conferirCoerencia } from "@/lib/coerencia";
 import { NextResponse } from "next/server";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo, rotuloAno } from "@/lib/bncc";
@@ -222,7 +223,7 @@ Regras:
           : null;
         material.dificuldade = nivelDif.id;
         material.avisosGabarito = avisosGabarito;
-        material.alertas = [...verificarUnidades(material), ...avisosGabarito];
+        material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito];
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
