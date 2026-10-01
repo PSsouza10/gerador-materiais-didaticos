@@ -74,3 +74,17 @@ test("gabarito já certo não gera aviso ao ser conferido de novo", () => {
   const { material } = conferirGabarito({ exercicios: [{ enunciado: "x", alternativas: alts, resposta: "b) 625. 5^5 = 3125" }] });
   assert.equal(conferirGabarito(material).avisos.length, 0);
 });
+
+test("frações simples nas alternativas (EF04MA09)", async () => {
+  const { valorNumerico, conferirExercicio } = await import("../lib/gabarito.js");
+  assert.equal(valorNumerico("1/4"), 0.25);
+  assert.equal(valorNumerico("1/10 do metro"), 0.1);
+  const ex = {
+    enunciado: "Uma pizza foi dividida em 4 partes iguais. Que fração representa um pedaço?",
+    alternativas: ["a) 1/2", "b) 1/3", "c) 1/4", "d) 1/5"],
+    resposta: "b) 1/3",
+    resolucao: "1 pedaço de 4 partes iguais = 1/4",
+  };
+  const r = conferirExercicio(ex, 1);
+  assert.match(r.exercicio.resposta, /^c\) 1\/4/);
+});
