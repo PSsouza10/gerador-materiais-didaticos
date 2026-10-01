@@ -102,9 +102,18 @@ Retorne um JSON com esta estrutura EXATA:
     "exemplos": ["exemplo prático curto", "..."]
   },
   "exercicios": [
-    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, terminando em = resultado", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
-  ]
+    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
+  ],
+  "figuraExplicativa": null
 }
+
+FIGURAS (desenhadas pelo sistema a partir destes dados; use em QUALQUER disciplina quando ajudar a entender):
+- { "tipo": "reta", "inicio": 0, "fim": 1, "divisoes": 4, "rotulos": "extremos" | "todos" | "nenhum", "marcar": null ou o número do tracinho (0 a divisoes) a destacar com a letra A, "legenda": "" }
+- { "tipo": "fracao", "forma": "barra" | "circulo", "partes": 5, "pintadas": 1, "legenda": "" }
+- { "tipo": "grade", "linhas": 3, "colunas": 4, "pintadas": 0, "legenda": "" }   (disposição retangular, área)
+- { "tipo": "tabela", "cabecalho": ["...", "..."], "linhas": [["...", "..."]], "legenda": "" }   (até 6 colunas e 8 linhas)
+- { "tipo": "barras", "titulo": "", "unidade": "", "itens": [{ "rotulo": "...", "valor": 10 }], "legenda": "" }   (até 8 barras)
+- { "tipo": "linha_do_tempo", "eventos": [{ "data": "1500", "texto": "..." }], "legenda": "" }   (até 6 eventos)
 
 Regras:
 - Entre 4 e 6 conceitos.
@@ -115,6 +124,8 @@ Regras:
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
+- Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). Em "figuraExplicativa" coloque uma figura que represente o conceito principal do tema, ou null se nenhum tipo servir.
+- Regras matemáticas com as condições completas e na linguagem da faixa etária (ex.: no 4º ano, "entre frações unitárias, quanto maior o denominador, menor a fração").
 - Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
 - Notação científica: use SEMPRE a convenção N × 10^n, com 1 ≤ N < 10 e n inteiro, na teoria, nas fórmulas, nos exemplos, nos exercícios e no gabarito. Nunca escreva "N = a × 10^n" nem use outra letra para a mantissa.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.

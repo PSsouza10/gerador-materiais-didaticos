@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
 import { conferirGabarito } from "@/lib/gabarito";
+import FiguraDidatica from "@/components/FiguraDidatica";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa, linhasResposta } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
@@ -162,6 +163,13 @@ const FolhaA4 = forwardRef(function FolhaA4(
         )}
       </div>
 
+      {/* Figura que representa o conceito principal (qualquer disciplina) */}
+      {m.figuraExplicativa && (
+        <section className="bloco-exercicio mt-3 rounded-xl border border-slate-100 p-3.5">
+          <FiguraDidatica figura={m.figuraExplicativa} />
+        </section>
+      )}
+
       {/* Pontos de atenção: lembrete + até 3 dicas num bloco só (vale para qualquer disciplina) */}
       {(m.lembreteImportante || (m.dicas || []).length > 0) && (
         <section className="bloco-exercicio mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3.5">
@@ -216,6 +224,8 @@ const FolhaA4 = forwardRef(function FolhaA4(
               <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
               <Tx>{ex.enunciado}</Tx>
             </p>
+            {/* figura do enunciado (reta, fração, tabela...) — parte do bloco indivisível do exercício */}
+            {ex.figura && <FiguraDidatica figura={ex.figura} className="mt-2.5 pl-7" />}
             {ex.alternativas.length > 0 ? (
               <ul
                 className={`mt-2.5 grid gap-x-4 gap-y-1.5 pl-7 text-[12px] ${
