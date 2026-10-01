@@ -35,7 +35,7 @@ export async function POST(request) {
   // Validação no servidor (não confia no navegador): obrigatórios, limites, controle
   const v = validarPedido(body);
   if (!v.ok) return erroJson(v.erro, 400);
-  const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade } = v.dados;
+  const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade, questoes } = v.dados;
   if (!process.env.OPENAI_API_KEY) {
     return erroJson("Chave da OpenAI não configurada no servidor.", 500);
   }
@@ -93,7 +93,7 @@ Retorne um JSON com esta estrutura EXATA:
   "formulas": [
     { "nome": "nome da fórmula ou regra", "expressao": "expressão/notação", "descricao": "para que serve em 1 frase curta" }
   ],
-  "dicas": ["dica prática de resolução ou memorização", "..."],
+  "dicas": ["ponto de atenção curto e direto (máx. 1 frase), adequado à disciplina", "..."],
   "lembreteImportante": "um lembrete conceitual importante, máximo 2 frases",
   "aplicacaoPratica": {
     "titulo": "título curto da aplicação no cotidiano",
@@ -108,9 +108,9 @@ Retorne um JSON com esta estrutura EXATA:
 Regras:
 - Entre 4 e 6 conceitos.
 - Entre 2 e 4 fórmulas (se a disciplina não usa fórmulas, use "regras" ou "princípios" com notação simbólica ou palavras-chave).
-- Entre 3 e 5 dicas.
+- Exatamente 3 dicas curtas (uma frase cada), adequadas à disciplina: em Matemática podem ser de resolução; em outras áreas, de atenção, segurança ou leitura.
 - Entre 2 e 4 exemplos práticos.
-- Entre 4 e 6 exercícios; misture questões abertas ("alternativas": []) e de múltipla escolha.
+- Exatamente ${questoes} exercícios, do mais fácil ao mais difícil; misture questões abertas ("alternativas": []) e de múltipla escolha.
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.

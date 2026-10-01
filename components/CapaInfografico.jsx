@@ -127,11 +127,18 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
   const destaque = formulas.find((f) => curta(f.expressao, 26)) || formulas[0];
   // exemplo numérico curto ("V = 2 × 1,5 × 1 = 3 m³") vira blocos coloridos
   const candidatos = [...(m.aplicacaoPratica?.exemplos || []), ...formulas.map((f) => f.expressao)];
-  const conta = candidatos.find((e) => curta(e, 30) && /\d/.test(e) && /=/.test(e) && e.trim().split(/\s+/).length <= 9);
-  const exemplos = formulas.filter((f) => f !== destaque).slice(0, 3);
-  const conceitos = (m.conceitos || []).slice(0, 3);
+  // blocos só para contas de verdade (pelo menos 2 números soltos), não para fórmulas com palavras
+  const conta = candidatos.find((e) => {
+    const t = curta(e, 30) && /=/.test(e) ? e.trim().split(/\s+/) : [];
+    return t.length >= 3 && t.length <= 9 && t.filter((x) => /^-?[\d.,]+(?:\^\d+)?$/.test(x)).length >= 2;
+  });
+  const outras = formulas.filter((f) => f !== destaque).slice(0, 3);
+  const exemplos = outras.length >= 2 ? outras : []; // um item sozinho no quadro fica pobre
+  const conceitos = (m.conceitos || []).slice(0, 5);
   const aplicacao = m.aplicacaoPratica;
 
+  // pouco conteúdo abaixo (sem conta em blocos nem quadro de exemplos): mascote maior ocupa a página
+  const lado = conta || exemplos.length ? 310 : 390;
   const caixa = useRef(null);
   const ajuste = useAjusteAoCaber(caixa, `${titulo}|${JSON.stringify(m.conceitos)}|${JSON.stringify(aplicacao)}|${conta}`);
   const tamanho = titulo.length <= 22 ? 62 : titulo.length <= 40 ? 46 : titulo.length <= 70 ? 36 : 29;
@@ -169,7 +176,7 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
 
         {/* Mascote + lousa */}
         <div className="mt-4 flex flex-none items-center gap-5">
-          <div className="flex-none overflow-hidden rounded-[28px]" style={{ width: 310, height: 310 }}>
+          <div className="flex-none overflow-hidden rounded-[28px]" style={{ width: lado, height: lado }}>
             {urlImagem ? (
               <div className="h-full w-full" style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }} role="img" aria-label={`Ilustração sobre ${form.tema || "o tema"}`} />
             ) : (
@@ -179,7 +186,7 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
             )}
           </div>
           <div
-            className="flex min-h-[230px] flex-1 flex-col items-center justify-center rounded-[22px] bg-white px-5 py-6 text-center"
+            className={`flex ${lado > 310 ? "min-h-[290px]" : "min-h-[230px]"} flex-1 flex-col items-center justify-center rounded-[22px] bg-white px-5 py-6 text-center`}
             style={{ border: "10px solid #c7d2fe", boxShadow: "0 10px 0 #a5b4fc, 0 18px 30px -12px rgba(79,70,229,.35)" }}
           >
             {destaque ? (
@@ -203,15 +210,19 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
         )}
 
         {/* O que significa? + Exemplos importantes */}
-        <div className="mt-4 grid flex-none grid-cols-[1fr_280px] gap-5">
+        <div className={`mt-4 grid flex-none gap-5 ${exemplos.length ? "grid-cols-[1fr_280px]" : "grid-cols-1"}`}>
           <div>
-            <Secao a="O que" b="significa?" />
-            <ul className="mt-3 space-y-2">
-              {conceitos.slice(0, ajuste >= 1 ? 2 : 3).map((c, i) => (
-                <li key={i} className="rounded-xl bg-white px-3 py-2 text-[12px] leading-snug shadow-[0_3px_0_#e0e7ff]">
-                  <b style={{ color: ["#0369a1", "#7e22ce", "#c2410c"][i % 3] }}><Tx>{c.termo}</Tx>:</b> <Tx>{c.definicao}</Tx>
-                </li>
-              ))}
+            {/* Só os termos: as definições estão na página de conteúdo (sem repetir) */}
+            <Secao a="Você vai" b="aprender:" />
+            <ul className="mt-3 flex flex-wrap gap-2.5">
+              {conceitos.map((c, i) => {
+                const [fundo, borda, texto] = TILES[i % TILES.length];
+                return (
+                  <li key={i} className="rounded-full px-4 py-1.5 text-[14px] font-black" style={{ background: fundo, color: texto, border: `2px solid ${borda}`, boxShadow: `0 3px 0 ${borda}` }}>
+                    <Tx>{c.termo}</Tx>
+                  </li>
+                );
+              })}
             </ul>
           </div>
           {exemplos.length > 0 && (
@@ -235,7 +246,6 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
             <Secao a="Aplicações no" b="cotidiano:" />
             <div className="mt-3 rounded-2xl bg-white px-4 py-3 shadow-[0_4px_0_#fde68a]">
               <p className="text-[13.5px] font-extrabold text-slate-800"><Tx>{aplicacao.titulo}</Tx></p>
-              {aplicacao.situacao && ajuste < 1 && <p className="mt-1 text-[12px] leading-snug text-slate-600"><Tx>{aplicacao.situacao}</Tx></p>}
             </div>
           </div>
         )}

@@ -7,7 +7,6 @@ import {
   BookOpen,
   Target,
   Lightbulb,
-  Boxes,
   Loader2,
   PencilLine,
   BadgeCheck,
@@ -59,6 +58,8 @@ const FolhaA4 = forwardRef(function FolhaA4(
   // Sem imagem pronta não imprime um quadro vazio; se a ilustração já está na capa, não repete.
   const mostrarImagem = loadingImagem || (urlImagem && !imagemNaCapa);
   const exercicios = m.exercicios || [];
+  const temConceitos = (m.conceitos || []).length > 0;
+  const temFormulas = (m.formulas || []).length > 0;
 
   return (
     <article ref={ref} className="folha-a4 bg-white text-slate-700 font-sans text-[12.5px] leading-[1.5]">
@@ -128,11 +129,12 @@ const FolhaA4 = forwardRef(function FolhaA4(
 
       {m.resumoPedagogico && <p className="mt-3 text-justify text-[13px] text-slate-600"><Tx>{m.resumoPedagogico}</Tx></p>}
 
-      {/* Conceitos e fórmulas */}
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      {/* Conceitos e fórmulas: lado a lado; se faltar um dos dois, o outro ocupa a largura em 2 colunas */}
+      <div className={`mt-3 grid gap-3 ${temConceitos && temFormulas ? "grid-cols-2" : "grid-cols-1"}`}>
+        {temConceitos && (
         <section className="bloco-exercicio rounded-xl border border-slate-100 bg-slate-50/70 p-3.5">
           <Rotulo icon={BookOpen} className="text-indigo-600">Conceitos-chave</Rotulo>
-          <ul className="mt-2 space-y-1.5">
+          <ul className={`mt-2 ${temFormulas ? "space-y-1.5" : "grid grid-cols-2 gap-x-5 gap-y-1.5"}`}>
             {(m.conceitos || []).map((c, i) => (
               <li key={i} className="text-[12px] leading-snug">
                 <span className="font-bold text-indigo-600">{c.termo}:</span> <Tx>{c.definicao}</Tx>
@@ -140,10 +142,12 @@ const FolhaA4 = forwardRef(function FolhaA4(
             ))}
           </ul>
         </section>
+        )}
 
+        {temFormulas && (
         <section className="bloco-exercicio rounded-xl bg-violet-50 p-3.5">
           <Rotulo icon={Target} className="text-violet-600">Fórmulas &amp; regras</Rotulo>
-          <div className="mt-2 space-y-2">
+          <div className={`mt-2 ${temConceitos ? "space-y-2" : "grid grid-cols-2 gap-2"}`}>
             {(m.formulas || []).map((f, i) => (
               <div key={i} className="rounded-lg bg-white/90 px-2.5 py-1.5">
                 <div className="font-mono text-[13px] font-bold text-violet-700"><Tx>{f.expressao}</Tx></div>
@@ -155,27 +159,27 @@ const FolhaA4 = forwardRef(function FolhaA4(
             ))}
           </div>
         </section>
+        )}
       </div>
 
-      {/* Dicas */}
-      {(m.dicas || []).length > 0 && (
-        <section className="bloco-exercicio mt-3 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3.5">
-          <Rotulo icon={Lightbulb} className="text-amber-700">Dicas de resolução</Rotulo>
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
-            {m.dicas.map((d, i) => (
-              <div key={i} className="flex items-start gap-2 text-[12px] leading-snug text-amber-800">
-                <Numero n={i + 1} tamanho={16} cor="#fbbf24" redondo className="mt-0.5" />
+      {/* Pontos de atenção: lembrete + até 3 dicas num bloco só (vale para qualquer disciplina) */}
+      {(m.lembreteImportante || (m.dicas || []).length > 0) && (
+        <section className="bloco-exercicio mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3.5">
+          <Rotulo icon={Lightbulb} className="text-amber-700">Pontos de atenção</Rotulo>
+          <ul className="mt-2 space-y-1.5 text-[12px] leading-snug text-amber-900">
+            {m.lembreteImportante && (
+              <li className="flex items-start gap-2 font-semibold">
+                <span className="mt-[5px] h-1.5 w-1.5 flex-none rounded-full bg-amber-600" aria-hidden="true" />
+                <span><Tx>{m.lembreteImportante}</Tx></span>
+              </li>
+            )}
+            {(m.dicas || []).slice(0, 3).map((d, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-[5px] h-1.5 w-1.5 flex-none rounded-full bg-amber-400" aria-hidden="true" />
                 <span><Tx>{d}</Tx></span>
-              </div>
+              </li>
             ))}
-          </div>
-        </section>
-      )}
-
-      {m.lembreteImportante && (
-        <section className="bloco-exercicio mt-3 rounded-xl bg-emerald-50 p-3.5">
-          <Rotulo icon={Boxes} className="text-emerald-700">Lembre-se</Rotulo>
-          <p className="mt-1.5 text-[12px] text-emerald-800"><Tx>{m.lembreteImportante}</Tx></p>
+          </ul>
         </section>
       )}
 

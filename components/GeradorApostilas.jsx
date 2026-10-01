@@ -31,6 +31,7 @@ import {
   AlertTriangle,
   CalendarRange,
   ShieldCheck,
+  ListOrdered,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import CapaA4 from "@/components/CapaA4";
@@ -45,7 +46,7 @@ import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
 import { verificarUnidades } from "@/lib/unidades";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
-import { LIMITES } from "@/lib/validacao";
+import { LIMITES, QUANTIDADES } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
@@ -145,6 +146,7 @@ const formDaConfig = (cfg) => ({
   estilo: cfg.estilo,
   dificuldade: cfg.dificuldade,
   capa: normalizarCapa(cfg.capa),
+  questoes: 5,
 });
 
 export default function GeradorApostilas() {
@@ -708,15 +710,27 @@ export default function GeradorApostilas() {
                 </select>
               </Field>
 
-              <Field label="Capa" icon={PanelTop} name="capa">
-                <select value={form.capa} onChange={set("capa")} className="ipt">
-                  {CAPAS.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.rotulo}
+              <Field label="Quantidade de exercícios" icon={ListOrdered} name="questoes">
+                <select value={form.questoes} onChange={(e) => setForm((f) => ({ ...f, questoes: Number(e.target.value) }))} className="ipt">
+                  {QUANTIDADES.map((q) => (
+                    <option key={q} value={q}>
+                      {q} exercícios{q === 5 ? " (padrão)" : ""}
                     </option>
                   ))}
                 </select>
               </Field>
+
+              <div className="sm:col-span-2">
+                <Field label="Capa" icon={PanelTop} name="capa">
+                  <select value={form.capa} onChange={set("capa")} className="ipt">
+                    {CAPAS.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.rotulo}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
             </div>
 
             {erro && (
