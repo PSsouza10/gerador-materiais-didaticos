@@ -33,3 +33,12 @@ test("enunciado que cita figura sem figura gera aviso (caso EF04MA09)", () => {
   const com = conferirCoerencia({}, { exercicios: [1, 2, 3].map(() => ex({ tipo: "fracao", partes: 5, pintadas: 1 })) });
   assert.equal(com.length, 0);
 });
+
+test("fluxo e mapa conceitual (todas as disciplinas)", () => {
+  const ciclo = normalizarFigura({ tipo: "fluxo", etapas: ["Evaporação", "Condensação", "Precipitação"], ciclo: true });
+  assert.equal(ciclo.ciclo, true);
+  assert.equal(normalizarFigura({ tipo: "fluxo", etapas: ["só uma"] }), null);
+  const mapa = normalizarFigura({ tipo: "mapa", centro: "Substantivo", ramos: ["próprio", "comum", "coletivo", "a", "b", "c", "d"] });
+  assert.equal(mapa.ramos.length, 6);
+  assert.ok(citaFigura("Complete o esquema abaixo"));
+});

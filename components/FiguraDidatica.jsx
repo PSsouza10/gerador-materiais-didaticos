@@ -160,9 +160,64 @@ function LinhaDoTempo({ f }) {
   );
 }
 
+// Etapas em caixas ligadas por setas; em ciclo, a última volta para a primeira
+function Fluxo({ f }) {
+  return (
+    <div className="flex flex-col items-center" role="img" aria-label={f.legenda || `${f.ciclo ? "Ciclo" : "Sequência"}: ${f.etapas.join(", ")}`}>
+      <ol className="flex flex-wrap items-center justify-center gap-y-2">
+        {f.etapas.map((e, i) => (
+          <li key={i} className="flex items-center">
+            <span className="flex min-h-[44px] max-w-[130px] items-center justify-center rounded-xl border-2 border-indigo-400 bg-indigo-50 px-2.5 py-1 text-center text-[11px] font-bold leading-tight text-indigo-900">
+              {e}
+            </span>
+            {i < f.etapas.length - 1 && <span className="px-1.5 text-[18px] font-black text-indigo-500" aria-hidden="true">→</span>}
+          </li>
+        ))}
+      </ol>
+      {f.ciclo && <span className="mt-1 text-[11px] font-bold text-indigo-500">↺ volta para &ldquo;{f.etapas[0]}&rdquo;</span>}
+    </div>
+  );
+}
+
+// Mapa conceitual: ideia central e ramos ao redor
+function Mapa({ f }) {
+  const W = 520;
+  const H = 210;
+  const cx = W / 2;
+  const cy = H / 2;
+  const pos = f.ramos.map((_, i) => {
+    const a = (i / f.ramos.length) * 2 * Math.PI - Math.PI / 2;
+    return [cx + Math.cos(a) * 190, cy + Math.sin(a) * 78];
+  });
+  return (
+    <div className="relative" style={{ width: W, height: H }} role="img" aria-label={f.legenda || `Mapa conceitual: ${f.centro} — ${f.ramos.join(", ")}`}>
+      <svg className="absolute inset-0" width={W} height={H} aria-hidden="true">
+        {pos.map(([x, y], i) => (
+          <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="#818cf8" strokeWidth="2" />
+        ))}
+      </svg>
+      {pos.map(([x, y], i) => (
+        <span
+          key={i}
+          className="absolute flex items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-2 py-1 text-center text-[10.5px] font-semibold leading-tight text-slate-700"
+          style={{ left: x - 62, top: y - 17, width: 124, minHeight: 34 }}
+        >
+          {f.ramos[i]}
+        </span>
+      ))}
+      <span
+        className="absolute flex items-center justify-center rounded-full bg-indigo-600 px-3 text-center text-[12px] font-black leading-tight text-white"
+        style={{ left: cx - 70, top: cy - 24, width: 140, height: 48 }}
+      >
+        {f.centro}
+      </span>
+    </div>
+  );
+}
+
 export default function FiguraDidatica({ figura, className = "" }) {
   if (!figura) return null;
-  const Comp = { reta: Reta, fracao: Fracao, grade: Grade, tabela: Tabela, barras: Barras, linha_do_tempo: LinhaDoTempo }[figura.tipo];
+  const Comp = { reta: Reta, fracao: Fracao, grade: Grade, tabela: Tabela, barras: Barras, linha_do_tempo: LinhaDoTempo, fluxo: Fluxo, mapa: Mapa }[figura.tipo];
   if (!Comp) return null;
   return (
     <figure className={`figura-didatica flex flex-col items-center ${className}`}>

@@ -114,6 +114,8 @@ FIGURAS (desenhadas pelo sistema a partir destes dados; use em QUALQUER discipli
 - { "tipo": "tabela", "cabecalho": ["...", "..."], "linhas": [["...", "..."]], "legenda": "" }   (até 6 colunas e 8 linhas)
 - { "tipo": "barras", "titulo": "", "unidade": "", "itens": [{ "rotulo": "...", "valor": 10 }], "legenda": "" }   (até 8 barras)
 - { "tipo": "linha_do_tempo", "eventos": [{ "data": "1500", "texto": "..." }], "legenda": "" }   (até 6 eventos)
+- { "tipo": "fluxo", "etapas": ["...", "..."], "ciclo": false, "legenda": "" }   (2 a 6 etapas com setas; "ciclo": true para ciclos como o da água)
+- { "tipo": "mapa", "centro": "ideia central", "ramos": ["...", "..."], "legenda": "" }   (mapa conceitual, 2 a 6 ramos)
 
 Regras:
 - Entre 4 e 6 conceitos.
@@ -124,7 +126,7 @@ Regras:
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
-- Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). Em "figuraExplicativa" coloque uma figura que represente o conceito principal do tema, ou null se nenhum tipo servir.
+- Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). "figuraExplicativa" é OBRIGATÓRIA em toda disciplina: escolha o tipo que melhor representa o conceito principal (ex.: Matemática → reta, fração, grade ou barras; História → linha do tempo; Ciências → fluxo/ciclo; Geografia → barras ou tabela; Português, Arte, Inglês e outras → mapa conceitual, tabela ou fluxo). Além dela, use figura em pelo menos 2 exercícios, sempre que a questão ficar melhor com ela.
 - Regras matemáticas com as condições completas e na linguagem da faixa etária (ex.: no 4º ano, "entre frações unitárias, quanto maior o denominador, menor a fração").
 - Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
 - Notação científica: use SEMPRE a convenção N × 10^n, com 1 ≤ N < 10 e n inteiro, na teoria, nas fórmulas, nos exemplos, nos exercícios e no gabarito. Nunca escreva "N = a × 10^n" nem use outra letra para a mantissa.
