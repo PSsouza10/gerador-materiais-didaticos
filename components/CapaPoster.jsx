@@ -61,7 +61,7 @@ function SeloSerie({ form }) {
       {ano && (
         <p style={{ fontSize: 46, fontWeight: 700, lineHeight: 1, color: CORAL, textShadow: sombra3D(2.5, 3) }}>{ano}</p>
       )}
-      <p className="mt-1.5 text-[13px] font-semibold" style={{ color: PETROLEO_ESCURO }}>
+      <p className="mt-3 text-[13px] font-semibold" style={{ color: PETROLEO_ESCURO }}>
         {form.disciplina}
         {form.nivel ? ` · ${form.nivel}` : ""}
       </p>
@@ -201,7 +201,16 @@ const CapaPoster = forwardRef(function CapaPoster({ form, material, urlImagem, e
               </div>
             )}
             {/* esmaece as bordas da ilustração no creme (sem "foto colada") */}
-            {urlImagem && <div className="absolute inset-0 rounded-[24px]" style={{ boxShadow: `inset 0 0 28px 18px ${CREME}` }} />}
+            {/* bordas esmaecidas com gradientes lineares (o html2canvas do PDF desenha "inset box-shadow"
+                como um bloco sólido por cima da imagem — era o quadro creme que cobria o mascote) */}
+            {urlImagem && (
+              <>
+                <div className="absolute inset-x-0 top-0 h-8" style={{ background: `linear-gradient(180deg, ${CREME}, rgba(246,238,220,0))` }} />
+                <div className="absolute inset-x-0 bottom-0 h-8" style={{ background: `linear-gradient(0deg, ${CREME}, rgba(246,238,220,0))` }} />
+                <div className="absolute inset-y-0 left-0 w-8" style={{ background: `linear-gradient(90deg, ${CREME}, rgba(246,238,220,0))` }} />
+                <div className="absolute inset-y-0 right-0 w-8" style={{ background: `linear-gradient(270deg, ${CREME}, rgba(246,238,220,0))` }} />
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-5">
             <SeloSerie form={form} />
