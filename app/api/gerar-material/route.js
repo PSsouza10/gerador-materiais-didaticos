@@ -9,6 +9,7 @@ import { obterNivel } from "@/lib/niveis";
 import { normalizarMaterial } from "@/lib/material";
 import { validarPedido } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
+import { revisarMaterial } from "@/lib/revisao";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
@@ -132,6 +133,10 @@ Regras:
 - Notação científica: use SEMPRE a convenção N × 10^n, com 1 ≤ N < 10 e n inteiro, na teoria, nas fórmulas, nos exemplos, nos exercícios e no gabarito. Nunca escreva "N = a × 10^n" nem use outra letra para a mantissa.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.
 - Consistência de unidades: comprimento em cm/m (1 dimensão), área em cm²/m² (2 dimensões), volume em cm³/dm³/m³ ou litros (3 dimensões). Nunca chame área de algo medido em unidade cúbica, nem volume de algo em unidade quadrada; revise isso nas respostas e no gabarito.
+- NENHUM bloco se repete: o que está em "formulas" não reaparece em "exemplos", "dicas" ou "lembreteImportante". Se não houver nada novo, deixe a lista mais curta ou o lembrete vazio.
+- Todo termo de "conceitos" precisa ser usado em pelo menos uma fórmula, exemplo ou exercício. Não defina termo decorativo.
+- A habilidade BNCC é da etapa do nível escolhido (EF = Ensino Fundamental, EM = Ensino Médio). Nunca adapte o conteúdo a um código de outra etapa.
+- Português do Brasil revisado: confira a grafia de títulos e enunciados (ex.: "Exemplos", "Explique") antes de terminar.
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
 
   // Aborta se passar do limite OU se o professor fechar a página
@@ -228,7 +233,9 @@ Regras:
           throw new Error("json");
         }
         // confere letra × resolução do gabarito (corrige quando a própria resolução prova o erro)
-        const { material, avisos: avisosGabarito } = conferirGabarito(normalizarMaterial(parsed, tema));
+        // revisão determinística: typos conhecidos, blocos repetidos, conceitos órfãos
+        const { material: revisado, avisos: avisosRevisao } = revisarMaterial(normalizarMaterial(parsed, tema));
+        const { material, avisos: avisosGabarito } = conferirGabarito(revisado);
         material.bncc = oficial
           ? { codigo: oficial.c, texto: oficial.t, verificada: true }
           : bncc
@@ -236,7 +243,8 @@ Regras:
           : null;
         material.dificuldade = nivelDif.id;
         material.avisosGabarito = avisosGabarito;
-        material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito];
+        material.avisosRevisao = avisosRevisao;
+        material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito, ...avisosRevisao];
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
