@@ -49,6 +49,7 @@ import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { LIMITES, QUANTIDADES } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
+import { conferirQualidade } from "@/lib/qualidade";
 import { conferirCoerencia } from "@/lib/coerencia";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
@@ -464,7 +465,9 @@ export default function GeradorApostilas() {
       ...(materialPreview.avisosRevisao || []).filter((a) => a.tipo === "corrigido"),
       ...(gerado ? revisarMaterial(materialPreview).avisos.filter((a) => a.tipo === "conferir") : []),
     ];
-    return [...coerencia, ...verificarUnidades(materialPreview), ...gab.filter((a) => !vistos.has(a.onde) && vistos.add(a.onde)), ...revisao];
+    // qualidade: texto longo, enfeite, alternativas repetidas, variedade, regras sem condição
+    const qualidade = gerado ? conferirQualidade(materialPreview) : [];
+    return [...coerencia, ...verificarUnidades(materialPreview), ...gab.filter((a) => !vistos.has(a.onde) && vistos.add(a.onde)), ...revisao, ...qualidade];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialPreview, gerado, formPreview.nivel, formPreview.bncc]);
 

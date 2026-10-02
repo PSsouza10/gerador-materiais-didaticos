@@ -10,6 +10,7 @@ import { normalizarMaterial } from "@/lib/material";
 import { validarPedido } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
+import { conferirQualidade } from "@/lib/qualidade";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
@@ -103,7 +104,7 @@ Retorne um JSON com esta estrutura EXATA:
     "exemplos": ["exemplo prático curto", "..."]
   },
   "exercicios": [
-    { "enunciado": "enunciado completo da questão", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
+    { "enunciado": "enunciado completo da questão", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
   ],
   "figuraExplicativa": null
 }
@@ -119,16 +120,18 @@ FIGURAS (desenhadas pelo sistema a partir destes dados; use em QUALQUER discipli
 - { "tipo": "mapa", "centro": "ideia central", "ramos": ["...", "..."], "legenda": "" }   (mapa conceitual, 2 a 6 ramos)
 
 Regras:
-- Entre 4 e 6 conceitos.
-- Entre 2 e 4 fórmulas (se a disciplina não usa fórmulas, use "regras" ou "princípios" com notação simbólica ou palavras-chave).
-- Exatamente 3 dicas curtas (uma frase cada), adequadas à disciplina: em Matemática podem ser de resolução; em outras áreas, de atenção, segurança ou leitura.
-- Entre 2 e 4 exemplos práticos.
-- Exatamente ${questoes} exercícios, do mais fácil ao mais difícil; misture questões abertas ("alternativas": []) e de múltipla escolha.
+- Apostila ENXUTA: no máximo 4 conceitos e no máximo 2 fórmulas/regras (se a disciplina não usa fórmulas, use "regras" ou "princípios" com notação simbólica ou palavras-chave).
+- Exatamente 3 dicas curtas (uma frase de até 20 palavras cada), adequadas à disciplina: em Matemática podem ser de resolução; em outras áreas, de atenção, segurança ou leitura.
+- Entre 2 e 3 exemplos práticos.
+- Texto direto: definições de 1 frase, enunciados objetivos e nada de frases de enfeite ("vamos mergulhar", "fascinante mundo", "é muito importante destacar").
+- Exatamente ${questoes} exercícios, do mais fácil ao mais difícil.
+- Tipos de questão VARIADOS: use pelo menos 3 tipos diferentes entre "multipla_escolha", "aberta", "completar", "verdadeiro_falso", "associar" e "explicar" (explicar o raciocínio). Em "completar", marque as lacunas com ____ no enunciado. Em "verdadeiro_falso", liste as afirmações no enunciado, numeradas, para o aluno marcar V ou F. Em "associar", escreva as duas colunas no enunciado (1, 2, 3… e A, B, C…). Só "multipla_escolha" tem alternativas; nos outros tipos use "alternativas": [].
+- Exigência: classifique cada exercício em "exigencia" e inclua ${questoes > 5 ? "pelo menos 2 questões" : "pelo menos 1 questão"} de "analisar", "avaliar" ou "criar" (ex.: encontrar o erro numa resolução, comparar estratégias, justificar uma escolha, criar um exemplo próprio).
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
 - Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). "figuraExplicativa" é OBRIGATÓRIA em toda disciplina: escolha o tipo que melhor representa o conceito principal (ex.: Matemática → reta, fração, grade ou barras; História → linha do tempo; Ciências → fluxo/ciclo; Geografia → barras ou tabela; Português, Arte, Inglês e outras → mapa conceitual, tabela ou fluxo). Além dela, use figura em pelo menos 2 exercícios, sempre que a questão ficar melhor com ela.
-- Regras matemáticas com as condições completas e na linguagem da faixa etária (ex.: no 4º ano, "entre frações unitárias, quanto maior o denominador, menor a fração").
+- Regras matemáticas com as condições completas e na linguagem da faixa etária (ex.: no 4º ano, "entre frações unitárias, quanto maior o denominador, menor a fração"). Comparar frações pelo denominador SÓ vale para frações unitárias ou com o mesmo numerador; comparar pelo numerador SÓ vale com o mesmo denominador. Sempre escreva a condição junto da regra.
 - Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
 - Notação científica: use SEMPRE a convenção N × 10^n, com 1 ≤ N < 10 e n inteiro, na teoria, nas fórmulas, nos exemplos, nos exercícios e no gabarito. Nunca escreva "N = a × 10^n" nem use outra letra para a mantissa.
 - Números e contextos adequados à faixa etária; unidades sempre explícitas.
@@ -244,7 +247,7 @@ Regras:
         material.dificuldade = nivelDif.id;
         material.avisosGabarito = avisosGabarito;
         material.avisosRevisao = avisosRevisao;
-        material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito, ...avisosRevisao];
+        material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito, ...avisosRevisao, ...conferirQualidade(material)];
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
