@@ -85,3 +85,15 @@ test("material antigo (sem tipo/exigência) não reclama de exigência", () => {
   m.exercicios = m.exercicios.map(({ tipo, exigencia, ...e }) => e);
   assert.doesNotMatch(motivos(conferirQualidade(m)), /analisar, avaliar ou criar/);
 });
+
+test("V ou F marcado como 'analisar' não conta como questão exigente", () => {
+  const m = base();
+  m.exercicios[3] = { enunciado: "Marque V ou F: 1) 1/2 > 1/3", tipo: "verdadeiro_falso", exigencia: "analisar", alternativas: [], resposta: "V" };
+  assert.match(motivos(conferirQualidade(m)), /analisar, avaliar ou criar/);
+});
+
+test("'Neste material, exploraremos' é enfeite", () => {
+  const m = base();
+  m.resumoPedagogico = "Neste material, exploraremos como localizar frações na reta.";
+  assert.match(motivos(conferirQualidade(m)), /enfeite/);
+});
