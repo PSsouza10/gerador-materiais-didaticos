@@ -1,3 +1,5 @@
+import "@fontsource/fredoka/600.css";
+import "@fontsource/fredoka/700.css";
 import "./globals.css";
 import Provedores from "@/components/Provedores";
 
