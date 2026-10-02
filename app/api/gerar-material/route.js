@@ -90,6 +90,13 @@ Retorne um JSON com esta estrutura EXATA:
 {
   "tituloDidatico": "título chamativo, curto e impactante, máx 6 palavras",
   "resumoPedagogico": "2-3 frases introdutórias sobre o tema, alinhadas à habilidade da BNCC e adequadas ao nível",
+  "cena": {
+    "titulo": "nome curto da situação (máx. 6 palavras)",
+    "lugar": "cozinha" | "mercado" | "escola" | "parque" | "casa" | "rua" | "feira" | "laboratorio" | "biblioteca" | "quadra",
+    "falas": [ { "quem": "lia" | "theo" | "vo" | "edu", "texto": "fala curta" } ],
+    "figura": { UMA figura dos tipos abaixo, sobre a qual os personagens conversam },
+    "pergunta": "pergunta que a cena deixa para o aluno responder"
+  },
   "conceitos": [
     { "termo": "nome do conceito", "definicao": "definição clara em 1 frase" }
   ],
@@ -119,14 +126,22 @@ FIGURAS (desenhadas pelo sistema a partir destes dados; use em QUALQUER discipli
 - { "tipo": "fluxo", "etapas": ["...", "..."], "ciclo": false, "legenda": "" }   (2 a 6 etapas com setas; "ciclo": true para ciclos como o da água)
 - { "tipo": "mapa", "centro": "ideia central", "ramos": ["...", "..."], "legenda": "" }   (mapa conceitual, 2 a 6 ramos)
 
+CENA DO COTIDIANO (obrigatória em TODA disciplina — é o diferencial da apostila):
+- Personagens fixos: "lia" (Lia, estudante curiosa), "theo" (Théo, estudante que às vezes se confunde), "vo" (Vó Ana, avó que usa o assunto no dia a dia), "edu" (Prof. Edu, professor que pergunta e não entrega a resposta). Use 2 ou 3 deles.
+- Uma situação real do dia a dia da faixa etária (receita, compras, jogo, passeio, notícia, conta de luz, horta...), contada em 4 a 6 falas curtas (até 25 palavras cada), em linguagem natural de conversa.
+- A conversa usa o conteúdo de verdade: alguém tem uma dúvida ou comete um erro comum, outro personagem questiona, e os dois olham para a "figura" da cena (ex.: "Olha a reta: entre 0 e 1 tem 4 partes iguais"). A figura é a ilustração da situação e precisa combinar com as falas.
+- Não resolva tudo na cena: termine com "pergunta" para o aluno, ligada ao conteúdo.
+- Pelo menos 1 exercício retoma a cena pelo nome dos personagens (ex.: "Ajude o Théo: ...").
+
 Regras:
+- Situações do cotidiano em todo o material: a "aplicacaoPratica" e pelo menos metade dos exercícios partem de um contexto real (compras, receitas, esportes, viagens, natureza, tecnologia), nunca só contas soltas.
 - Apostila ENXUTA: no máximo 4 conceitos e no máximo 2 fórmulas/regras (se a disciplina não usa fórmulas, use "regras" ou "princípios" com notação simbólica ou palavras-chave).
 - Exatamente 3 dicas curtas (uma frase de até 20 palavras cada), adequadas à disciplina: em Matemática podem ser de resolução; em outras áreas, de atenção, segurança ou leitura.
 - Entre 2 e 3 exemplos práticos.
 - Texto direto: definições de 1 frase, enunciados objetivos e nada de frases de enfeite ("vamos mergulhar", "fascinante mundo", "é muito importante destacar").
 - Exatamente ${questoes} exercícios, do mais fácil ao mais difícil.
-- Tipos de questão VARIADOS: use pelo menos 3 tipos diferentes entre "multipla_escolha", "aberta", "completar", "verdadeiro_falso", "associar" e "explicar" (explicar o raciocínio). Em "completar", marque as lacunas com ____ no enunciado. Em "verdadeiro_falso", liste as afirmações no enunciado, numeradas, para o aluno marcar V ou F. Em "associar", escreva as duas colunas no enunciado (1, 2, 3… e A, B, C…). Só "multipla_escolha" tem alternativas; nos outros tipos use "alternativas": [].
-- Exigência: classifique cada exercício em "exigencia" e inclua ${questoes > 5 ? "pelo menos 2 questões" : "pelo menos 1 questão"} de "analisar", "avaliar" ou "criar" (ex.: encontrar o erro numa resolução, comparar estratégias, justificar uma escolha, criar um exemplo próprio).
+- Tipos de questão VARIADOS: use pelo menos 3 tipos diferentes entre "multipla_escolha", "aberta", "completar", "verdadeiro_falso", "associar" e "explicar" (explicar o raciocínio). Em "completar", marque as lacunas com ____ no enunciado. Em "verdadeiro_falso", liste as afirmações no enunciado, numeradas, para o aluno marcar V ou F. Em "associar", escreva as duas colunas no enunciado (1, 2, 3… e A, B, C…) usando só textos ou números; não descreva figuras ("meio círculo pintado") sem preencher "figura". Só "multipla_escolha" tem alternativas; nos outros tipos use "alternativas": [].
+- Exigência: classifique cada exercício em "exigencia" e inclua ${questoes > 5 ? "pelo menos 2 questões" : "pelo menos 1 questão"} de "analisar", "avaliar" ou "criar" (ex.: encontrar o erro numa resolução, comparar estratégias, justificar uma escolha, criar um exemplo próprio). Verdadeiro ou falso, completar, associar e múltipla escolha direta NÃO são "analisar", "avaliar" nem "criar": a questão exigente tem de pedir que o aluno explique, justifique, encontre o erro, compare ou crie.
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.

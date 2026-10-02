@@ -14,6 +14,7 @@ import {
 import { obterNivel } from "@/lib/niveis";
 import { conferirGabarito } from "@/lib/gabarito";
 import FiguraDidatica from "@/components/FiguraDidatica";
+import CenaCotidiano from "@/components/CenaCotidiano";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa, linhasResposta } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
@@ -130,6 +131,9 @@ const FolhaA4 = forwardRef(function FolhaA4(
 
       {m.resumoPedagogico && <p className="mt-3 text-justify text-[13px] text-slate-600"><Tx>{m.resumoPedagogico}</Tx></p>}
 
+      {/* Situação do cotidiano contada pelos personagens (abre o conteúdo em toda disciplina) */}
+      {m.cena && <CenaCotidiano cena={m.cena} />}
+
       {/* Conceitos e fórmulas: lado a lado; se faltar um dos dois, o outro ocupa a largura em 2 colunas */}
       <div className={`mt-3 grid gap-3 ${temConceitos && temFormulas ? "grid-cols-2" : "grid-cols-1"}`}>
         {temConceitos && (
@@ -164,7 +168,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
       </div>
 
       {/* Figura que representa o conceito principal (qualquer disciplina) */}
-      {m.figuraExplicativa && (
+      {m.figuraExplicativa && !(m.cena?.figura && JSON.stringify(m.cena.figura) === JSON.stringify(m.figuraExplicativa)) && (
         <section className="bloco-exercicio mt-3 rounded-xl border border-slate-100 p-3.5">
           <FiguraDidatica figura={m.figuraExplicativa} />
         </section>
