@@ -127,3 +127,46 @@ body {
   position: relative;
   top: -2px;
 }
+
+/* ===== Visual Premium (pôster 3D): creme, azul-petróleo e coral =====
+   Mesma folha A4, só troca a paleta e a tipografia — vale na tela, na impressão e no PDF
+   (o html2canvas lê os estilos calculados). Fundo da página continua branco (economiza tinta). */
+.folha-a4[data-tema="premium"] { color: #2c4148; }
+.folha-a4[data-tema="premium"] h2.titulo-material {
+  font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; font-size: 30px; text-transform: uppercase; color: #e8805a;
+  text-shadow: 0 2px 0 #173a44, 2px 0 0 #173a44, -2px 0 0 #173a44, 0 -2px 0 #173a44, 1.4px 1.4px 0 #173a44, -1.4px 1.4px 0 #173a44,
+    1.4px -1.4px 0 #173a44, -1.4px -1.4px 0 #173a44, 0 3px 0 #173a44, 0 4px 0 #173a44, 0 9px 8px rgba(23, 58, 68, 0.2);
+}
+.folha-a4[data-tema="premium"] .text-indigo-500,
+.folha-a4[data-tema="premium"] .text-indigo-600,
+.folha-a4[data-tema="premium"] .text-indigo-700 { color: #1f5f6e; }
+.folha-a4[data-tema="premium"] .text-violet-600,
+.folha-a4[data-tema="premium"] .text-violet-700 { color: #c4603b; }
+.folha-a4[data-tema="premium"] .bg-indigo-50,
+.folha-a4[data-tema="premium"] .bg-indigo-50\/70,
+.folha-a4[data-tema="premium"] .bg-indigo-100,
+.folha-a4[data-tema="premium"] .bg-slate-50\/70 { background: #f6eedc; }
+.folha-a4[data-tema="premium"] .bg-violet-50 { background: #fdebe2; }
+.folha-a4[data-tema="premium"] .bg-indigo-600 { background: #1f5f6e; }
+.folha-a4[data-tema="premium"] .from-violet-50,
+.folha-a4[data-tema="premium"] .from-sky-50 { --tw-gradient-from: #f6eedc var(--tw-gradient-from-position); --tw-gradient-to: rgb(246 238 220 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.folha-a4[data-tema="premium"] .to-indigo-50 { --tw-gradient-to: #fbf6ea var(--tw-gradient-to-position); }
+.folha-a4[data-tema="premium"] .border-indigo-100,
+.folha-a4[data-tema="premium"] .border-indigo-200,
+.folha-a4[data-tema="premium"] .border-slate-100,
+.folha-a4[data-tema="premium"] .border-slate-200 { border-color: #e4d6b8; }
+.folha-a4[data-tema="premium"] .border-indigo-300 { border-color: #c9b48a; }
+.folha-a4[data-tema="premium"] .cabecalho-escola { border-color: #1f5f6e; }
+.folha-a4[data-tema="premium"] .numero rect { fill: #e8805a; }
+.folha-a4[data-tema="premium"] .text-\[11px\].font-extrabold.uppercase,
+.folha-a4[data-tema="premium"] .text-\[13px\].font-extrabold.uppercase {
+  font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; letter-spacing: 0.04em;
+}
+/* figuras didáticas (SVG) na paleta do pôster */
+.folha-a4[data-tema="premium"] [fill="#a5b4fc"] { fill: #f3b89f; }
+.folha-a4[data-tema="premium"] [fill="#4f46e5"] { fill: #1f5f6e; }
+.folha-a4[data-tema="premium"] [stroke="#4f46e5"] { stroke: #1f5f6e; }
+.folha-a4[data-tema="premium"] .border-indigo-400 { border-color: #1f5f6e; }
+.folha-a4[data-tema="premium"] .text-indigo-900 { color: #163f4a; }
+.folha-a4[data-tema="premium"] .text-indigo-800 { color: #163f4a; }
+.folha-a4[data-tema="premium"] .bg-gradient-to-r.from-violet-400 { background: #e8805a; }

@@ -243,16 +243,19 @@ export default function GeradorApostilas() {
 
   // O preview mostra o EXEMPLO (rotulado) até existir um material do professor
   // No exemplo, o nome e a escola são os do professor (formulário, Configurações ou conta Google)
+  // Premium: capa pôster 3D + páginas no mesmo estilo. Sem o plano, a capa pôster vira a escolar.
+  const premium = !!conta.uso?.premium;
+  const capaEfetiva = form.capa === "poster" && !premium ? "escolar" : form.capa;
   const nomeProfessor = form.professor?.trim() || sessao?.user?.name || "";
   const formPreview = gerado
     ? form
     : {
         ...EXEMPLO_FORM,
-        capa: form.capa,
+        capa: capaEfetiva,
         professor: nomeProfessor || EXEMPLO_FORM.professor,
         escola: form.escola?.trim() || (nomeProfessor ? "" : EXEMPLO_FORM.escola),
       };
-  const materialPreview = gerado ? material : EXEMPLO;
+  const materialPreview = gerado ? material : { ...EXEMPLO, tema: premium ? "premium" : "padrao" };
   const imagemPreview = gerado ? urlImagem : null;
 
   const set = (k) => (e) =>
@@ -345,7 +348,7 @@ export default function GeradorApostilas() {
         imagemPromise = fetch("/api/gerar-imagem", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina, capa: form.capa }),
+          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina, capa: capaEfetiva }),
         });
       }
       novoMaterial = await lerStreamMaterial(res, {
@@ -423,7 +426,7 @@ export default function GeradorApostilas() {
     try {
       const base = `apostila-${slugify(formPreview.tema) || "material"}`;
       await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
-        capa: form.capa !== "nenhuma" ? capaRef.current : null,
+        capa: capaEfetiva !== "nenhuma" ? capaRef.current : null,
         titulo: materialPreview.tituloDidatico || formPreview.tema,
         assunto: [formPreview.disciplina, formPreview.tema].filter(Boolean).join(" · "),
         autor: formPreview.professor,
@@ -756,11 +759,14 @@ export default function GeradorApostilas() {
                 <Field label="Capa" icon={PanelTop} name="capa">
                   <select value={form.capa} onChange={set("capa")} className="ipt">
                     {CAPAS.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id} disabled={c.premium && !premium && form.capa !== c.id}>
                         {c.rotulo}
                       </option>
                     ))}
                   </select>
+                  {form.capa === "poster" && !premium && (
+                    <p className="mt-1.5 text-[11.5px] text-amber-700">A capa pôster 3D faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
+                  )}
                 </Field>
               </div>
             </div>
@@ -877,7 +883,7 @@ export default function GeradorApostilas() {
               </div>
             )}
 
-            {form.capa !== "nenhuma" && paginacao.paginasFolha <= 1 && (
+            {capaEfetiva !== "nenhuma" && paginacao.paginasFolha <= 1 && (
               <div className="nao-imprimir mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-[12.5px] text-sky-900">
                 <Info className="h-4 w-4 flex-none" />
                 <span>Ficha curta: o conteúdo cabe em 1 página e a capa dobra o papel.</span>
@@ -936,7 +942,7 @@ export default function GeradorApostilas() {
             <PreviewEscalado onPaginas={setPaginacao}>
               <CapaA4
                 ref={capaRef}
-                variante={form.capa}
+                variante={capaEfetiva}
                 form={formPreview}
                 material={materialPreview}
                 urlImagem={imagemPreview}
@@ -950,7 +956,7 @@ export default function GeradorApostilas() {
                 loadingImagem={gerado && loadingImagem}
                 mostrarGabarito={gabaritoVisivel}
                 exemplo={!gerado}
-                imagemNaCapa={form.capa !== "nenhuma"}
+                imagemNaCapa={capaEfetiva !== "nenhuma"}
               />
             </PreviewEscalado>
           </section>

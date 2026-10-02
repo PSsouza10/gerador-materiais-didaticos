@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import { hashChave } from "@/lib/chave";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
+import { ehPremium } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
 import { normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
@@ -26,7 +27,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Storage (Vercel Blob) não configurado." }, { status: 500 });
     }
 
-    if (!authConfigurado || !(await usuarioAtual())) {
+    const usuario = authConfigurado ? await usuarioAtual() : null;
+    if (!usuario) {
       return NextResponse.json({ error: "Entre com sua conta para salvar e compartilhar." }, { status: 401 });
     }
 
@@ -51,10 +53,12 @@ export async function POST(request) {
         estilo: normalizarEstilo(form.estilo),
         dificuldade: obterNivel(form.dificuldade).id,
         escola: str(form.escola, 120),
-        capa: normalizarCapa(form.capa),
+        // capa pôster é Premium: quem não tem o plano guarda a capa escolar
+        capa: normalizarCapa(form.capa) === "poster" && !ehPremium(usuario.email) ? "escolar" : normalizarCapa(form.capa),
       },
       material: {
         ...normalizarMaterial(material, form.tema),
+        tema: material?.tema === "premium" && ehPremium(usuario.email) ? "premium" : "padrao",
         // o servidor confere o código na base oficial (não confia no navegador)
         bncc: (() => {
           const cod = material.bncc?.codigo || form.bncc;

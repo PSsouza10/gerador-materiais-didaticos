@@ -76,7 +76,7 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
           <p className="truncate text-sm font-bold text-slate-800">{u.name}</p>
           <p className="truncate text-xs text-slate-600">{u.email}</p>
           <div className="mt-3 rounded-xl bg-slate-50 p-2.5">
-            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano grátis</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">{uso?.premium ? "Plano Premium" : "Plano grátis"}</p>
             <MedidorUso uso={uso} />
           </div>
           <button type="button"

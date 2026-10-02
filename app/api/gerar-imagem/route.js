@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirImagem, devolverImagem } from "@/lib/uso";
+import { consumirImagem, devolverImagem, ehPremium } from "@/lib/uso";
 import { normalizarEstilo } from "@/lib/opcoes";
 import { limparTexto, LIMITES } from "@/lib/validacao";
 
@@ -38,7 +38,7 @@ async function processar(request, ctx) {
     const disciplina = limparTexto(body.disciplina).slice(0, 60);
     const estilo = normalizarEstilo(body.estilo);
     const mascote = body.capa === "infografico";
-    const poster = body.capa === "poster";
+    let poster = body.capa === "poster"; // confirmado como Premium depois do login
 
     if (!tema) {
       return NextResponse.json(
@@ -59,6 +59,7 @@ async function processar(request, ctx) {
     }
     const usuario = await usuarioAtual();
     if (!usuario) return NextResponse.json({ error: "Entre com sua conta para gerar ilustrações." }, { status: 401 });
+    poster = poster && ehPremium(usuario.email);
     const img = await consumirImagem(usuario.email);
     if (img?.ok) ctx.consumidoPor = usuario.email;
     if (!img?.ok) {
