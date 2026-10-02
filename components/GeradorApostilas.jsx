@@ -127,16 +127,19 @@ const EXEMPLO = {
   },
   exercicios: [
     {
+      fala: { quem: "lia", texto: "Meu aquário mede 50 cm de comprimento, 30 cm de largura e 40 cm de altura. Quanta água eu compro?" },
       enunciado: "Um aquário tem 50 cm de comprimento, 30 cm de largura e 40 cm de altura. Qual é a sua capacidade em litros?",
       alternativas: ["a) 6 L", "b) 60 L", "c) 600 L", "d) 6000 L"],
       resposta: "b) 60 L — 50 × 30 × 40 = 60 000 cm³ = 60 dm³ = 60 L.",
     },
     {
+      fala: { quem: "theo", texto: "Minha caixa de brinquedos é um cubo de 3 dm de aresta. Acho que o volume é 9 dm³!" },
       enunciado: "Um cubo tem aresta de 3 dm. Qual é o seu volume?",
       alternativas: ["a) 9 dm³", "b) 18 dm³", "c) 27 dm³", "d) 81 dm³"],
       resposta: "c) 27 dm³ — V = 3 × 3 × 3 = 27 dm³ (9 dm² é a área de uma face, não o volume).",
     },
     {
+      fala: { quem: "edu", texto: "Uma garrafa fechada de vidro ocupa espaço na mochila e também guarda suco." },
       enunciado: "Explique, com suas palavras, a diferença entre volume e capacidade.",
       alternativas: [],
       resposta: "Volume é o espaço ocupado pelo objeto; capacidade é o quanto cabe dentro dele.",

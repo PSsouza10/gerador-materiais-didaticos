@@ -38,6 +38,7 @@ async function processar(request, ctx) {
     const disciplina = limparTexto(body.disciplina).slice(0, 60);
     const estilo = normalizarEstilo(body.estilo);
     const mascote = body.capa === "infografico";
+    const poster = body.capa === "poster";
 
     if (!tema) {
       return NextResponse.json(
@@ -77,7 +78,10 @@ async function processar(request, ctx) {
     const sobre = `o tema "${tema}"${disciplina ? ` da disciplina de ${disciplina}` : ""}`;
     // Capa infográfico: só o mascote; título, fórmulas e contas são texto real
     // na capa (a IA de imagem erra texto e matemática).
-    const prompt = mascote
+    // Capa pôster 3D: mascote + objetos do tema no estilo dos pôsteres creme (azul-petróleo e coral)
+    const prompt = poster
+      ? `Ilustração 3D para a capa de um pôster didático escolar brasileiro sobre ${sobre}. À esquerda, um mascote original e simpático: um robozinho de óculos redondos com corpo branco-creme e detalhes azul-petróleo e coral, acenando; ao lado dele, 2 ou 3 objetos do cotidiano que representam o tema (ex.: cestos de frutas, carrinhos, livros, plantas, instrumentos), organizados como numa vitrine. Estilo de animação 3D com acabamento de vinil fosco, formas arredondadas, sombras suaves, paleta azul-petróleo (#1F5F6E), coral (#E8805A), mostarda e verde-sálvia. Fundo creme liso (#F6EEDC), sem cenário e sem moldura, para se fundir à página. Sem texto, sem letras e sem números na imagem. Não imite personagens existentes.`
+      : mascote
       ? `Personagem mascote original e simpático para uma capa de material didático escolar brasileiro sobre ${sobre}: um(a) estudante com óculos ou um robozinho amigável, o que combinar melhor com o tema. Corpo inteiro, sorrindo, virado levemente para a direita e apontando com a mão para a direita, com 2 ou 3 objetos 3D relacionados ao tema ao redor. Animação 3D colorida e original (não imite personagens existentes), formas arredondadas, iluminação suave de estúdio, alta qualidade. Fundo liso lilás bem claro (#EEF0FB), sem cenário. Sem texto, sem letras e sem números na imagem.`
       : `Ilustração educacional sobre ${sobre}, voltada para material didático escolar brasileiro. ${direcaoVisual}. Sem texto, sem letras e sem números na imagem. Composição central, fundo limpo.`;
 

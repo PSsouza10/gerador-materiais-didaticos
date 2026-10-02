@@ -113,3 +113,9 @@ test("apostila sem cena do cotidiano é apontada", () => {
   m.cena = null;
   assert.match(motivos(conferirQualidade(m)), /situação do cotidiano/);
 });
+
+test("exercício sem fala de personagem é apontado (material novo)", () => {
+  const m = base();
+  m.exercicios[0].fala = null;
+  assert.match(motivos(conferirQualidade(m)), /sem a fala do personagem/);
+});

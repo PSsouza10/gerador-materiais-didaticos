@@ -5,10 +5,13 @@ import Chip from "@/components/Chip";
 import { BadgeCheck, GraduationCap, BookOpen, Gauge, Layers } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
+import { Rosto } from "@/components/CenaCotidiano";
+import { elencoDaCena } from "@/lib/cena";
 
 // Capa escolar clara (padrão): fundo branco, economiza tinta. A ilustração
-// da IA aparece transparente ao fundo da metade de cima e em destaque numa
-// moldura. Sem ilustração, entra uma composição de símbolos pedagógicos.
+// da IA ocupa a parte de cima, de ponta a ponta, e se funde no branco; os
+// personagens do EduGera fazem a pergunta da situação do cotidiano.
+// Sem ilustração, entra uma composição de símbolos pedagógicos.
 // Só usa recursos que o html2canvas desenha bem (sem blur/backdrop-filter).
 
 
@@ -71,6 +74,9 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
   // Sem cortar texto: se não couber, a capa simplifica (1: sem resumo, 2: BNCC só
   // com o código, 3: título menor). O texto completo está nas páginas de conteúdo.
   const caixa = useRef(null);
+  // chamada dos personagens: a pergunta da cena (ou o título dela)
+  const chamada = (m.cena?.pergunta || m.cena?.titulo || "").slice(0, 140);
+  const elenco = elencoDaCena(m.cena).slice(0, 2);
   const ajuste = useAjusteAoCaber(caixa, `${titulo}|${m.resumoPedagogico || ""}|${bncc?.texto || ""}`);
 
   return (
@@ -79,33 +85,38 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
       className="capa-a4 relative overflow-hidden bg-white font-sans text-slate-700"
       style={{ width: "210mm", height: "297mm" }}
     >
-      {/* Metade de cima: ilustração transparente ao fundo, esmaecendo para o branco */}
-      <div className="absolute inset-x-0 top-0" style={{ height: 600 }}>
+      {/* Ilustração única, de ponta a ponta, que se funde no branco (sem moldura nem cópia esmaecida por trás) */}
+      <div className="absolute inset-x-0 top-0" style={{ height: 500 }}>
         {urlImagem ? (
           <div
             className="absolute inset-0"
-            style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.2 }}
+            style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center 40%" }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-violet-50" />
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-violet-50" />
+            <Simbolos />
+            <div className="absolute inset-x-0 top-[120px] flex justify-center">
+              <IlustracaoPadrao />
+            </div>
+          </>
         )}
-        <Simbolos />
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 55%, #ffffff 100%)" }}
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.85) 85%, #ffffff 100%)" }}
         />
       </div>
 
-      {/* Faixa superior */}
+      {/* Faixa superior (sobre a ilustração, num cartão branco para ficar legível) */}
       <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-violet-400 via-indigo-400 to-sky-400" />
       <div className="absolute inset-x-12 top-9 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 rounded-2xl bg-white/95 py-2 pl-2 pr-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500">
             <GraduationCap className="h-5 w-5 text-white" />
           </div>
           <div className="leading-tight">
-            <p className="max-w-[520px] break-words text-[14px] font-extrabold text-slate-800">{form.escola || "Material didático"}</p>
-            <p className="max-w-[520px] break-words text-[11.5px] text-slate-500">{form.professor || "Professor(a)"}</p>
+            <p className="max-w-[460px] break-words text-[14px] font-extrabold text-slate-800">{form.escola || "Material didático"}</p>
+            <p className="max-w-[460px] break-words text-[11.5px] text-slate-500">{form.professor || "Professor(a)"}</p>
           </div>
         </div>
         {exemplo ? (
@@ -117,24 +128,25 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
         )}
       </div>
 
-      {/* Ilustração em destaque */}
-      <div className="absolute top-[140px]" style={{ left: 207 }}>
-        {urlImagem ? (
-          <div
-            className="rounded-[28px] bg-white p-2 shadow-[0_18px_40px_-12px_rgba(79,70,229,0.35)] ring-1 ring-indigo-100"
-            style={{ width: 380, height: 330 }}
-          >
-            <div
-              className="h-full w-full rounded-[22px]"
-              style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }}
-            />
+      {/* Personagens do EduGera chamando para a situação da apostila */}
+      {chamada && (
+        <div className="absolute right-12 top-[400px] flex items-end gap-2" style={{ maxWidth: 470 }}>
+          <div className="relative mb-6 rounded-2xl border-2 border-slate-700 bg-white px-3 py-2 text-[12.5px] font-semibold leading-snug text-slate-800 shadow-sm">
+            {chamada}
+            <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true" className="absolute -bottom-[10px] right-5">
+              <path d="M0 0 L14 0 L12 11Z" fill="#fff" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
+              <rect x="1" y="-2" width="12" height="3" fill="#fff" />
+            </svg>
           </div>
-        ) : (
-          <div className="flex items-center justify-center" style={{ width: 380, height: 330 }}>
-            <IlustracaoPadrao />
+          <div className="flex flex-none -space-x-3">
+            {elenco.map((q) => (
+              <div key={q} className="rounded-full bg-white p-0.5 shadow-sm">
+                <Rosto quem={q} tamanho={58} />
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Título, etiquetas, resumo e BNCC em fluxo: crescem com o texto e empurram o que vem depois */}
       <div ref={caixa} className="absolute inset-x-12 top-[520px] bottom-[192px] flex flex-col overflow-hidden">

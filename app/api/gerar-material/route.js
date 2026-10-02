@@ -111,7 +111,7 @@ Retorne um JSON com esta estrutura EXATA:
     "exemplos": ["exemplo prático curto", "..."]
   },
   "exercicios": [
-    { "enunciado": "enunciado completo da questão", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
+    { "fala": { "quem": "lia" | "theo" | "vo" | "edu", "texto": "fala curta do personagem que apresenta a situação ou a dúvida da questão" }, "enunciado": "o que o aluno deve fazer", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
   ],
   "figuraExplicativa": null
 }
@@ -132,6 +132,7 @@ CENA DO COTIDIANO (obrigatória em TODA disciplina — é o diferencial da apost
 - A conversa usa o conteúdo de verdade: alguém tem uma dúvida ou comete um erro comum, outro personagem questiona, e os dois olham para a "figura" da cena (ex.: "Olha a reta: entre 0 e 1 tem 4 partes iguais"). A figura é a ilustração da situação e precisa combinar com as falas.
 - Não resolva tudo na cena: termine com "pergunta" para o aluno, ligada ao conteúdo.
 - Pelo menos 1 exercício retoma a cena pelo nome dos personagens (ex.: "Ajude o Théo: ...").
+- DIÁLOGO NOS EXERCÍCIOS (todas as séries e anos): TODO exercício começa com "fala" — um dos personagens conta a situação do dia a dia ou a dúvida (até 25 palavras, linguagem da faixa etária), e o "enunciado" diz o que o aluno deve fazer, sem repetir a fala. Varie os personagens entre as questões. Ex.: fala { "quem": "theo", "texto": "Comprei 3 pacotes com 12 figurinhas cada. Acho que tenho 15 figurinhas!" } e enunciado "O Théo está certo? Calcule quantas figurinhas ele tem e explique o erro dele."
 
 Regras:
 - Situações do cotidiano em todo o material: a "aplicacaoPratica" e pelo menos metade dos exercícios partem de um contexto real (compras, receitas, esportes, viagens, natureza, tecnologia), nunca só contas soltas.

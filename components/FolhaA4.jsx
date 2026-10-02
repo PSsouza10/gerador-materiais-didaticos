@@ -14,7 +14,7 @@ import {
 import { obterNivel } from "@/lib/niveis";
 import { conferirGabarito } from "@/lib/gabarito";
 import FiguraDidatica from "@/components/FiguraDidatica";
-import CenaCotidiano from "@/components/CenaCotidiano";
+import CenaCotidiano, { FalaCurta } from "@/components/CenaCotidiano";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa, linhasResposta } from "@/lib/material";
 
 // Folha A4 em tamanho real (210 mm de largura, 15 mm de margem lateral).
@@ -224,6 +224,8 @@ const FolhaA4 = forwardRef(function FolhaA4(
             </div>
           )}
           <section className="mt-3.5 rounded-xl border border-slate-200 px-3.5 py-3">
+            {/* um personagem apresenta a situação da questão */}
+            {ex.fala && <FalaCurta fala={ex.fala} className="mb-2" />}
             <p className="text-[12.5px]">
               <Numero n={i + 1} className="mr-1.5 -mt-0.5 align-middle" />
               <Tx>{ex.enunciado}</Tx>
