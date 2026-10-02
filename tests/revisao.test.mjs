@@ -67,3 +67,22 @@ test("material limpo passa sem avisos e sem perder conteúdo", () => {
   assert.deepEqual(material.dicas, m.dicas);
   assert.equal(material.figuraExplicativa.legenda, "EXEMPPLOS"); // figuras não são mexidas
 });
+
+test("cena: fala final que confirma a resposta é retirada", () => {
+  const { material, avisos } = revisarMaterial({
+    conceitos: [],
+    cena: { falas: [
+      { quem: "lia", texto: "Vó, o bolo fica pronto às 15h?" },
+      { quem: "vo", texto: "Faltam 45 minutos e agora são 14h15." },
+      { quem: "lia", texto: "Então às 15h?" },
+      { quem: "vo", texto: "Isso mesmo! Vamos ver no relógio." },
+    ] },
+  });
+  assert.equal(material.cena.falas.length, 3);
+  assert.ok(avisos.some((a) => /entregava a resposta/.test(a.motivo)));
+});
+
+test("cena: fala de dúvida no fim fica", () => {
+  const { material } = revisarMaterial({ conceitos: [], cena: { falas: [{ quem: "lia", texto: "a" }, { quem: "vo", texto: "b" }, { quem: "theo", texto: "Será que dá tempo?" }] } });
+  assert.equal(material.cena.falas.length, 3);
+});

@@ -168,7 +168,8 @@ const FolhaA4 = forwardRef(function FolhaA4(
       </div>
 
       {/* Figura que representa o conceito principal (qualquer disciplina) */}
-      {m.figuraExplicativa && !(m.cena?.figura && JSON.stringify(m.cena.figura) === JSON.stringify(m.figuraExplicativa)) && (
+      {/* não repete o mesmo tipo de figura que já aparece na cena (ex.: duas retas seguidas) */}
+      {m.figuraExplicativa && m.cena?.figura?.tipo !== m.figuraExplicativa.tipo && (
         <section className="bloco-exercicio mt-3 rounded-xl border border-slate-100 p-3.5">
           <FiguraDidatica figura={m.figuraExplicativa} />
         </section>
