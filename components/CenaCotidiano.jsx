@@ -24,7 +24,7 @@ const LUGAR = {
 const T = "#1e293b"; // contorno
 
 // Bustos dos personagens (originais), 64×64
-function Rosto({ quem, tamanho = 56 }) {
+export function Rosto({ quem, tamanho = 56 }) {
   const comum = { width: tamanho, height: tamanho, viewBox: "0 0 64 64", "aria-hidden": true, className: "flex-none" };
   const olhos = (y = 31, dx = 7) => (
     <>
@@ -111,6 +111,27 @@ function Fala({ quem, texto, lado }) {
           <path d={direita ? "M0 0 L14 0 L12 11Z" : "M0 0 L14 0 L2 11Z"} fill="#fff" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
           <rect x="1" y="-2" width="12" height="3" fill="#fff" />
         </svg>
+      </div>
+    </div>
+  );
+}
+
+// Fala curta de um personagem (abre cada exercício): rosto pequeno + balão
+export function FalaCurta({ fala, className = "" }) {
+  if (!fala?.texto) return null;
+  const p = PERSONAGENS[fala.quem] || PERSONAGENS.edu;
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="flex w-[44px] flex-none flex-col items-center">
+        <Rosto quem={fala.quem} tamanho={38} />
+        <span className="text-[9px] font-extrabold leading-tight text-slate-600">{p.nome}</span>
+      </div>
+      <div className="relative rounded-2xl border-2 border-slate-700 bg-white px-2.5 py-1.5 text-[11.5px] leading-snug text-slate-800">
+        <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true" className="absolute -left-[10px] top-[9px]">
+          <path d="M10 0 L0 6 L10 12Z" fill="#fff" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />
+          <rect x="8" y="1" width="3" height="10" fill="#fff" />
+        </svg>
+        <Tx>{fala.texto}</Tx>
       </div>
     </div>
   );
