@@ -103,10 +103,27 @@ const EXEMPLO = {
     "Para litros, calcule em dm³: o número é o mesmo.",
   ],
   lembreteImportante: "V = a³ vale só para o cubo; para qualquer bloco retangular use V = c × l × h.",
+  cena: {
+    titulo: "Quanto cabe na caixa-d'água?",
+    lugar: "casa",
+    falas: [
+      { quem: "theo", texto: "Vó, a caixa-d'água mede 2 m, 1,5 m e 1 m. Então cabem 4,5 litros, né? É só somar!" },
+      { quem: "vo", texto: "Somar? Pense no espaço lá dentro, Théo. Ele tem comprimento, largura e altura." },
+      { quem: "theo", texto: "Ah... então eu multiplico as três medidas da tabela: 2 × 1,5 × 1 = 3. Mas 3 o quê?" },
+      { quem: "vo", texto: "3 metros cúbicos! E cada metro cúbico guarda 1000 litros de água." },
+    ],
+    figura: {
+      tipo: "tabela",
+      cabecalho: ["Medida da caixa", "Valor"],
+      linhas: [["Comprimento", "2 m"], ["Largura", "1,5 m"], ["Altura", "1 m"]],
+      legenda: "Medidas da caixa-d'água da Vó Ana",
+    },
+    pergunta: "Quantos litros de água cabem na caixa-d'água da Vó Ana?",
+  },
   aplicacaoPratica: {
-    titulo: "Caixa-d'água em casa",
-    situacao: "Uma caixa-d'água em forma de bloco retangular mede 2 m de comprimento, 1,5 m de largura e 1 m de altura.",
-    exemplos: ["V = 2 × 1,5 × 1 = 3 m³", "3 m³ = 3000 L"],
+    titulo: "Litros e metros cúbicos por aí",
+    situacao: "Rótulos de bebidas, contas de água, piscinas e aquários usam litros ou metros cúbicos.",
+    exemplos: ["Garrafa de 2 L = 2 dm³", "Conta de água: 1 m³ = 1000 L"],
   },
   exercicios: [
     {

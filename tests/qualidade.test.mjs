@@ -11,6 +11,16 @@ const base = () => ({
   dicas: ["Divida a reta em partes iguais antes de marcar."],
   lembreteImportante: "",
   aplicacaoPratica: { titulo: "Pizza", situacao: "Dividir uma pizza.", exemplos: [] },
+  cena: {
+    titulo: "A pizza da Vó Ana",
+    lugar: "cozinha",
+    falas: [
+      { quem: "theo", texto: "Quero 1/8 da pizza, é maior que 1/4!" },
+      { quem: "vo", texto: "Será? Olha a reta: em quantas partes iguais está dividida?" },
+    ],
+    figura: { tipo: "reta", inicio: 0, fim: 1, divisoes: 8, rotulos: "extremos", marcar: null, legenda: "" },
+    pergunta: "Quem come mais: quem pega 1/8 ou 1/4?",
+  },
   exercicios: [
     { enunciado: "Qual fração é maior?", tipo: "multipla_escolha", exigencia: "compreender", alternativas: ["a) 1/2", "b) 1/3", "c) 1/4", "d) 1/5"], resposta: "a) 1/2" },
     { enunciado: "Complete: 1/2 = ____/4", tipo: "completar", exigencia: "aplicar", alternativas: [], resposta: "2" },
@@ -96,4 +106,10 @@ test("'Neste material, exploraremos' é enfeite", () => {
   const m = base();
   m.resumoPedagogico = "Neste material, exploraremos como localizar frações na reta.";
   assert.match(motivos(conferirQualidade(m)), /enfeite/);
+});
+
+test("apostila sem cena do cotidiano é apontada", () => {
+  const m = base();
+  m.cena = null;
+  assert.match(motivos(conferirQualidade(m)), /situação do cotidiano/);
 });
