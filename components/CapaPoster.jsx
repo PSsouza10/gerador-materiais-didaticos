@@ -186,12 +186,22 @@ const CapaPoster = forwardRef(function CapaPoster({ form, material, urlImagem, e
                 style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center rounded-[24px]" style={{ background: "#efe4cc" }}>
-                <Rosto quem="edu" tamanho={150} />
+              // sem ilustração: a turma do EduGera reunida (sem quadro vazio por trás)
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <div className="flex -space-x-3">
+                  {["lia", "edu", "vo", "theo"].map((q, i) => (
+                    <div key={q} className="rounded-full p-1" style={{ background: CREME, marginTop: i % 2 ? 36 : 0 }}>
+                      <Rosto quem={q} tamanho={i === 1 ? 100 : 80} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-center text-[12px] font-bold uppercase tracking-wider" style={{ color: PETROLEO, fontFamily: FONTE }}>
+                  Lia · Prof. Edu · Vó Ana · Théo
+                </p>
               </div>
             )}
             {/* esmaece as bordas da ilustração no creme (sem "foto colada") */}
-            <div className="absolute inset-0 rounded-[24px]" style={{ boxShadow: `inset 0 0 28px 18px ${CREME}` }} />
+            {urlImagem && <div className="absolute inset-0 rounded-[24px]" style={{ boxShadow: `inset 0 0 28px 18px ${CREME}` }} />}
           </div>
           <div className="flex flex-col gap-5">
             <SeloSerie form={form} />
