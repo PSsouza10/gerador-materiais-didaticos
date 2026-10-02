@@ -15,3 +15,10 @@ test("enunciado longo ganha mais linhas, com teto", () => {
   assert.ok(linhasResposta("Explique " + "x".repeat(5000)) <= 9);
   assert.equal(linhasResposta(), 4);
 });
+
+test("tema visual: só 'premium' passa; o resto vira 'padrao'", async () => {
+  const { normalizarMaterial } = await import("../lib/material.js");
+  assert.equal(normalizarMaterial({ tema: "premium" }).tema, "premium");
+  assert.equal(normalizarMaterial({ tema: "qualquer" }).tema, "padrao");
+  assert.equal(normalizarMaterial({}).tema, "padrao");
+});

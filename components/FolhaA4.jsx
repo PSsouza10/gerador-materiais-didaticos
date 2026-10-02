@@ -35,7 +35,7 @@ const Rotulo = ({ icon: Icon, children, className = "" }) => (
 // como imagem, então o número fica sempre centralizado — texto em caixinhas
 // pequenas costuma sair deslocado no PDF.
 const Numero = ({ n, tamanho = 20, cor = "#6366f1", redondo = false, className = "" }) => (
-  <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" className={`inline-block flex-none ${className}`} aria-hidden="true">
+  <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" className={`numero inline-block flex-none ${className}`} aria-hidden="true">
     <rect width="20" height="20" rx={redondo ? 10 : 5} fill={cor} />
     <text x="10" y="14.2" textAnchor="middle" fontSize="11.5" fontWeight="700" fill="#fff" fontFamily="system-ui, sans-serif">
       {n}
@@ -64,7 +64,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
   const temFormulas = (m.formulas || []).length > 0;
 
   return (
-    <article ref={ref} className="folha-a4 bg-white text-slate-700 font-sans text-[12.5px] leading-[1.5]">
+    <article ref={ref} data-tema={m.tema === "premium" ? "premium" : undefined} className="folha-a4 bg-white text-slate-700 font-sans text-[12.5px] leading-[1.5]">
       {/* Cabeçalho da escola / identificação do aluno */}
       <header className="cabecalho-escola rounded-2xl border-2 border-indigo-100 p-4">
         <div className="flex items-center justify-between gap-4">
@@ -110,7 +110,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
       )}
 
       {/* Título */}
-      <h2 className="mt-4 text-center text-[26px] font-black leading-tight text-indigo-600">
+      <h2 className="titulo-material mt-4 text-center text-[26px] font-black leading-tight text-indigo-600">
         {form.tema ? m.tituloDidatico : "Tema Principal"}
       </h2>
 
