@@ -167,7 +167,7 @@ const CapaPoster = forwardRef(function CapaPoster({ form, material, urlImagem, e
       style={{ width: "210mm", height: "297mm", background: `radial-gradient(ellipse at 50% 35%, #fbf6ea 0%, ${CREME} 60%, #efe4cc 100%)` }}
     >
       {/* escola / professor */}
-      <div className="absolute inset-x-10 top-6 flex items-center justify-between text-[11.5px]" style={{ color: PETROLEO_ESCURO }}>
+      <div className="absolute inset-x-12 top-[40px] flex items-center justify-between text-[11.5px]" style={{ color: PETROLEO_ESCURO }}>
         <span className="font-bold">{form.escola || "Material didático"}{form.professor ? ` · ${form.professor}` : ""}</span>
         {exemplo && <span className="rounded-full bg-amber-400 px-2.5 py-0.5 text-[10.5px] font-black text-amber-950">EXEMPLO</span>}
       </div>
@@ -256,10 +256,10 @@ const CapaPoster = forwardRef(function CapaPoster({ form, material, urlImagem, e
 
       {/* faixa petróleo com o selo */}
       <div className="absolute inset-x-0 bottom-0 h-[64px]" style={{ background: PETROLEO_ESCURO }} />
-      <div className="absolute bottom-[14px] left-1/2 -translate-x-1/2">
+      <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
         <Selo />
       </div>
-      <p className="absolute bottom-3 left-10 max-w-[260px] text-[9.5px] leading-tight text-white/80">{rodapeBncc(bncc, exemplo)}</p>
+      <p className="absolute bottom-[30px] left-12 max-w-[230px] text-[9.5px] leading-tight text-white/80">{rodapeBncc(bncc, exemplo)}</p>
     </section>
   );
 });

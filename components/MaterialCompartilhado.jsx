@@ -72,6 +72,7 @@ export default function MaterialCompartilhado({ dados }) {
 
       <main className="mx-auto max-w-[794px]">
         <h1 className="sr-only">{material.tituloDidatico || form.tema}</h1>
+        <div className="moldura-impressao" data-tema={material?.tema === "premium" ? "premium" : undefined} aria-hidden="true" />
         <PreviewEscalado>
           <CapaA4 ref={capaRef} variante={capa} form={form} material={material} urlImagem={urlImagem} />
           <FolhaA4
