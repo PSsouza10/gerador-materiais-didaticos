@@ -170,3 +170,18 @@ body {
 .folha-a4[data-tema="premium"] .text-indigo-900 { color: #163f4a; }
 .folha-a4[data-tema="premium"] .text-indigo-800 { color: #163f4a; }
 .folha-a4[data-tema="premium"] .bg-gradient-to-r.from-violet-400 { background: #e8805a; }
+
+/* Moldura da página na impressão (Ctrl+P / Imprimir): elemento fixo se repete em cada folha */
+.moldura-impressao { display: none; }
+@media print {
+  .moldura-impressao {
+    display: block;
+    position: fixed;
+    inset: 6mm;
+    border: 0.6mm solid #a5b4fc;
+    border-radius: 4mm;
+    pointer-events: none;
+    z-index: 50;
+  }
+  .moldura-impressao[data-tema="premium"] { border: 0.8mm solid #1f5f6e; }
+}

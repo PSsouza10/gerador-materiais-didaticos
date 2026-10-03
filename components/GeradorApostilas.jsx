@@ -939,6 +939,7 @@ export default function GeradorApostilas() {
               </p>
             )}
 
+            <div className="moldura-impressao" data-tema={materialPreview.tema === "premium" ? "premium" : undefined} aria-hidden="true" />
             <PreviewEscalado onPaginas={setPaginacao}>
               <CapaA4
                 ref={capaRef}
