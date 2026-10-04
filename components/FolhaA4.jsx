@@ -271,6 +271,9 @@ const FolhaA4 = forwardRef(function FolhaA4(
               </li>
             ))}
           </ol>
+          <p className="mt-2.5 border-t border-slate-200 pt-1.5 text-[10px] text-slate-500">
+            Gabarito gerado por IA e conferido automaticamente. Revise antes de aplicar.
+          </p>
         </section>
       )}
 

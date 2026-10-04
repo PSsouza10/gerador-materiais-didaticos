@@ -50,7 +50,7 @@ import { LIMITES, QUANTIDADES } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
-import { conferirCoerencia } from "@/lib/coerencia";
+import { conferirCoerencia, conferirPedido } from "@/lib/coerencia";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
   CONFIG_PADRAO,
@@ -187,6 +187,21 @@ export default function GeradorApostilas() {
   const [config, setConfig] = useState(CONFIG_PADRAO);
   const [materiais, setMateriais] = useState([]);
   const [paginacao, setPaginacao] = useState({ paginas: 1, paginasFolha: 1, capa: false });
+  // Aviso da primeira visita: some depois do "Entendi" (lembrado neste navegador)
+  const [avisoIaVisto, setAvisoIaVisto] = useState(true);
+  useEffect(() => {
+    try {
+      setAvisoIaVisto(window.localStorage.getItem("edugera:aviso-ia") === "1");
+    } catch {
+      setAvisoIaVisto(false);
+    }
+  }, []);
+  const fecharAvisoIa = () => {
+    setAvisoIaVisto(true);
+    try {
+      window.localStorage.setItem("edugera:aviso-ia", "1");
+    } catch {}
+  };
 
   // ===== CONTA E LIMITE =====
   const { data: sessao, status: statusSessao } = useSession();
@@ -304,6 +319,9 @@ export default function GeradorApostilas() {
   };
 
   // ===== GERAÇÃO (conteúdo via streaming + imagem em paralelo) =====
+  // Conferência do pedido antes de gerar (BNCC × etapa × ano × disciplina), sem gastar IA
+  const avisosPedido = useMemo(() => conferirPedido(form), [form]);
+
   const handleGerarMaterial = async () => {
     // trava contra duplo clique/Enter: uma única requisição por vez
     if (gerandoRef.current) return;
@@ -312,6 +330,7 @@ export default function GeradorApostilas() {
       document.getElementById("campo-tema")?.focus();
       return;
     }
+    if (avisosPedido.length && !window.confirm(`Confira o pedido antes de gerar:\n\n• ${avisosPedido.map((a) => a.motivo).join("\n• ")}\n\nGerar mesmo assim?`)) return;
     gerandoRef.current = true;
     try {
       await gerarMaterial();
@@ -627,6 +646,18 @@ export default function GeradorApostilas() {
         )}
 
         {/* Task 2.1 — split-screen: controles à esquerda, live preview à direita */}
+        {active === "Gerar Material" && !avisoIaVisto && (
+          <div role="note" className="nao-imprimir mx-4 mb-4 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950 sm:mx-6 sm:flex-row sm:items-center md:mx-8">
+            <ShieldCheck className="hidden h-6 w-6 flex-none text-indigo-500 sm:block" />
+            <p className="flex-1">
+              <b>O EduGera usa inteligência artificial.</b> Ele confere contas, gabarito, figuras e BNCC automaticamente e avisa o que
+              encontrar, mas a IA ainda pode errar. Revise o material antes de imprimir ou aplicar.
+            </p>
+            <button type="button" onClick={fecharAvisoIa} className="self-start rounded-xl bg-indigo-600 px-4 py-2 font-bold text-white sm:self-auto">
+              Entendi
+            </button>
+          </div>
+        )}
         <div className={`${active === "Gerar Material" ? "grid" : "hidden"} grid-cols-1 xl:grid-cols-2 gap-6 px-4 sm:px-6 md:px-8 pb-10`}>
           {/* ===== FORMULÁRIO ===== */}
           <section className="nao-imprimir self-start rounded-3xl bg-white p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
@@ -785,6 +816,19 @@ export default function GeradorApostilas() {
               </div>
             )}
 
+            {avisosPedido.length > 0 && (
+              <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p className="flex items-center gap-1.5 font-bold">
+                  <AlertTriangle className="h-4 w-4 shrink-0" /> Confira o pedido antes de gerar
+                </p>
+                <ul className="mt-1 list-disc pl-5">
+                  {avisosPedido.map((a, i) => (
+                    <li key={i}>{a.motivo.charAt(0).toUpperCase() + a.motivo.slice(1)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {conta.authConfigurado === false && (
               <p role="status" className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                 A geração está desativada até o login ser configurado neste site. Você ainda pode ver o exemplo e testar a prévia e o PDF.
@@ -824,6 +868,10 @@ export default function GeradorApostilas() {
                 <MedidorUso uso={conta.uso} compacto />
               </p>
             )}
+            <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[12px] text-slate-600">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-indigo-500" />
+              Material gerado por IA: o EduGera confere contas, gabarito e BNCC, mas revise conceitos, exercícios e gabarito antes de imprimir.
+            </p>
             <p className="sr-only" aria-live="polite">
               {statusGeracao}
             </p>

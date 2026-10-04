@@ -17,3 +17,17 @@ test("código da etapa certa não gera aviso", () => {
 test("menos de 3 exercícios é apontado", () => {
   assert.equal(conferirCoerencia({}, { exercicios: ex(1) })[0].onde, "Exercícios");
 });
+
+test("pedido: ano e disciplina do código BNCC (antes de gerar)", async () => {
+  const { conferirPedido, anosDoCodigo } = await import("../lib/coerencia.js");
+  assert.deepEqual(anosDoCodigo("EF06MA03"), [6]);
+  assert.deepEqual(anosDoCodigo("EF69AR01"), [6, 7, 8, 9]);
+  assert.deepEqual(anosDoCodigo("EF15AR04"), [1, 2, 3, 4, 5]);
+  const F = { nivel: "Ensino Fundamental" };
+  assert.equal(conferirPedido({ ...F, ano: "6", disciplina: "Matemática", bncc: "EF06MA03" }).length, 0);
+  assert.match(conferirPedido({ ...F, ano: "8", disciplina: "Matemática", bncc: "EF06MA03" })[0].motivo, /6º ano, mas o ano escolhido é o 8º/);
+  assert.match(conferirPedido({ ...F, ano: "6", disciplina: "Ciências", bncc: "EF06MA03" })[0].motivo, /de Matemática, mas a disciplina escolhida é Ciências/);
+  assert.equal(conferirPedido({ ...F, ano: "7", disciplina: "Arte", bncc: "EF69AR01" }).length, 0);
+  assert.equal(conferirPedido({ nivel: "Ensino Médio", ano: "EM1", disciplina: "História", bncc: "EM13CHS101" }).length, 0);
+  assert.equal(conferirPedido({ ...F, ano: "", disciplina: "Matemática", bncc: "EF06MA03" }).length, 0); // ano não escolhido
+});
