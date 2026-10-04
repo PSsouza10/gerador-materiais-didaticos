@@ -111,7 +111,7 @@ Retorne um JSON com esta estrutura EXATA:
     "exemplos": ["exemplo prático curto", "..."]
   },
   "exercicios": [
-    { "fala": { "quem": "lia" | "theo" | "vo" | "edu", "texto": "fala curta do personagem que apresenta a situação ou a dúvida da questão" }, "enunciado": "o que o aluno deve fazer", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
+    { "fala": { "quem": "lia" | "theo" | "vo" | "edu", "texto": "fala curta do personagem que apresenta a situação ou a dúvida da questão" }, "enunciado": "o que o aluno deve fazer", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": { "tipo": "tabela", "cabecalho": ["...", "..."], "linhas": [["...", "..."]], "legenda": "" } ou null, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
   ],
   "figuraExplicativa": null
 }
@@ -146,7 +146,7 @@ Regras:
 - Fórmulas: apresente primeiro a forma GERAL e depois os casos particulares, dizendo quando se aplicam (ex.: volume do bloco retangular V = c × l × h; cubo V = a³ é um caso particular). Nunca apresente um caso particular como regra geral.
 - Múltipla escolha: exatamente uma alternativa correta; distratores plausíveis, baseados em erros comuns dos alunos (ex.: esquecer de converter unidades), sem "todas/nenhuma das anteriores".
 - Antes de responder, RESOLVA cada exercício em "resolucao" e só então preencha "resposta": a letra marcada TEM de ser a alternativa cujo valor é igual ao resultado final da resolução. Confira letra e valor antes de terminar.
-- Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). "figuraExplicativa" é OBRIGATÓRIA em toda disciplina e tem de ser de TIPO DIFERENTE da figura da cena (ex.: cena com reta → figura explicativa com tabela, barras ou fração): escolha o tipo que melhor representa o conceito principal (ex.: Matemática → reta, fração, grade ou barras; História → linha do tempo; Ciências → fluxo/ciclo; Geografia → barras ou tabela; Português, Arte, Inglês e outras → mapa conceitual, tabela ou fluxo). Além dela, use figura em pelo menos 2 exercícios, sempre que a questão ficar melhor com ela.
+- Figuras: se um enunciado depende de algo visual (figura, parte colorida, reta numérica, tabela, gráfico, malha, linha do tempo), preencha "figura" desse exercício com UM dos tipos acima; senão use null. NUNCA cite figura, reta, tabela ou gráfico no enunciado sem preencher "figura". A figura não pode entregar a resposta: em "localize 1/3 na reta" não use "marcar" nem rótulos "todos"; use "marcar" só quando a pergunta é sobre o ponto destacado (ex.: "que fração o ponto A representa?"). "figuraExplicativa" é OBRIGATÓRIA em toda disciplina e tem de ser de TIPO DIFERENTE da figura da cena (ex.: cena com reta → figura explicativa com tabela, barras ou fração): escolha o tipo que melhor representa o conceito principal (ex.: Matemática → reta, fração, grade ou barras; História → linha do tempo; Ciências → fluxo/ciclo; Geografia → barras ou tabela; Português, Arte, Inglês e outras → mapa conceitual, tabela ou fluxo). Além dela, PELO MENOS 2 exercícios TÊM de vir com "figura" preenchida (não null), em toda disciplina: escreva essas questões a partir da figura (ex.: "Observe a tabela…", "Na reta abaixo…", "Complete o esquema…"). Confira essa contagem antes de terminar.
 - Regras matemáticas com as condições completas e na linguagem da faixa etária (ex.: no 4º ano, "entre frações unitárias, quanto maior o denominador, menor a fração"). Comparar frações pelo denominador SÓ vale para frações unitárias ou com o mesmo numerador; comparar pelo numerador SÓ vale com o mesmo denominador. Sempre escreva a condição junto da regra.
 - Até o 5º ano, escreva fórmulas e regras em palavras simples, sem letras como a, b ou n (ex.: "entre frações unitárias, quanto maior o denominador, menor a fração", e não "1/a < 1/b se a > b").
 - Potências: escreva sempre com ^ (ex.: 3^4, 10^-3, (2^3)^2, a^(m+n)); o sistema formata como expoente.
@@ -167,6 +167,8 @@ Regras:
 
   let openaiResponse;
   try {
+    // Limite por minuto da OpenAI (429): espera o tempo que ela indica e tenta de novo, até 2 vezes
+    for (let tentativa = 0; ; tentativa++) {
     openaiResponse = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`, {
       method: "POST",
       signal: controller.signal,
@@ -185,6 +187,11 @@ Regras:
         ],
       }),
     });
+      if (openaiResponse.status !== 429 || tentativa >= 2) break;
+      const espera = Math.min(12, Math.max(2, parseFloat(openaiResponse.headers.get("retry-after") || "") || 6 * (tentativa + 1)));
+      await openaiResponse.body?.cancel?.();
+      await new Promise((r) => setTimeout(r, espera * 1000));
+    }
   } catch (e) {
     clearTimeout(timer);
     await devolver();

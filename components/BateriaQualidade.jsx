@@ -9,7 +9,7 @@ import { rotuloAno } from "@/lib/bncc";
 // variados (só texto, sem ilustração) e confere cada uma com todas as regras
 // do EduGera. Só para administradores (cada caso usa uma geração).
 
-const SIMULTANEOS = 2;
+const SIMULTANEOS = 1; // a OpenAI limita tokens por minuto; um por vez evita o erro 429
 const CUSTO_CASO_USD = 0.02;
 
 const corNota = (n) => (n >= 85 ? "bg-emerald-100 text-emerald-800" : n >= 70 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800");
@@ -31,7 +31,7 @@ export default function BateriaQualidade() {
 
   const admin = !!conta?.uso?.admin;
 
-  async function rodarCaso(i) {
+  async function rodarCaso(i, tentativa = 0) {
     const c = CASOS_BATERIA[i];
     const inicio = Date.now();
     setResultados((r) => ({ ...r, [i]: { estado: "gerando" } }));
@@ -42,10 +42,18 @@ export default function BateriaQualidade() {
         body: JSON.stringify(c),
       });
       const material = await lerStreamMaterial(res, {});
+      if (!material) throw new Error("resposta vazia");
       const auditoria = auditarMaterial(c, material, { questoes: c.questoes });
       setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, segundos: Math.round((Date.now() - inicio) / 1000) } }));
     } catch (e) {
-      setResultados((r) => ({ ...r, [i]: { estado: "erro", erro: String(e.message || e) } }));
+      const msg = String(e.message || e);
+      // limite por minuto da IA: espera e tenta de novo (até 3 vezes)
+      if (/Limite de uso/.test(msg) && tentativa < 3) {
+        setResultados((r) => ({ ...r, [i]: { estado: "gerando" } }));
+        await new Promise((ok) => setTimeout(ok, 20000));
+        return rodarCaso(i, tentativa + 1);
+      }
+      setResultados((r) => ({ ...r, [i]: { estado: "erro", erro: msg } }));
     }
   }
 
