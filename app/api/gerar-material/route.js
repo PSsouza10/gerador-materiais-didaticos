@@ -62,6 +62,12 @@ export async function POST(request) {
   }
   const devolver = () => devolverGeracao(usuario.email);
 
+  // Modelo de texto: MODELO_TEXTO na Vercel (padrão gpt-4o). Só o administrador
+  // pode escolher outro por pedido, para comparar na bateria de qualidade.
+  const MODELOS = ["gpt-4o", "gpt-4o-mini"];
+  const modeloPadrao = MODELOS.includes(process.env.MODELO_TEXTO) ? process.env.MODELO_TEXTO : "gpt-4o";
+  const modelo = uso.admin && MODELOS.includes(body.modelo) ? body.modelo : modeloPadrao;
+
   // Task 3.1 — o texto oficial da habilidade vem da base, não do navegador.
   const oficial = bncc ? resolverCodigo(BNCC, bncc) : null;
   const linhaBncc = oficial
@@ -177,7 +183,7 @@ Regras:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: modelo,
         temperature: 0.7,
         stream: true,
         response_format: { type: "json_object" },

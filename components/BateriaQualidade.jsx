@@ -20,6 +20,7 @@ export default function BateriaQualidade() {
   const [resultados, setResultados] = useState({});
   const [rodando, setRodando] = useState(false);
   const [aberto, setAberto] = useState(null);
+  const [modelo, setModelo] = useState("gpt-4o");
   const parar = useRef(false);
 
   useEffect(() => {
@@ -39,12 +40,12 @@ export default function BateriaQualidade() {
       const res = await fetch("/api/gerar-material", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(c),
+        body: JSON.stringify({ ...c, modelo }),
       });
       const material = await lerStreamMaterial(res, {});
       if (!material) throw new Error("resposta vazia");
       const auditoria = auditarMaterial(c, material, { questoes: c.questoes });
-      setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, segundos: Math.round((Date.now() - inicio) / 1000) } }));
+      setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, modelo, segundos: Math.round((Date.now() - inicio) / 1000) } }));
     } catch (e) {
       const msg = String(e.message || e);
       // limite por minuto da IA: espera e tenta de novo (até 3 vezes)
@@ -77,7 +78,7 @@ export default function BateriaQualidade() {
       tipo: "bateria-qualidade",
       geradoEm: new Date().toISOString(),
       resumo,
-      resultados: lista.filter((r) => r.estado === "pronto" || r.estado === "erro").map(({ caso, estado, material, auditoria, erro, segundos }) => ({ caso, estado, material, auditoria, erro, segundos })),
+      resultados: lista.filter((r) => r.estado === "pronto" || r.estado === "erro").map(({ caso, estado, material, auditoria, erro, segundos, modelo }) => ({ caso, estado, material, auditoria, erro, segundos, modelo })),
     };
     const blob = new Blob([JSON.stringify(relatorio, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -123,7 +124,16 @@ export default function BateriaQualidade() {
         <button type="button" onClick={baixar} disabled={!lista.some((r) => r.estado === "pronto")} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold disabled:opacity-40">
           Baixar relatório (JSON)
         </button>
-        <span className="text-xs text-slate-500">Custo estimado: ~US$ {(marcados.size * CUSTO_CASO_USD).toFixed(2)} · {SIMULTANEOS} por vez</span>
+        <label className="text-xs text-slate-600">
+          Modelo{" "}
+          <select value={modelo} onChange={(e) => setModelo(e.target.value)} disabled={rodando} className="rounded border border-slate-300 px-1 py-0.5">
+            <option value="gpt-4o">gpt-4o (atual)</option>
+            <option value="gpt-4o-mini">gpt-4o-mini (~15× mais barato)</option>
+          </select>
+        </label>
+        <span className="text-xs text-slate-500">
+          Custo estimado: ~US$ {(marcados.size * (modelo === "gpt-4o-mini" ? 0.0015 : CUSTO_CASO_USD)).toFixed(3)} · {SIMULTANEOS} por vez
+        </span>
       </section>
 
       {resumo.gerados > 0 && (
