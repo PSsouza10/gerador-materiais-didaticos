@@ -42,3 +42,16 @@ test("fluxo e mapa conceitual (todas as disciplinas)", () => {
   assert.equal(mapa.ramos.length, 6);
   assert.ok(citaFigura("Complete o esquema abaixo"));
 });
+
+test("exercício que cita a figura do conteúdo recebe a figura (bateria: História e frações)", async () => {
+  const { normalizarMaterial } = await import("../lib/material.js");
+  const m = normalizarMaterial({
+    figuraExplicativa: { tipo: "linha_do_tempo", eventos: [{ data: "1492", texto: "Chegada de Colombo" }, { data: "1500", texto: "Cabral" }] },
+    exercicios: [
+      { enunciado: "Analise a linha do tempo e identifique o primeiro evento.", alternativas: [], resposta: "1492" },
+      { enunciado: "Localize 1/3 na reta numérica.", alternativas: [], resposta: "1º tracinho" },
+    ],
+  });
+  assert.equal(m.exercicios[0].figura.tipo, "linha_do_tempo");
+  assert.equal(m.exercicios[1].figura, null); // tipo diferente: não inventa
+});

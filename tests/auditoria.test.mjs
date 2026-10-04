@@ -11,7 +11,7 @@ const base = () =>
     resumoPedagogico: "Uma fração unitária é uma das partes iguais de um inteiro.",
     conceitos: [{ termo: "Fração unitária", definicao: "Fração com numerador 1." }],
     formulas: [{ nome: "Comparar", expressao: "1/a < 1/b se a > b", descricao: "" }],
-    figuraExplicativa: { tipo: "reta", inicio: 0, fim: 1, divisoes: 4 },
+    figuraExplicativa: { tipo: "fracao", partes: 4, pintadas: 1 }, // tipo diferente da reta citada no exercício 2
     exercicios: [
       { enunciado: "Qual fração unitária é a maior?", alternativas: ["a) 1/2", "b) 1/3", "c) 1/4", "d) 1/5"], resposta: "a) 1/2" },
       { enunciado: "Localize 1/3 na reta numérica.", alternativas: [], resposta: "No primeiro tracinho." },

@@ -88,3 +88,8 @@ test("frações simples nas alternativas (EF04MA09)", async () => {
   const r = conferirExercicio(ex, 1);
   assert.match(r.exercicio.resposta, /^c\) 1\/4/);
 });
+
+test("resposta aberta '8. 5 + 3 = 8' não é lida como 8,5 (falso alerta da bateria)", () => {
+  const r = conferirExercicio({ enunciado: "Complete: 5 + 3 = ____.", alternativas: [], resposta: "8. 5 + 3 = 8. Portanto, Lia tem 8 balas." }, 1);
+  assert.equal(r.avisos.length, 0);
+});
