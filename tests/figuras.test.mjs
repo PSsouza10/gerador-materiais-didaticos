@@ -55,3 +55,15 @@ test("exercício que cita a figura do conteúdo recebe a figura (bateria: Histó
   assert.equal(m.exercicios[0].figura.tipo, "linha_do_tempo");
   assert.equal(m.exercicios[1].figura, null); // tipo diferente: não inventa
 });
+
+test("'marque 3/4 na reta' com o ponto já destacado: o destaque sai (apostila real de 04/10)", async () => {
+  const { normalizarMaterial } = await import("../lib/material.js");
+  const m = normalizarMaterial({
+    exercicios: [
+      { enunciado: "Observe a reta e marque a fração correspondente.", alternativas: [], resposta: "3/4", figura: { tipo: "reta", inicio: 0, fim: 1, divisoes: 4, marcar: 3 } },
+      { enunciado: "Que fração o ponto A representa?", alternativas: [], resposta: "3/4", figura: { tipo: "reta", inicio: 0, fim: 1, divisoes: 4, marcar: 3 } },
+    ],
+  });
+  assert.equal(m.exercicios[0].figura.marcar, null);
+  assert.equal(m.exercicios[1].figura.marcar, 3); // aqui o ponto faz parte da pergunta
+});
