@@ -6,7 +6,7 @@ const SITE = "https://edugera.vercel.app";
 // API e callbacks do login ficam de fora.
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: ["/", "/privacidade", "/termos"], disallow: ["/api/", "/m/"] }],
+    rules: [{ userAgent: "*", allow: ["/", "/privacidade", "/termos"], disallow: ["/api/", "/m/", "/qualidade"] }],
     sitemap: `${SITE}/sitemap.xml`,
   };
 }

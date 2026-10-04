@@ -764,10 +764,11 @@ export default function GeradorApostilas() {
                       </option>
                     ))}
                   </select>
-                  {form.capa === "poster" && !premium && (
-                    <p className="mt-1.5 text-[11.5px] text-amber-700">A capa pôster 3D faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
-                  )}
                 </Field>
+                {/* fora do Field: ele só liga label/id quando há um único campo dentro */}
+                {form.capa === "poster" && !premium && (
+                  <p className="mt-1.5 text-[11.5px] text-amber-700">A capa pôster 3D faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
+                )}
               </div>
             </div>
 
