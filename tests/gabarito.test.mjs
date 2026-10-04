@@ -93,3 +93,10 @@ test("resposta aberta '8. 5 + 3 = 8' não é lida como 8,5 (falso alerta da bate
   const r = conferirExercicio({ enunciado: "Complete: 5 + 3 = ____.", alternativas: [], resposta: "8. 5 + 3 = 8. Portanto, Lia tem 8 balas." }, 1);
   assert.equal(r.avisos.length, 0);
 });
+
+test("conversão de unidade depois do cálculo não é erro (10^3 g = 1000 g = 1 kg)", () => {
+  const r = conferirExercicio({ enunciado: "Quantos quilogramas são 10^3 gramas?", alternativas: [], resolucao: "10^3 gramas = 1000 gramas = 1 quilograma.", resposta: "1 quilograma." }, 4);
+  assert.equal(r.avisos.length, 0);
+  const errada = conferirExercicio({ enunciado: "Calcule 3^4.", alternativas: [], resolucao: "3^4 = 12", resposta: "12" }, 1);
+  assert.equal(errada.avisos.length, 1); // erro de verdade continua apontado
+});

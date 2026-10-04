@@ -86,3 +86,12 @@ test("cena: fala de dúvida no fim fica", () => {
   const { material } = revisarMaterial({ conceitos: [], cena: { falas: [{ quem: "lia", texto: "a" }, { quem: "vo", texto: "b" }, { quem: "theo", texto: "Será que dá tempo?" }] } });
   assert.equal(material.cena.falas.length, 3);
 });
+
+test("tira 'Vamos explorar...' do resumo (bateria: 5 de 23 casos)", async () => {
+  const { revisarMaterial } = await import("../lib/revisao.js");
+  const r = revisarMaterial({ resumoPedagogico: "Frações unitárias são partes menores que um inteiro. Vamos explorar como representá-las na reta numérica." });
+  assert.equal(r.material.resumoPedagogico, "Frações unitárias são partes menores que um inteiro.");
+  assert.equal(r.avisos[0].tipo, "corrigido");
+  const so = revisarMaterial({ resumoPedagogico: "Vamos explorar a reta." });
+  assert.equal(so.material.resumoPedagogico, "Vamos explorar a reta."); // não deixa o resumo vazio
+});
