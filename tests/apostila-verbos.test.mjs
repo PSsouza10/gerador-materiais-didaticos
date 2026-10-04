@@ -43,3 +43,14 @@ test("figura obrigatória em 2 exercícios só fora de Linguagens", () => {
   assert.ok(!pt.problemas.some((p) => p.onde === "Figuras"));
   assert.ok(ma.problemas.some((p) => p.onde === "Figuras"));
 });
+
+test("fala que cita as duas opções não entrega; fala que copia o enunciado é outro aviso", () => {
+  const comparar = { fala: { quem: "theo", texto: "Preciso saber se 1/5 é maior que 1/4." }, enunciado: "Compare as frações 1/5 e 1/4 e escolha a maior.", alternativas: ["a) 1/5", "b) 1/4", "c) São iguais", "d) Não dá para saber"], resposta: "b) 1/4. Portanto, 1/4 é maior." };
+  assert.equal(falaEntregaResposta(comparar), false);
+  const copia = { fala: { quem: "edu", texto: "Complete: 7 × 10^4 é equivalente a ____ em notação científica." }, enunciado: "Complete: 7 × 10^4 é equivalente a ____ em notação científica.", resposta: "7 × 10^4. Portanto, não há alteração." };
+  const avisos = conferirQualidade({ exercicios: [copia] });
+  assert.ok(avisos.some((a) => /repete o enunciado/.test(a.motivo)));
+  assert.ok(!avisos.some((a) => /mostra a resposta/.test(a.motivo)));
+  // o caso real dos verbos continua pego, mesmo com "(estuda/estudar)" no enunciado
+  assert.equal(falaEntregaResposta({ fala: { quem: "edu", texto: "Se você estudar, talvez entenda melhor." }, enunciado: "Complete: 'Se você ____ (estuda/estudar), talvez entenda melhor.'", resposta: "estudar" }), true);
+});
