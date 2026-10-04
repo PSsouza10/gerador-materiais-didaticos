@@ -34,6 +34,7 @@ import {
   ListOrdered,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
+import RevisaoExercicios from "@/components/RevisaoExercicios";
 import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import SeletorBNCC from "@/components/SeletorBNCC";
@@ -431,11 +432,13 @@ export default function GeradorApostilas() {
     if (!folhaRef.current) return;
     // pontos que o professor precisa conferir (correções automáticas não bloqueiam)
     const pendentes = alertas.filter((a) => a.tipo !== "corrigido");
+    const naoAprovados = gerado ? (material?.exercicios || []).filter((e) => !e.aprovado).length : 0;
     if (
       pendentes.length > 0 &&
       !window.confirm(
         `Há ${pendentes.length} ponto(s) para conferir antes de imprimir:\n\n` +
           pendentes.map((a) => `• ${a.onde}: ${String(a.motivo).replace(/\.$/, "")}`).join("\n") +
+          (naoAprovados ? `\n\n${naoAprovados} exercício(s) ainda não aprovado(s) em "Revisar exercícios".` : "") +
           "\n\nBaixar o PDF mesmo assim?"
       )
     )
@@ -876,6 +879,9 @@ export default function GeradorApostilas() {
               {statusGeracao}
             </p>
           </section>
+
+          {/* Revisão exercício por exercício (só depois de gerar) */}
+          {gerado && !loading && <RevisaoExercicios form={form} material={material} onMudar={setMaterial} />}
 
           {/* ===== LIVE PREVIEW A4 ===== */}
           <section aria-label="Prévia do material" className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
