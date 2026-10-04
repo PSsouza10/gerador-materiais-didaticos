@@ -5,6 +5,7 @@ import { auditarMaterial } from "@/lib/auditoria";
 import { conferirGabarito } from "@/lib/gabarito";
 import FiguraDidatica from "@/components/FiguraDidatica";
 import Tx from "@/components/Tx";
+import { PERSONAGENS } from "@/lib/cena";
 
 // Revisão exercício por exercício, antes de imprimir: cada exercício aparece com
 // o resultado das conferências automáticas e os botões Aprovar, Corrigir com IA
@@ -62,12 +63,13 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
   };
 
   const abrirEdicao = () => {
-    setRascunho({ enunciado: ex.enunciado, alternativas: (ex.alternativas || []).join("\n"), resposta: ex.resposta || "" });
+    setRascunho({ fala: ex.fala?.texto || "", enunciado: ex.enunciado, alternativas: (ex.alternativas || []).join("\n"), resposta: ex.resposta || "" });
     setEditando(true);
   };
   const salvarEdicao = () => {
     trocar({
       ...ex,
+      fala: ex.fala && rascunho.fala.trim() ? { ...ex.fala, texto: rascunho.fala.trim() } : rascunho.fala.trim() ? { quem: "edu", texto: rascunho.fala.trim() } : null,
       enunciado: rascunho.enunciado.trim(),
       alternativas: rascunho.alternativas.split("\n").map((a) => a.trim()).filter(Boolean),
       resposta: rascunho.resposta.trim(),
@@ -95,7 +97,7 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Não foi possível corrigir.");
-      trocar({ ...json.exercicio, fala: ex.fala, aprovado: false });
+      trocar({ ...json.exercicio, fala: json.exercicio.fala || ex.fala, aprovado: false });
       setInstrucao("");
     } catch (e) {
       setErro(e.message);
@@ -158,6 +160,10 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
         {editando ? (
           <div className="mt-3 space-y-2 text-[13px]">
             <label className="block">
+              <span className="text-xs font-bold text-slate-600">Fala do personagem ({PERSONAGENS[ex.fala?.quem]?.nome || "Prof. Edu"})</span>
+              <textarea className="ipt mt-1 w-full" rows={2} value={rascunho.fala} onChange={(e) => setRascunho({ ...rascunho, fala: e.target.value })} />
+            </label>
+            <label className="block">
               <span className="text-xs font-bold text-slate-600">Enunciado</span>
               <textarea className="ipt mt-1 w-full" rows={3} value={rascunho.enunciado} onChange={(e) => setRascunho({ ...rascunho, enunciado: e.target.value })} />
             </label>
@@ -176,6 +182,11 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
           </div>
         ) : (
           <>
+            {ex.fala?.texto && (
+              <p className="mt-2 rounded-xl bg-slate-50 px-3 py-1.5 text-[12.5px] italic text-slate-600">
+                <span className="font-bold not-italic text-slate-700">{PERSONAGENS[ex.fala.quem]?.nome || "Personagem"}:</span> {ex.fala.texto}
+              </p>
+            )}
             <p className="mt-2 text-[13px] text-slate-800"><Tx>{ex.enunciado}</Tx></p>
             {ex.figura && <FiguraDidatica figura={ex.figura} className="mt-2 scale-90" />}
             {ex.alternativas?.length > 0 && (
