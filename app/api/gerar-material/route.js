@@ -179,6 +179,7 @@ Regras:
   const forcado = uso.admin && ["openai", "gemini"].includes(body.provedorTexto) ? body.provedorTexto : null;
   const ordem = forcado ? [forcado] : ["openai", "gemini"].filter((p) => (p === "openai" ? temOpenAI() : temGemini()));
   let fonte = null;
+  let infoFonte = null;
   let provedorTexto = null;
   let semCredito = false;
   let ultimoStatus = 0;
@@ -190,6 +191,7 @@ Regras:
           : await geminiStream({ sistema: systemPrompt, prompt: userPrompt, signal: controller.signal });
       if (r.ok) {
         fonte = r.partes;
+        infoFonte = r.info || null;
         provedorTexto = p;
         break;
       }
@@ -269,9 +271,10 @@ Regras:
           : e.message === "json"
           ? "A IA devolveu uma resposta incompleta. Clique em gerar novamente."
           : "A conexão com a IA foi interrompida. Tente novamente.";
-        console.error("Erro no stream gerar-material:", e);
+        console.error("Erro no stream gerar-material:", e, provedorTexto, infoFonte, acumulado.slice(0, 300));
         await devolver();
-        enviar(ctrl, { tipo: "erro", mensagem: motivo });
+        // administrador vê o diagnóstico (quem gerou, por que parou, começo do texto)
+        enviar(ctrl, { tipo: "erro", mensagem: motivo, ...(uso.admin ? { diagnostico: { provedorTexto, ...infoFonte, caracteres: acumulado.length, inicio: acumulado.slice(0, 300), fim: acumulado.slice(-200) } } : {}) });
       } finally {
         clearTimeout(timer);
         ctrl.close();
