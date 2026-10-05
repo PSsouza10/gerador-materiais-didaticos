@@ -18,12 +18,12 @@ import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from 
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
 // então a requisição não "morre" esperando a resposta completa do modelo.
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 // Encerramos a chamada à OpenAI um pouco antes do limite da Vercel,
 // para ainda conseguir avisar o front com uma mensagem clara.
-const LIMITE_IA_MS = 55_000;
+const LIMITE_IA_MS = 115_000; // Gemini (reserva) pode levar mais de 1 min; Vercel com Fluid compute aceita até 300 s
 
 const BNCC = indexar(bnccDados.habilidades);
 
@@ -267,7 +267,7 @@ Regras:
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
-          ? "A geração passou do tempo limite do servidor (60 s). Tente um tema mais específico ou gere novamente."
+          ? "A geração passou do tempo limite do servidor (2 min). Tente um tema mais específico ou gere novamente."
           : e.message === "json"
           ? "A IA devolveu uma resposta incompleta. Clique em gerar novamente."
           : "A conexão com a IA foi interrompida. Tente novamente.";

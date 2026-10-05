@@ -11,7 +11,7 @@ import { limparTexto } from "@/lib/validacao";
 // da disciplina. Devolve só os apontamentos; quem grava no material é o navegador.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 200) => limparTexto(typeof v === "string" ? v : "").slice(0, max);

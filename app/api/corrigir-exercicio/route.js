@@ -12,7 +12,7 @@ import { openaiJson, geminiJson, temOpenAI, temGemini } from "@/lib/provedoresIA
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
