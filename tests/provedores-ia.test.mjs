@@ -104,3 +104,23 @@ test("Gemini que não aceita 'thinkingLevel' (400): tenta de novo sem o campo", 
   assert.ok(corpos[0].generationConfig.thinkingConfig);
   assert.equal(corpos[1].generationConfig.thinkingConfig, undefined);
 });
+
+test("Gemini lotado (503): passa para o próximo modelo da lista sem esperar", async () => {
+  const e = { ...process.env };
+  process.env.GEMINI_API_KEY = "y";
+  process.env.MODELOS_GEMINI = "m1,m2,m3";
+  const orig = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (u) => {
+    urls.push(u);
+    if (urls.length < 3) return new Response('{"error":{"code":503,"message":"high demand"}}', { status: 503 });
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }), { status: 200 });
+  };
+  const { geminiJson } = await import("../lib/provedoresIA.js");
+  const r = await geminiJson({ sistema: "", prompt: "", modelo: "m1" });
+  globalThis.fetch = orig;
+  for (const k of Object.keys(process.env)) if (!(k in e)) delete process.env[k];
+  Object.assign(process.env, e);
+  assert.equal(r.ok, true);
+  assert.deepEqual(urls.map((u) => u.match(/models\/([^:]+)/)[1]), ["m1", "m2", "m3"]);
+});
