@@ -52,3 +52,16 @@ test("casos da bateria: disciplinas e etapas variadas, códigos da etapa certa",
   assert.ok(new Set(CASOS_BATERIA.map((c) => c.disciplina)).size >= 8);
   for (const c of CASOS_BATERIA) assert.equal(c.bncc.startsWith("EM"), c.nivel === "Ensino Médio", c.bncc);
 });
+
+import { CASOS_BATERIA_2 } from "../lib/bateria.js";
+import { conferirPedido } from "../lib/coerencia.js";
+import { createRequire } from "node:module";
+test("conjunto 2 da bateria: códigos existem na BNCC e combinam com disciplina, etapa e ano", () => {
+  const bncc = new Set(createRequire(import.meta.url)("../data/bncc-habilidades.json").habilidades.map((h) => h.c));
+  assert.ok(CASOS_BATERIA_2.length >= 15);
+  for (const c of CASOS_BATERIA_2) {
+    if (!c.bncc) continue; // casos sem BNCC de propósito
+    assert.ok(bncc.has(c.bncc), c.bncc);
+    assert.deepEqual(conferirPedido(c), [], `${c.bncc} ${c.disciplina} ${c.ano}`);
+  }
+});

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { CASOS_BATERIA } from "@/lib/bateria";
+import { CONJUNTOS_BATERIA } from "@/lib/bateria";
+import { aplicarRevisao } from "@/lib/revisorConteudo";
 import { auditarMaterial, resumirBateria } from "@/lib/auditoria";
 import { lerStreamMaterial } from "@/lib/sse";
 import { rotuloAno } from "@/lib/bncc";
@@ -11,12 +12,16 @@ import { rotuloAno } from "@/lib/bncc";
 
 const SIMULTANEOS = 1; // a OpenAI limita tokens por minuto; um por vez evita o erro 429
 const CUSTO_CASO_USD = 0.02;
+const CUSTO_REVISOR_USD = 0.015;
 
 const corNota = (n) => (n >= 85 ? "bg-emerald-100 text-emerald-800" : n >= 70 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800");
 
 export default function BateriaQualidade() {
   const [conta, setConta] = useState(null);
-  const [marcados, setMarcados] = useState(() => new Set(CASOS_BATERIA.map((_, i) => i)));
+  const [conjunto, setConjunto] = useState(1);
+  const CASOS_BATERIA = CONJUNTOS_BATERIA[conjunto];
+  const [marcados, setMarcados] = useState(() => new Set(CONJUNTOS_BATERIA[1].map((_, i) => i)));
+  const [comRevisor, setComRevisor] = useState(false);
   const [resultados, setResultados] = useState({});
   const [rodando, setRodando] = useState(false);
   const [aberto, setAberto] = useState(null);
@@ -42,8 +47,18 @@ export default function BateriaQualidade() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...c, modelo }),
       });
-      const material = await lerStreamMaterial(res, {});
+      let material = await lerStreamMaterial(res, {});
       if (!material) throw new Error("resposta vazia");
+      // segunda leitura (revisor de conteúdo), igual à do professor no site
+      if (comRevisor) {
+        const rv = await fetch("/api/revisar-conteudo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ form: c, material }),
+        });
+        const j = await rv.json().catch(() => ({}));
+        material = rv.ok ? aplicarRevisao(material, j.apontamentos || []) : { ...material, revisaoConteudo: { feita: false, erro: j.error || `HTTP ${rv.status}` } };
+      }
       const auditoria = auditarMaterial(c, material, { questoes: c.questoes });
       setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, modelo, segundos: Math.round((Date.now() - inicio) / 1000) } }));
     } catch (e) {
@@ -125,6 +140,27 @@ export default function BateriaQualidade() {
           Baixar relatório (JSON)
         </button>
         <label className="text-xs text-slate-600">
+          Conjunto{" "}
+          <select
+            value={conjunto}
+            onChange={(e) => {
+              const n = Number(e.target.value);
+              setConjunto(n);
+              setResultados({});
+              setMarcados(new Set(CONJUNTOS_BATERIA[n].map((_, i) => i)));
+            }}
+            disabled={rodando}
+            className="rounded border border-slate-300 px-1 py-0.5"
+          >
+            <option value={1}>1 · original ({CONJUNTOS_BATERIA[1].length})</option>
+            <option value={2}>2 · novas disciplinas ({CONJUNTOS_BATERIA[2].length})</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <input type="checkbox" checked={comRevisor} onChange={(e) => setComRevisor(e.target.checked)} disabled={rodando} />
+          com revisor de conteúdo
+        </label>
+        <label className="text-xs text-slate-600">
           Modelo{" "}
           <select value={modelo} onChange={(e) => setModelo(e.target.value)} disabled={rodando} className="rounded border border-slate-300 px-1 py-0.5">
             <option value="gpt-4o">gpt-4o (atual)</option>
@@ -132,7 +168,7 @@ export default function BateriaQualidade() {
           </select>
         </label>
         <span className="text-xs text-slate-500">
-          Custo estimado: ~US$ {(marcados.size * (modelo === "gpt-4o-mini" ? 0.0015 : CUSTO_CASO_USD)).toFixed(3)} · {SIMULTANEOS} por vez
+          Custo estimado: ~US$ {(marcados.size * ((modelo === "gpt-4o-mini" ? 0.0015 : CUSTO_CASO_USD) + (comRevisor ? CUSTO_REVISOR_USD : 0))).toFixed(3)} · {SIMULTANEOS} por vez
         </span>
       </section>
 
@@ -184,7 +220,7 @@ export default function BateriaQualidade() {
                   <td className="p-2">
                     <div className="font-bold text-slate-800">{c.tema}</div>
                     <div className="text-xs text-slate-500">
-                      {c.disciplina} · {rotuloAno(c.ano)} · {c.bncc} · {c.questoes} exercícios · {c.dificuldade}
+                      {c.disciplina} · {c.ano ? rotuloAno(c.ano) : "sem ano"} · {c.bncc || "sem BNCC"} · {c.questoes} exercícios · {c.dificuldade}
                     </div>
                   </td>
                   <td className="p-2">
