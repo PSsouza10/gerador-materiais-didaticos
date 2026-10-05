@@ -78,3 +78,10 @@ test("tabela de 'preencha' que já vem com as respostas é apontada", () => {
   assert.equal(tabelaJaPreenchida(vazia), false);
   assert.equal(tabelaJaPreenchida({ ...cheia, enunciado: "Observe a tabela e responda." }), false);
 });
+
+import { falaEntregaResposta } from "../lib/qualidade.js";
+test("alarmes falsos da bateria: lacuna na frase com tabela de dados; palavra que já está no enunciado", () => {
+  assert.equal(tabelaJaPreenchida({ enunciado: "Complete: A cidade tem mais ____ e ____ em comparação ao campo.", figura: { tipo: "tabela", linhas: [["Agricultura", "Indústria"]] } }), false);
+  assert.equal(tabelaJaPreenchida({ enunciado: "Complete a tabela com frações de 1/2 e 1/3.", figura: { tipo: "tabela", linhas: [["1/2", "2"]] } }), true);
+  assert.equal(falaEntregaResposta({ fala: { texto: "Lia, como você escreve 'cachorro' em letra de imprensa?" }, enunciado: "Escreva a palavra 'cachorro' em letra de imprensa.", resposta: "cachorro. Letras separadas." }), false);
+});
