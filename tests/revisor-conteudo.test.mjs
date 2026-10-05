@@ -85,3 +85,23 @@ test("alarmes falsos da bateria: lacuna na frase com tabela de dados; palavra qu
   assert.equal(tabelaJaPreenchida({ enunciado: "Complete a tabela com frações de 1/2 e 1/3.", figura: { tipo: "tabela", linhas: [["1/2", "2"]] } }), true);
   assert.equal(falaEntregaResposta({ fala: { texto: "Lia, como você escreve 'cachorro' em letra de imprensa?" }, enunciado: "Escreva a palavra 'cachorro' em letra de imprensa.", resposta: "cachorro. Letras separadas." }), false);
 });
+
+test("alarmes falsos reais do revisor (bateria 05/10) são descartados; erros reais ficam", () => {
+  const exercicios = [{ tipo: "aberta" }, { tipo: "multipla_escolha", alternativas: ["a) 1", "b) 2"] }, { tipo: "completar" }, { tipo: "explicar" }];
+  const ap = normalizarApontamentos(
+    {
+      apontamentos: [
+        { onde: "exercicio", numero: 1, gravidade: "erro", problema: "O exercício não apresenta alternativas para escolha.", sugestao: "Incluir alternativas para que o aluno escolha a correta." },
+        { onde: "exercicio", numero: 3, problema: "Falta de alternativas para escolha.", sugestao: "Incluir alternativas." },
+        { onde: "exercicio", numero: 4, gravidade: "erro", problema: "A resposta está repetida.", sugestao: "Remover a repetição na resposta." },
+        { onde: "figura", problema: "A figura do conteúdo não tem legenda.", sugestao: "Adicionar uma legenda explicativa." },
+        { onde: "geral", problema: "Faltam alternativas para a pergunta.", sugestao: "Adicionar alternativas." },
+        { onde: "exercicio", numero: 2, gravidade: "erro", problema: "Só há 2 alternativas; falta a alternativa correta.", sugestao: "Incluir a alternativa correta 136,36." },
+        { onde: "exercicio", numero: 4, gravidade: "erro", problema: "A descrição da pirâmide etária está incorreta: base larga indica população jovem.", sugestao: "Corrigir." },
+      ],
+    },
+    exercicios
+  );
+  assert.deepEqual(ap.map((a) => a.numero), [2, 4]);
+  assert.match(ap[1].problema, /pirâmide/);
+});

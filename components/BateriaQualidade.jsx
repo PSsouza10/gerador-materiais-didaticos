@@ -69,7 +69,9 @@ export default function BateriaQualidade() {
         const [openai, gemini] = await Promise.all([revisar("openai"), revisar("gemini")]);
         material = { ...material, comparacaoRevisor: { openai, gemini } };
       }
-      const auditoria = auditarMaterial(c, material, { questoes: c.questoes });
+      // a nota da bateria conta só as conferências fixas (comparável entre rodadas);
+      // os apontamentos do revisor ficam no relatório e no placar
+      const auditoria = auditarMaterial(c, material, { questoes: c.questoes, semRevisor: true });
       setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, modelo, segundos: Math.round((Date.now() - inicio) / 1000) } }));
     } catch (e) {
       const msg = String(e.message || e);

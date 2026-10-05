@@ -66,5 +66,5 @@ export async function POST(request) {
     const msg = /ausente/.test(r.erro || "") ? `Chave do ${provedor === "gemini" ? "Gemini" : "OpenAI"} não configurada na Vercel.` : r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao revisar o conteúdo.";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
-  return NextResponse.json({ apontamentos: normalizarApontamentos(r.json, exercicios.length), provedor });
+  return NextResponse.json({ apontamentos: normalizarApontamentos(r.json, exercicios), provedor });
 }
