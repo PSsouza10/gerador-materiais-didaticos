@@ -69,3 +69,12 @@ test("resposta atrasada de outra apostila é ignorada", () => {
   const ap = normalizarApontamentos({ apontamentos: [{ onde: "geral", problema: "X." }] }, 1);
   assert.equal(aplicarRevisao(outra, ap, ["Enunciado antigo"]), outra);
 });
+
+import { tabelaJaPreenchida } from "../lib/qualidade.js";
+test("tabela de 'preencha' que já vem com as respostas é apontada", () => {
+  const cheia = { enunciado: "Preencha a tabela com o modo correto.", figura: { tipo: "tabela", cabecalho: ["Frase", "Modo"], linhas: [["Estude.", "Imperativo"], ["Nós vamos.", "Indicativo"]] } };
+  const vazia = { ...cheia, figura: { ...cheia.figura, linhas: [["Estude.", "____"], ["Nós vamos.", ""]] } };
+  assert.equal(tabelaJaPreenchida(cheia), true);
+  assert.equal(tabelaJaPreenchida(vazia), false);
+  assert.equal(tabelaJaPreenchida({ ...cheia, enunciado: "Observe a tabela e responda." }), false);
+});
