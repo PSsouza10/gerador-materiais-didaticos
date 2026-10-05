@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirRevisao } from "@/lib/uso";
+import { consumirRevisao, ehAdmin } from "@/lib/uso";
+import { openaiJson, geminiJson, temGemini, temOpenAI, provedorRevisorPadrao } from "@/lib/provedoresIA";
 import { promptRevisor, normalizarApontamentos } from "@/lib/revisorConteudo";
 import { limparTexto } from "@/lib/validacao";
 
@@ -16,7 +17,7 @@ const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 200) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
 export async function POST(request) {
-  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
+  if (!provedorRevisorPadrao()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
@@ -45,34 +46,25 @@ export async function POST(request) {
   const oficial = form.bncc ? resolverCodigo(BNCC, form.bncc) : null;
   const prompt = promptRevisor(form, { ...material, exercicios }, oficial ? `${oficial.c} — ${oficial.t}` : "");
 
-  let r;
-  for (let tentativa = 0; ; tentativa++) {
-    r = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-      body: JSON.stringify({
-        model: process.env.MODELO_REVISOR || "gpt-4o",
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "Você revisa material didático brasileiro alinhado à BNCC. Seja rigoroso e objetivo. Responda em português do Brasil, só com JSON válido." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-    if (r.status !== 429 || tentativa >= 2) break;
-    await new Promise((ok) => setTimeout(ok, 5000 * (tentativa + 1)));
+  // provedor: o padrão da Vercel; administrador pode escolher (bateria compara GPT × Gemini)
+  const pedido = ehAdmin(usuario.email) && ["openai", "gemini"].includes(body.provedor) ? body.provedor : null;
+  const primeiro = pedido || provedorRevisorPadrao();
+  const sistema = "Você revisa material didático brasileiro alinhado à BNCC. Seja rigoroso e objetivo. Responda em português do Brasil, só com JSON válido.";
+  const chamar = (p) => (p === "gemini" ? geminiJson({ sistema, prompt }) : openaiJson({ sistema, prompt, modelo: process.env.MODELO_REVISOR || "gpt-4o" }));
+
+  let provedor = primeiro;
+  let r = await chamar(provedor);
+  // reserva: se o primeiro falhar (fora do ar, cota, chave), tenta o outro — exceto quando o admin escolheu um para comparar
+  const outro = provedor === "gemini" ? "openai" : "gemini";
+  if (!r.ok && !pedido && (outro === "gemini" ? temGemini() : temOpenAI())) {
+    console.error(`Revisor ${provedor} falhou (${r.status}): ${r.erro}. Tentando ${outro}.`);
+    provedor = outro;
+    r = await chamar(provedor);
   }
   if (!r.ok) {
-    console.error("Erro OpenAI (revisar conteúdo):", r.status, await r.text());
-    return NextResponse.json({ error: r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao revisar o conteúdo." }, { status: 502 });
+    console.error(`Erro no revisor (${provedor}):`, r.status, r.erro);
+    const msg = /ausente/.test(r.erro || "") ? `Chave do ${provedor === "gemini" ? "Gemini" : "OpenAI"} não configurada na Vercel.` : r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao revisar o conteúdo.";
+    return NextResponse.json({ error: msg }, { status: 502 });
   }
-  try {
-    const dados = await r.json();
-    const json = JSON.parse(dados.choices?.[0]?.message?.content || "{}");
-    return NextResponse.json({ apontamentos: normalizarApontamentos(json, exercicios.length) });
-  } catch (e) {
-    console.error("Resposta inválida (revisar conteúdo):", e);
-    return NextResponse.json({ error: "O revisor devolveu uma resposta inválida. Tente de novo." }, { status: 502 });
-  }
+  return NextResponse.json({ apontamentos: normalizarApontamentos(r.json, exercicios.length), provedor });
 }

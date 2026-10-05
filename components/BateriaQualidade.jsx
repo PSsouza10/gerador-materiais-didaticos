@@ -21,7 +21,8 @@ export default function BateriaQualidade() {
   const [conjunto, setConjunto] = useState(1);
   const CASOS_BATERIA = CONJUNTOS_BATERIA[conjunto];
   const [marcados, setMarcados] = useState(() => new Set(CONJUNTOS_BATERIA[1].map((_, i) => i)));
-  const [comRevisor, setComRevisor] = useState(false);
+  // revisor: "" (sem), "openai", "gemini" ou "comparar" (os dois nas mesmas apostilas)
+  const [revisor, setRevisor] = useState("");
   const [resultados, setResultados] = useState({});
   const [rodando, setRodando] = useState(false);
   const [aberto, setAberto] = useState(null);
@@ -50,14 +51,23 @@ export default function BateriaQualidade() {
       let material = await lerStreamMaterial(res, {});
       if (!material) throw new Error("resposta vazia");
       // segunda leitura (revisor de conteúdo), igual à do professor no site
-      if (comRevisor) {
+      const revisar = async (provedor) => {
+        const inicioRv = Date.now();
         const rv = await fetch("/api/revisar-conteudo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ form: c, material }),
+          body: JSON.stringify({ form: c, material, provedor }),
         });
         const j = await rv.json().catch(() => ({}));
-        material = rv.ok ? aplicarRevisao(material, j.apontamentos || []) : { ...material, revisaoConteudo: { feita: false, erro: j.error || `HTTP ${rv.status}` } };
+        return rv.ok ? { apontamentos: j.apontamentos || [], provedor: j.provedor, segundos: Math.round((Date.now() - inicioRv) / 1000) } : { erro: j.error || `HTTP ${rv.status}` };
+      };
+      if (revisor === "openai" || revisor === "gemini") {
+        const rv = await revisar(revisor);
+        material = rv.erro ? { ...material, revisaoConteudo: { feita: false, erro: rv.erro } } : aplicarRevisao(material, rv.apontamentos);
+      } else if (revisor === "comparar") {
+        // os dois revisores leem a MESMA apostila; a nota não muda (comparação fica no relatório)
+        const [openai, gemini] = await Promise.all([revisar("openai"), revisar("gemini")]);
+        material = { ...material, comparacaoRevisor: { openai, gemini } };
       }
       const auditoria = auditarMaterial(c, material, { questoes: c.questoes });
       setResultados((r) => ({ ...r, [i]: { estado: "pronto", material, auditoria, modelo, segundos: Math.round((Date.now() - inicio) / 1000) } }));
@@ -86,6 +96,18 @@ export default function BateriaQualidade() {
 
   const lista = Object.entries(resultados).map(([i, r]) => ({ caso: CASOS_BATERIA[i], ...r }));
   const resumo = resumirBateria(lista.filter((r) => r.estado !== "gerando"));
+  // comparação GPT × Gemini: quantos apontamentos (e erros graves) cada um fez nas mesmas apostilas
+  const comparados = lista.filter((r) => r.material?.comparacaoRevisor);
+  const placar = (prov) => {
+    const rs = comparados.map((r) => r.material.comparacaoRevisor[prov]);
+    const ok = rs.filter((x) => x && !x.erro);
+    return {
+      apontamentos: ok.reduce((s, x) => s + x.apontamentos.length, 0),
+      graves: ok.reduce((s, x) => s + x.apontamentos.filter((a) => a.gravidade === "erro").length, 0),
+      falhas: rs.length - ok.length,
+      segundos: ok.length ? Math.round(ok.reduce((s, x) => s + (x.segundos || 0), 0) / ok.length) : 0,
+    };
+  };
 
   function baixar() {
     const relatorio = {
@@ -156,9 +178,14 @@ export default function BateriaQualidade() {
             <option value={2}>2 · novas disciplinas ({CONJUNTOS_BATERIA[2].length})</option>
           </select>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <input type="checkbox" checked={comRevisor} onChange={(e) => setComRevisor(e.target.checked)} disabled={rodando} />
-          com revisor de conteúdo
+        <label className="text-xs text-slate-600">
+          Revisor de conteúdo{" "}
+          <select value={revisor} onChange={(e) => setRevisor(e.target.value)} disabled={rodando} className="rounded border border-slate-300 px-1 py-0.5">
+            <option value="">sem revisor</option>
+            <option value="openai">GPT</option>
+            <option value="gemini">Gemini</option>
+            <option value="comparar">comparar GPT × Gemini</option>
+          </select>
         </label>
         <label className="text-xs text-slate-600">
           Modelo{" "}
@@ -168,7 +195,7 @@ export default function BateriaQualidade() {
           </select>
         </label>
         <span className="text-xs text-slate-500">
-          Custo estimado: ~US$ {(marcados.size * ((modelo === "gpt-4o-mini" ? 0.0015 : CUSTO_CASO_USD) + (comRevisor ? CUSTO_REVISOR_USD : 0))).toFixed(3)} · {SIMULTANEOS} por vez
+          Custo estimado: ~US$ {(marcados.size * ((modelo === "gpt-4o-mini" ? 0.0015 : CUSTO_CASO_USD) + (revisor === "comparar" ? CUSTO_REVISOR_USD * 1.5 : revisor ? CUSTO_REVISOR_USD : 0))).toFixed(3)} · {SIMULTANEOS} por vez
         </span>
       </section>
 
@@ -197,6 +224,22 @@ export default function BateriaQualidade() {
               </ul>
             </div>
           )}
+        </section>
+      )}
+
+      {comparados.length > 0 && (
+        <section className="mt-3 grid gap-3 sm:grid-cols-2">
+          {[["openai", "GPT"], ["gemini", "Gemini"]].map(([prov, nome]) => {
+            const p = placar(prov);
+            return (
+              <div key={prov} className="rounded-xl border border-slate-200 p-3 text-sm">
+                <div className="text-xs font-bold uppercase text-slate-500">Revisor {nome} · {comparados.length} apostila(s)</div>
+                <div className="mt-1">
+                  <b>{p.apontamentos}</b> apontamentos (<b>{p.graves}</b> graves) · {p.falhas} falha(s) · ~{p.segundos}s cada
+                </div>
+              </div>
+            );
+          })}
         </section>
       )}
 
@@ -253,6 +296,28 @@ export default function BateriaQualidade() {
                           ))}
                         </ul>
                       )}
+                      {r.material.comparacaoRevisor &&
+                        [["openai", "GPT"], ["gemini", "Gemini"]].map(([prov, nome]) => {
+                          const x = r.material.comparacaoRevisor[prov];
+                          return (
+                            <div key={prov} className="mt-2 text-xs">
+                              <b>Revisor {nome}:</b>{" "}
+                              {x?.erro ? (
+                                <span className="text-rose-700">falhou ({x.erro})</span>
+                              ) : x.apontamentos.length === 0 ? (
+                                "nada apontado"
+                              ) : (
+                                <ul className="ml-4 list-disc">
+                                  {x.apontamentos.map((a, k) => (
+                                    <li key={k} className={a.gravidade === "erro" ? "text-rose-700" : "text-amber-800"}>
+                                      {a.lugar === "exercicio" ? `Exercício ${a.numero}` : a.lugar}: {a.problema}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          );
+                        })}
                       <p className="mt-2 text-xs text-slate-500">
                         Título: <b>{r.material.tituloDidatico}</b> · {r.material.exercicios?.length || 0} exercícios ·{" "}
                         {r.material.exercicios?.filter((e) => e.figura).length || 0} com figura
