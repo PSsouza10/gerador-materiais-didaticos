@@ -1,11 +1,12 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import { CheckCircle2, AlertTriangle, Wand2, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, ThumbsUp } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, AlertTriangle, Wand2, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2, ThumbsUp, GraduationCap } from "lucide-react";
 import { auditarMaterial } from "@/lib/auditoria";
 import { conferirGabarito } from "@/lib/gabarito";
 import FiguraDidatica from "@/components/FiguraDidatica";
 import Tx from "@/components/Tx";
 import { PERSONAGENS } from "@/lib/cena";
+import { aplicarRevisao } from "@/lib/revisorConteudo";
 
 // Revisão exercício por exercício, antes de imprimir: cada exercício aparece com
 // o resultado das conferências automáticas e os botões Aprovar, Corrigir com IA
@@ -13,13 +14,51 @@ import { PERSONAGENS } from "@/lib/cena";
 
 const numeroDe = (onde = "") => Number((/exerc[ií]cio\s+(\d+)/i.exec(onde) || [])[1]) || null;
 
-export default function RevisaoExercicios({ form, material, onMudar }) {
+// autoRevisar: número que muda a cada apostila recém-gerada; dispara o revisor de conteúdo
+export default function RevisaoExercicios({ form, material, onMudar, autoRevisar = 0 }) {
   const [atual, setAtual] = useState(0);
   const [editando, setEditando] = useState(false);
   const [rascunho, setRascunho] = useState(null);
   const [corrigindo, setCorrigindo] = useState(false);
   const [erro, setErro] = useState("");
   const [instrucao, setInstrucao] = useState("");
+  const [revisando, setRevisando] = useState(false);
+  const [erroRevisor, setErroRevisor] = useState("");
+  const pedidoFeito = useRef(0);
+
+  // Revisor de conteúdo: uma segunda IA lê a apostila como professor da disciplina
+  async function revisarConteudo() {
+    const exs = material?.exercicios || [];
+    if (!exs.length || revisando) return;
+    setErroRevisor("");
+    setRevisando(true);
+    const enunciados = exs.map((e) => e.enunciado);
+    try {
+      const res = await fetch("/api/revisar-conteudo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          form: { disciplina: form.disciplina, nivel: form.nivel, ano: form.ano, tema: form.tema, bncc: form.bncc },
+          material,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Não foi possível revisar o conteúdo.");
+      // função: aplica sobre a versão mais nova (o professor pode ter mexido enquanto isso)
+      onMudar((atualMat) => aplicarRevisao(atualMat, json.apontamentos || [], enunciados));
+    } catch (e) {
+      setErroRevisor(e instanceof TypeError ? "Sem conexão com o servidor." : e.message);
+    } finally {
+      setRevisando(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!autoRevisar || pedidoFeito.current === autoRevisar || material?.revisaoConteudo) return;
+    pedidoFeito.current = autoRevisar;
+    revisarConteudo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRevisar]);
 
   // mostra (e guarda) a versão já conferida: letra do gabarito corrigida etc.
   const conferido = useMemo(() => conferirGabarito(material || {}), [material]);
@@ -69,6 +108,7 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
   const salvarEdicao = () => {
     trocar({
       ...ex,
+      revisor: undefined,
       fala: ex.fala && rascunho.fala.trim() ? { ...ex.fala, texto: rascunho.fala.trim() } : rascunho.fala.trim() ? { quem: "edu", texto: rascunho.fala.trim() } : null,
       enunciado: rascunho.enunciado.trim(),
       alternativas: rascunho.alternativas.split("\n").map((a) => a.trim()).filter(Boolean),
@@ -118,6 +158,41 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
         </span>
       </div>
       <p className="mt-1 text-[12px] text-slate-600">Confira um por vez. Aprove, peça para a IA corrigir só este exercício, edite ou remova.</p>
+
+      {/* revisor de conteúdo: situação e apontamentos que não são de um exercício */}
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[12.5px]" aria-live="polite">
+        {revisando ? (
+          <p className="flex items-center gap-2 font-semibold text-indigo-700">
+            <Loader2 className="h-4 w-4 animate-spin" /> Revisor de conteúdo lendo a apostila como professor de {form.disciplina || "da disciplina"}…
+          </p>
+        ) : material?.revisaoConteudo ? (
+          <>
+            <p className={`flex items-center gap-2 font-bold ${material.revisaoConteudo.total ? "text-amber-800" : "text-emerald-700"}`}>
+              <GraduationCap className="h-4 w-4" />
+              {material.revisaoConteudo.total
+                ? `Revisor de conteúdo: ${material.revisaoConteudo.total} ponto(s) para conferir (marcados nos exercícios em amarelo)`
+                : "Revisor de conteúdo: nenhum problema encontrado"}
+            </p>
+            {(material.revisorGeral || []).length > 0 && (
+              <ul className="mt-1.5 space-y-1 text-amber-900">
+                {material.revisorGeral.map((r, k) => (
+                  <li key={k} className="flex gap-1.5">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
+                    <span><b>{r.onde}:</b> {r.motivo}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-slate-600">{erroRevisor || "Uma segunda IA lê a apostila como professor da disciplina e aponta erros de conteúdo."}</span>
+            <button type="button" onClick={revisarConteudo} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-[12.5px] font-bold text-white">
+              <GraduationCap className="h-4 w-4" /> {erroRevisor ? "Tentar de novo" : "Revisar conteúdo"}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* atalhos: uma bolinha por exercício (verde = aprovado, amarelo = atenção) */}
       <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Exercícios">
@@ -218,7 +293,10 @@ export default function RevisaoExercicios({ form, material, onMudar }) {
             {meus.map((p, k) => (
               <li key={k} className="flex gap-1.5">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none" />
-                <span>{p.motivo.charAt(0).toUpperCase() + p.motivo.slice(1)}</span>
+                <span>
+                  {p.fonte === "revisor" && <b>Revisor: </b>}
+                  {p.motivo.charAt(0).toUpperCase() + p.motivo.slice(1)}
+                </span>
               </li>
             ))}
           </ul>

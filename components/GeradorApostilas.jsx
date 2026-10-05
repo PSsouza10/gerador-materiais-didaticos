@@ -254,6 +254,7 @@ export default function GeradorApostilas() {
 
   // ===== RESULTADO DA IA =====
   const [material, setMaterial] = useState(null);
+  const [pedidoRevisao, setPedidoRevisao] = useState(0);
   const [urlImagem, setUrlImagem] = useState(null);
   const gerado = !!material;
 
@@ -376,6 +377,7 @@ export default function GeradorApostilas() {
         onUso: (uso) => setConta((c) => ({ ...c, uso: { ...c.uso, ...uso } })),
       });
       setMaterial(novoMaterial);
+      setPedidoRevisao(Date.now());
       setUrlImagem(null);
     } catch (e) {
       console.error(e);
@@ -881,7 +883,7 @@ export default function GeradorApostilas() {
           </section>
 
           {/* Revisão exercício por exercício (só depois de gerar) */}
-          {gerado && !loading && <RevisaoExercicios form={form} material={material} onMudar={setMaterial} />}
+          {gerado && !loading && <RevisaoExercicios form={form} material={material} onMudar={setMaterial} autoRevisar={pedidoRevisao} />}
 
           {/* ===== LIVE PREVIEW A4 ===== */}
           <section aria-label="Prévia do material" className="coluna-preview min-w-0 xl:sticky xl:top-4 self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
