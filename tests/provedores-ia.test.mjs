@@ -66,17 +66,14 @@ test("OpenAI sem crédito: não fica esperando, avisa 'semCredito' para o Gemini
   assert.equal(chamadas, 1);
 });
 
-test("stream do Gemini: junta os trechos e ignora o raciocínio interno (thought)", async () => {
+test("Gemini na geração: texto inteiro numa parte só, sem o raciocínio interno (thought)", async () => {
   const e = { ...process.env };
   process.env.GEMINI_API_KEY = "y";
   const orig = globalThis.fetch;
   let url;
   globalThis.fetch = async (u) => {
     url = u;
-    return sse([
-      'data: {"candidates":[{"content":{"parts":[{"text":"pensando...","thought":true}]}}]}\n\n',
-      'data: {"candidates":[{"content":{"parts":[{"text":"{\\"a\\":"}]}}]}\n\ndata: {"candidates":[{"content":{"parts":[{"text":"1}"}]}}]}\n\n',
-    ]);
+    return new Response(JSON.stringify({ candidates: [{ finishReason: "STOP", content: { parts: [{ text: "pensando...", thought: true }, { text: '{"a":' }, { text: "1}" }] } }] }), { status: 200 });
   };
   const r = await geminiStream({ sistema: "S", prompt: "P", modelo: "m" });
   let t = "";
@@ -84,7 +81,8 @@ test("stream do Gemini: junta os trechos e ignora o raciocínio interno (thought
   globalThis.fetch = orig;
   Object.assign(process.env, e);
   assert.equal(t, '{"a":1}');
-  assert.match(url, /m:streamGenerateContent\?alt=sse$/);
+  assert.equal(r.info.finishReason, "STOP");
+  assert.match(url, /m:generateContent$/);
 });
 
 test("Gemini que não aceita 'thinkingLevel' (400): tenta de novo sem o campo", async () => {
