@@ -64,7 +64,7 @@ export async function POST(request) {
   if (!r.ok) {
     console.error(`Erro no revisor (${provedor}):`, r.status, r.erro);
     const msg = /ausente/.test(r.erro || "") ? `Chave do ${provedor === "gemini" ? "Gemini" : "OpenAI"} não configurada na Vercel.` : r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao revisar o conteúdo.";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json({ error: msg, ...(ehAdmin(usuario.email) ? { detalhe: { provedor, status: r.status, erro: String(r.erro || "").slice(0, 300) } } : {}) }, { status: 502 });
   }
   return NextResponse.json({ apontamentos: normalizarApontamentos(r.json, exercicios), provedor });
 }
