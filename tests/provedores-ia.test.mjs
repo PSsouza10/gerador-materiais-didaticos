@@ -48,3 +48,61 @@ test("sem chave: devolve erro em vez de lançar", async () => {
   assert.match((await openaiJson({ sistema: "", prompt: "" })).erro, /ausente/);
   restaurar(e);
 });
+
+import { openaiStream, geminiStream } from "../lib/provedoresIA.js";
+const sse = (linhas) => new Response(new ReadableStream({ start(c) { for (const l of linhas) c.enqueue(new TextEncoder().encode(l)); c.close(); } }), { status: 200 });
+
+test("OpenAI sem crédito: não fica esperando, avisa 'semCredito' para o Gemini assumir", async () => {
+  const e = { ...process.env };
+  process.env.OPENAI_API_KEY = "x";
+  const orig = globalThis.fetch;
+  let chamadas = 0;
+  globalThis.fetch = async () => { chamadas++; return new Response('{"error":{"code":"insufficient_quota"}}', { status: 429 }); };
+  const r = await openaiStream({ sistema: "", prompt: "" });
+  globalThis.fetch = orig;
+  Object.assign(process.env, e);
+  assert.equal(r.ok, false);
+  assert.equal(r.semCredito, true);
+  assert.equal(chamadas, 1);
+});
+
+test("stream do Gemini: junta os trechos e ignora o raciocínio interno (thought)", async () => {
+  const e = { ...process.env };
+  process.env.GEMINI_API_KEY = "y";
+  const orig = globalThis.fetch;
+  let url;
+  globalThis.fetch = async (u) => {
+    url = u;
+    return sse([
+      'data: {"candidates":[{"content":{"parts":[{"text":"pensando...","thought":true}]}}]}\n\n',
+      'data: {"candidates":[{"content":{"parts":[{"text":"{\\"a\\":"}]}}]}\n\ndata: {"candidates":[{"content":{"parts":[{"text":"1}"}]}}]}\n\n',
+    ]);
+  };
+  const r = await geminiStream({ sistema: "S", prompt: "P", modelo: "m" });
+  let t = "";
+  for await (const p of r.partes) t += p;
+  globalThis.fetch = orig;
+  Object.assign(process.env, e);
+  assert.equal(t, '{"a":1}');
+  assert.match(url, /m:streamGenerateContent\?alt=sse$/);
+});
+
+test("Gemini que não aceita 'thinkingLevel' (400): tenta de novo sem o campo", async () => {
+  const e = { ...process.env };
+  process.env.GEMINI_API_KEY = "y";
+  const orig = globalThis.fetch;
+  const corpos = [];
+  globalThis.fetch = async (_u, op) => {
+    corpos.push(JSON.parse(op.body));
+    return corpos.length === 1
+      ? new Response('{"error":{"message":"Unknown name \\"thinkingConfig\\""}}', { status: 400 })
+      : new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] }), { status: 200 });
+  };
+  const { geminiJson } = await import("../lib/provedoresIA.js");
+  const r = await geminiJson({ sistema: "", prompt: "" });
+  globalThis.fetch = orig;
+  Object.assign(process.env, e);
+  assert.equal(r.ok, true);
+  assert.ok(corpos[0].generationConfig.thinkingConfig);
+  assert.equal(corpos[1].generationConfig.thinkingConfig, undefined);
+});

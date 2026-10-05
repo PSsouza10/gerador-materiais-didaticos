@@ -12,6 +12,7 @@ import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
 import { figurasObrigatorias } from "@/lib/figuras";
+import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from "@/lib/provedoresIA";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
@@ -40,8 +41,8 @@ export async function POST(request) {
   const v = validarPedido(body);
   if (!v.ok) return erroJson(v.erro, 400);
   const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade, questoes } = v.dados;
-  if (!process.env.OPENAI_API_KEY) {
-    return erroJson("Chave da OpenAI não configurada no servidor.", 500);
+  if (!temOpenAI() && !temGemini()) {
+    return erroJson("Nenhuma chave de IA configurada no servidor.", 500);
   }
 
   // Login obrigatório + limite mensal: protege o crédito da OpenAI
@@ -173,38 +174,34 @@ Regras:
   const timer = setTimeout(() => controller.abort(new Error("timeout")), LIMITE_IA_MS);
   request.signal?.addEventListener?.("abort", () => controller.abort(new Error("cliente")));
 
-  let openaiResponse;
+  // Texto da apostila: OpenAI primeiro; se ela falhar (sem crédito, fora do ar, limite),
+  // o Gemini assume (GEMINI_API_KEY). O administrador pode forçar um deles na bateria.
+  const forcado = uso.admin && ["openai", "gemini"].includes(body.provedorTexto) ? body.provedorTexto : null;
+  const ordem = forcado ? [forcado] : ["openai", "gemini"].filter((p) => (p === "openai" ? temOpenAI() : temGemini()));
+  let fonte = null;
+  let provedorTexto = null;
+  let semCredito = false;
+  let ultimoStatus = 0;
   try {
-    // Limite por minuto da OpenAI (429): espera o tempo que ela indica e tenta de novo, até 2 vezes
-    for (let tentativa = 0; ; tentativa++) {
-    openaiResponse = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: modelo,
-        temperature: 0.7,
-        stream: true,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-      if (openaiResponse.status !== 429 || tentativa >= 2) break;
-      const espera = Math.min(12, Math.max(2, parseFloat(openaiResponse.headers.get("retry-after") || "") || 6 * (tentativa + 1)));
-      await openaiResponse.body?.cancel?.();
-      await new Promise((r) => setTimeout(r, espera * 1000));
+    for (const p of ordem) {
+      const r =
+        p === "openai"
+          ? await openaiStream({ sistema: systemPrompt, prompt: userPrompt, modelo, signal: controller.signal })
+          : await geminiStream({ sistema: systemPrompt, prompt: userPrompt, signal: controller.signal });
+      if (r.ok) {
+        fonte = r.partes;
+        provedorTexto = p;
+        break;
+      }
+      ultimoStatus = r.status;
+      if (r.semCredito) semCredito = true;
+      console.error(`Erro ${p} (texto):`, r.status, r.erro);
     }
   } catch (e) {
     clearTimeout(timer);
     await devolver();
     const timeout = controller.signal.aborted;
-    console.error("Erro de conexão com a OpenAI:", e);
+    console.error("Erro de conexão com a IA:", e);
     return erroJson(
       timeout
         ? "A IA demorou demais para começar a responder. Tente novamente em instantes."
@@ -213,15 +210,14 @@ Regras:
     );
   }
 
-  if (!openaiResponse.ok) {
+  if (!fonte) {
     clearTimeout(timer);
     await devolver();
-    const detalhe = await openaiResponse.text();
-    console.error("Erro OpenAI (texto):", openaiResponse.status, detalhe);
-    const msg =
-      openaiResponse.status === 429
-        ? "Limite de uso da IA atingido no momento. Aguarde um pouco e tente novamente."
-        : "Falha ao gerar conteúdo na OpenAI.";
+    const msg = semCredito
+      ? "O serviço de IA do EduGera está temporariamente indisponível. Tente novamente mais tarde."
+      : ultimoStatus === 429
+      ? "Limite de uso da IA atingido no momento. Aguarde um pouco e tente novamente."
+      : "Falha ao gerar o conteúdo. Tente novamente.";
     return erroJson(msg, 502);
   }
 
@@ -233,29 +229,12 @@ Regras:
   const stream = new ReadableStream({
     async start(ctrl) {
       enviar(ctrl, { tipo: "progresso", caracteres: 0 });
-      const reader = openaiResponse.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
       let acumulado = "";
       let ultimoEnvio = 0;
 
       try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const linhas = buffer.split("\n");
-          buffer = linhas.pop();
-          for (const l of linhas) {
-            if (!l.startsWith("data:")) continue;
-            const dado = l.slice(5).trim();
-            if (dado === "[DONE]") continue;
-            try {
-              acumulado += JSON.parse(dado).choices?.[0]?.delta?.content ?? "";
-            } catch {
-              /* linha parcial — ignorada */
-            }
-          }
+        for await (const pedaco of fonte) {
+          acumulado += pedaco;
           if (acumulado.length - ultimoEnvio > 150) {
             ultimoEnvio = acumulado.length;
             enviar(ctrl, { tipo: "progresso", caracteres: acumulado.length });
@@ -264,7 +243,7 @@ Regras:
 
         let parsed;
         try {
-          parsed = JSON.parse(acumulado);
+          parsed = textoParaJson(acumulado);
         } catch {
           throw new Error("json");
         }
@@ -278,6 +257,7 @@ Regras:
           ? { codigo: bncc, texto: habilidade || "", verificada: false }
           : null;
         material.dificuldade = nivelDif.id;
+        material.geradoPor = provedorTexto;
         material.tema = uso.premium ? "premium" : "padrao";
         material.avisosGabarito = avisosGabarito;
         material.avisosRevisao = avisosRevisao;

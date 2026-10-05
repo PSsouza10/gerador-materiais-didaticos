@@ -23,6 +23,8 @@ export default function BateriaQualidade() {
   const [marcados, setMarcados] = useState(() => new Set(CONJUNTOS_BATERIA[1].map((_, i) => i)));
   // revisor: "" (sem), "openai", "gemini" ou "comparar" (os dois nas mesmas apostilas)
   const [revisor, setRevisor] = useState("");
+  // quem escreve a apostila: "" (padrão do site: OpenAI com Gemini de reserva), "openai" ou "gemini"
+  const [gerador, setGerador] = useState("");
   const [resultados, setResultados] = useState({});
   const [rodando, setRodando] = useState(false);
   const [aberto, setAberto] = useState(null);
@@ -46,7 +48,7 @@ export default function BateriaQualidade() {
       const res = await fetch("/api/gerar-material", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...c, modelo }),
+        body: JSON.stringify({ ...c, modelo, ...(gerador ? { provedorTexto: gerador } : {}) }),
       });
       let material = await lerStreamMaterial(res, {});
       if (!material) throw new Error("resposta vazia");
@@ -181,6 +183,14 @@ export default function BateriaQualidade() {
           </select>
         </label>
         <label className="text-xs text-slate-600">
+          Gerador{" "}
+          <select value={gerador} onChange={(e) => setGerador(e.target.value)} disabled={rodando} className="rounded border border-slate-300 px-1 py-0.5">
+            <option value="">padrão (GPT, Gemini de reserva)</option>
+            <option value="openai">só GPT</option>
+            <option value="gemini">só Gemini</option>
+          </select>
+        </label>
+        <label className="text-xs text-slate-600">
           Revisor de conteúdo{" "}
           <select value={revisor} onChange={(e) => setRevisor(e.target.value)} disabled={rodando} className="rounded border border-slate-300 px-1 py-0.5">
             <option value="">sem revisor</option>
@@ -276,7 +286,7 @@ export default function BateriaQualidade() {
                       <button type="button" onClick={() => setAberto(aberto === i ? null : i)} className="flex items-center gap-2 text-left">
                         <span className={`rounded-lg px-2 py-0.5 font-black ${corNota(r.auditoria.nota)}`}>{r.auditoria.nota}</span>
                         <span className="text-xs text-slate-600">
-                          {r.auditoria.erros} erro(s) · {r.auditoria.avisos} aviso(s) · {r.segundos}s {aberto === i ? "▲" : "▼"}
+                          {r.auditoria.erros} erro(s) · {r.auditoria.avisos} aviso(s) · {r.segundos}s{r.material?.geradoPor ? ` · ${r.material.geradoPor === "gemini" ? "Gemini" : "GPT"}` : ""} {aberto === i ? "▲" : "▼"}
                         </span>
                       </button>
                     )}

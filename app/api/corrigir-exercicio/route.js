@@ -6,6 +6,7 @@ import { consumirCorrecao } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
+import { openaiJson, geminiJson, temOpenAI, temGemini } from "@/lib/provedoresIA";
 
 // Refaz UM exercício da apostila, com o motivo do problema (revisão exercício por exercício).
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
@@ -17,7 +18,7 @@ const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
 export async function POST(request) {
-  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
+  if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
@@ -63,31 +64,19 @@ Regras: fique no tema e na habilidade; a "fala" é de um personagem (lia, theo, 
 
 Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado": "...", "tipo": "...", "exigencia": "...", "alternativas": [...], "figura": null, "resolucao": "...", "resposta": "..." }`;
 
-  let r;
-  for (let tentativa = 0; ; tentativa++) {
-    r = await fetch(`${process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        temperature: 0.5,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-    if (r.status !== 429 || tentativa >= 2) break;
-    await new Promise((ok) => setTimeout(ok, 5000 * (tentativa + 1)));
+  // OpenAI primeiro; se falhar (sem crédito, fora do ar), o Gemini corrige
+  const sistema = "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido.";
+  let r = temOpenAI() ? await openaiJson({ sistema, prompt, modelo: "gpt-4o", temperatura: 0.5 }) : { ok: false, status: 500, erro: "sem OpenAI" };
+  if (!r.ok && temGemini()) {
+    console.error("Corrigir exercício: OpenAI falhou, usando Gemini:", r.status, r.erro);
+    r = await geminiJson({ sistema, prompt, temperatura: 0.5 });
   }
   if (!r.ok) {
-    console.error("Erro OpenAI (corrigir exercício):", r.status, await r.text());
+    console.error("Erro IA (corrigir exercício):", r.status, r.erro);
     return NextResponse.json({ error: r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao corrigir o exercício." }, { status: 502 });
   }
   try {
-    const dados = await r.json();
-    const novo = JSON.parse(dados.choices?.[0]?.message?.content || "{}");
+    const novo = r.json || {};
     const [normalizado] = normalizarMaterial({ exercicios: [novo] }, f.tema).exercicios;
     if (!normalizado) throw new Error("vazio");
     const { exercicio, avisos } = conferirExercicio(normalizado, Number(body.numero) || 1);
