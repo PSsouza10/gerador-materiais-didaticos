@@ -1,4 +1,5 @@
 "use client";
+import TurmaEduGera from "@/components/TurmaEduGera";
 import React, { forwardRef, useRef } from "react";
 import { useAjusteAoCaber, tamanhoTitulo } from "@/lib/ajuste";
 import Chip from "@/components/Chip";
@@ -216,10 +217,7 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
                 style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }}
               />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-[#6e6e78]">
-                <Sparkles className="h-8 w-8" />
-                <span className="text-[11px] font-semibold">ilustração · {form.estilo}</span>
-              </div>
+              <TurmaEduGera tema={form.tema || material?.tituloDidatico} lado={330} escuro />
             )}
           </div>
           <div className="mx-3 mt-2 flex justify-between font-mono text-[10px] text-[#8b8b93]">

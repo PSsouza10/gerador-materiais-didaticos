@@ -6,6 +6,7 @@ import Tx from "@/components/Tx";
 import { GraduationCap, BadgeCheck } from "lucide-react";
 import { obterNivel } from "@/lib/niveis";
 import { bnccDoMaterial, rodapeBncc, linhaEtapa } from "@/lib/material";
+import TurmaEduGera from "@/components/TurmaEduGera";
 
 // Capa "infográfico": pôster colorido com título em letras de bolha, mascote 3D
 // da IA apontando para uma lousa e cartões "O que significa?", "Exemplos
@@ -180,9 +181,8 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
             {urlImagem ? (
               <div className="h-full w-full" style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }} role="img" aria-label={`Ilustração sobre ${form.tema || "o tema"}`} />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-white/60" aria-hidden="true">
-                <GraduationCap className="h-32 w-32 text-indigo-300" />
-              </div>
+              // sem ilustração de IA: a turma do EduGera diante da lousa com o tema
+              <TurmaEduGera tema={form.tema || titulo} lado={lado} />
             )}
           </div>
           <div
