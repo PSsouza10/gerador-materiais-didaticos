@@ -137,6 +137,12 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
   const exemplos = outras.length >= 2 ? outras : []; // um item sozinho no quadro fica pobre
   const conceitos = (m.conceitos || []).slice(0, 5);
   const aplicacao = m.aplicacaoPratica;
+  // lousa da turma (sem ilustração de IA): um exemplo curto do próprio conteúdo
+  // ("Vou à escola", "3 × 4 = 12"), diferente da conta em blocos e da fórmula em destaque
+  const naLousa =
+    [...(aplicacao?.exemplos || []), ...formulas.map((f) => f.expressao)]
+      .map((e) => String(e || "").replace(/^\s*[→\-–•]\s*/, "").trim())
+      .find((e) => e && e.length <= 34 && e !== conta && e !== destaque?.expressao) || form.tema || titulo;
 
   // pouco conteúdo abaixo (sem conta em blocos nem quadro de exemplos): mascote maior ocupa a página
   const lado = conta || exemplos.length ? 310 : 390;
@@ -182,7 +188,7 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
               <div className="h-full w-full" style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }} role="img" aria-label={`Ilustração sobre ${form.tema || "o tema"}`} />
             ) : (
               // sem ilustração de IA: a turma do EduGera diante da lousa com o tema
-              <TurmaEduGera tema={form.tema || titulo} lado={lado} />
+              <TurmaEduGera tema={naLousa} lado={lado} />
             )}
           </div>
           <div

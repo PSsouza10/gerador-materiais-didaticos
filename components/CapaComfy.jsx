@@ -217,7 +217,15 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
                 style={{ backgroundImage: `url(${urlImagem})`, backgroundSize: "cover", backgroundPosition: "center" }}
               />
             ) : (
-              <TurmaEduGera tema={form.tema || material?.tituloDidatico} lado={330} escuro />
+              <TurmaEduGera
+                tema={
+                  [...(m.aplicacaoPratica?.exemplos || []), ...(m.formulas || []).map((f) => f?.expressao)]
+                    .map((e) => String(e || "").replace(/^\s*[→\-–•]\s*/, "").trim())
+                    .find((e) => e && e.length <= 34) || form.tema || m.tituloDidatico
+                }
+                lado={330}
+                escuro
+              />
             )}
           </div>
           <div className="mx-3 mt-2 flex justify-between font-mono text-[10px] text-[#8b8b93]">
