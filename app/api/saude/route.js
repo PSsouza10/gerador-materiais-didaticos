@@ -18,7 +18,13 @@ async function getRota(_request, _contexto, request_id) {
     request_id,
     iaSimulada: iaSimulada(),
     blob: { prefixo: PREFIXO_TESTE, tokenConfigurado: !!process.env.BLOB_READ_WRITE_TOKEN },
-    banco: { configurado: ligado, marcador, ok: marcador === "teste" },
+    banco: {
+      configurado: ligado,
+      marcador,
+      ok: marcador === "teste",
+      // diagnóstico sem expor o valor: só se a variável existe e se tem "postgres" dentro
+      variavel: !process.env.DATABASE_URL_TESTE ? "ausente" : /postgres(ql)?:\/\//.test(process.env.DATABASE_URL_TESTE) ? "ok" : "formato inesperado",
+    },
     commit: (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 7) || null,
     branch: process.env.VERCEL_GIT_COMMIT_REF || null,
   });
