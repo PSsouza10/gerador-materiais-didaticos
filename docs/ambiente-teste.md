@@ -19,7 +19,7 @@ Em todas as variáveis abaixo marque **só Preview** (nunca Production).
 
 1. **Neon**: criar projeto `edugera-teste` → copiar a connection string → na Vercel, `DATABASE_URL_TESTE` (Preview).
 2. **Blob**: Vercel → Storage → criar store `edugera-teste` → conectar só a Preview (ela cria `BLOB_READ_WRITE_TOKEN` de Preview).
-3. Variáveis de Preview: `APP_ENV=teste`, `IA_SIMULADA=1`, um `NEXTAUTH_SECRET` diferente do de produção, `NEXTAUTH_URL` = endereço do Preview do branch.
+3. Variáveis de Preview: `APP_ENV=teste`, `IA_SIMULADA=1`, um (o login do Preview já volta sozinho para o endereço do teste — `lib/ambiente.js`, `urlLoginPreview`).
 4. **Google OAuth**: adicionar `<endereço do Preview>/api/auth/callback/google` nas URIs de redirecionamento.
 5. Fazer redeploy do Preview do `fase-0`.
 

@@ -46,3 +46,10 @@ test("ehProducao só com VERCEL_ENV=production", () => {
   assert.equal(ehProducao(TESTE), false);
   assert.equal(ehProducao({ NODE_ENV: "production" }), false);
 });
+
+test("login do Preview volta ao endereço do teste; produção não muda", async () => {
+  const { urlLoginPreview } = await import("../lib/ambiente.js");
+  assert.equal(urlLoginPreview({ VERCEL_ENV: "preview", VERCEL_BRANCH_URL: "edugera-git-fase-0-x.vercel.app" }), "https://edugera-git-fase-0-x.vercel.app");
+  assert.equal(urlLoginPreview({ VERCEL_ENV: "production", VERCEL_BRANCH_URL: "edugera-git-main-x.vercel.app" }), null);
+  assert.equal(urlLoginPreview({}), null);
+});
