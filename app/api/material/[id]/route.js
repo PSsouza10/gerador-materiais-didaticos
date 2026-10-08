@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
+import { caminhoBlob } from "@/lib/ambiente";
 import { head, del } from "@vercel/blob";
 import { chaveConfere } from "@/lib/chave";
 
@@ -7,7 +9,7 @@ import { chaveConfere } from "@/lib/chave";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function DELETE(request, { params }) {
+async function deleteRota(request, { params }) {
   const { id } = params;
   if (!/^[\w-]{6,32}$/.test(id)) return NextResponse.json({ error: "Link inválido." }, { status: 400 });
 
@@ -20,7 +22,7 @@ export async function DELETE(request, { params }) {
 
   let meta;
   try {
-    meta = await head(`materiais/${id}.json`);
+    meta = await head(caminhoBlob(`materiais/${id}.json`));
   } catch {
     // já não existe: para o professor, o resultado é o mesmo
     return NextResponse.json({ ok: true, jaRevogado: true });
@@ -39,3 +41,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Não foi possível revogar agora. Tente novamente." }, { status: 500 });
   }
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const DELETE = comRequestId("/api/material/[id]", deleteRota);

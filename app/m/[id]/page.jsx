@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { head } from "@vercel/blob";
+import { caminhoBlob } from "@/lib/ambiente";
 import MaterialCompartilhado from "@/components/MaterialCompartilhado";
 
 // Task 4.1 — Página pública do material compartilhado entre docentes.
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 async function carregar(id) {
   if (!/^[\w-]{6,32}$/.test(id) || !process.env.BLOB_READ_WRITE_TOKEN) return null;
   try {
-    const meta = await head(`materiais/${id}.json`);
+    const meta = await head(caminhoBlob(`materiais/${id}.json`));
     const res = await fetch(meta.url, { cache: "no-store" });
     if (!res.ok) return null;
     const { chaveHash, ...dados } = await res.json(); // o hash não vai para o navegador

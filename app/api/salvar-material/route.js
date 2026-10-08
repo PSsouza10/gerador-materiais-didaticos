@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
+import { caminhoBlob } from "@/lib/ambiente";
 import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import { hashChave } from "@/lib/chave";
@@ -21,7 +23,7 @@ export const dynamic = "force-dynamic";
 const LIMITE_BYTES = 200_000;
 const str = (v, max = 300) => (typeof v === "string" ? v.slice(0, max) : "");
 
-export async function POST(request) {
+async function postRota(request) {
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json({ error: "Storage (Vercel Blob) não configurado." }, { status: 500 });
@@ -80,7 +82,7 @@ export async function POST(request) {
     const id = randomBytes(8).toString("base64url");
     const chave = randomBytes(18).toString("base64url");
     registro.chaveHash = hashChave(chave);
-    await put(`materiais/${id}.json`, JSON.stringify(registro), {
+    await put(caminhoBlob(`materiais/${id}.json`), JSON.stringify(registro), {
       access: "public",
       contentType: "application/json",
       addRandomSuffix: false,
@@ -94,3 +96,6 @@ export async function POST(request) {
     return NextResponse.json({ error: "Não foi possível salvar o material." }, { status: 500 });
   }
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const POST = comRequestId("/api/salvar-material", postRota);

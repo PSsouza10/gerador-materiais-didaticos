@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { lerHistorico, sincronizarHistorico, LIMITE_ITENS } from "@/lib/historico";
 
@@ -12,7 +13,7 @@ async function conta() {
 }
 
 // Lista "Minhas Apostilas" da conta
-export async function GET() {
+async function getRota() {
   const u = await conta();
   if (!u) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
   try {
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 // { itens?: [...], removidos?: [id] } → junta com o que já está na conta e devolve a lista
-export async function POST(request) {
+async function postRota(request) {
   const u = await conta();
   if (!u) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
   try {
@@ -39,3 +40,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Não foi possível sincronizar o histórico." }, { status: 500 });
   }
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const GET = comRequestId("/api/historico", getRota);
+export const POST = comRequestId("/api/historico", postRota);

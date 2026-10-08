@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
+import { caminhoBlob, iaSimulada } from "@/lib/ambiente";
 import { put } from "@vercel/blob";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirImagem, devolverImagem, ehPremium } from "@/lib/uso";
@@ -46,6 +48,8 @@ async function processar(request, ctx) {
         { status: 400 }
       );
     }
+
+    if (iaSimulada()) return NextResponse.json({ urlImagem: null, simulado: true });
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
@@ -154,7 +158,7 @@ async function processar(request, ctx) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
-    const nomeArquivo = `apostilas/${slug || "ilustracao"}-${Date.now()}.png`;
+    const nomeArquivo = caminhoBlob(`apostilas/${slug || "ilustracao"}-${Date.now()}.png`);
 
     const blob = await put(nomeArquivo, imagemBuffer, {
       access: "public",
@@ -174,9 +178,12 @@ async function processar(request, ctx) {
 
 // Se a ilustração falhar depois de reservada, devolve a vaga: o professor pode
 // tentar de novo sem precisar gastar outra geração de material.
-export async function POST(request) {
+async function postRota(request) {
   const ctx = { consumidoPor: null };
   const res = await processar(request, ctx);
   if (res.status >= 400 && ctx.consumidoPor) await devolverImagem(ctx.consumidoPor);
   return res;
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const POST = comRequestId("/api/gerar-imagem", postRota);

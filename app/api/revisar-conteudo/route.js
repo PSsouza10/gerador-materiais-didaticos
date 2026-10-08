@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
@@ -16,7 +17,7 @@ export const maxDuration = 90;
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 200) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
-export async function POST(request) {
+async function postRota(request) {
   if (!provedorRevisorPadrao()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
@@ -68,3 +69,6 @@ export async function POST(request) {
   }
   return NextResponse.json({ apontamentos: normalizarApontamentos(r.json, exercicios), provedor });
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const POST = comRequestId("/api/revisar-conteudo", postRota);

@@ -1,5 +1,6 @@
 import { conferirCoerencia } from "@/lib/coerencia";
 import { NextResponse } from "next/server";
+import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo, rotuloAno } from "@/lib/bncc";
 import { verificarUnidades } from "@/lib/unidades";
@@ -29,7 +30,7 @@ const BNCC = indexar(bnccDados.habilidades);
 
 const erroJson = (mensagem, status) => NextResponse.json({ error: mensagem }, { status });
 
-export async function POST(request) {
+async function postRota(request) {
   let body;
   try {
     body = await request.json();
@@ -294,3 +295,6 @@ Regras:
     },
   });
 }
+
+// request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
+export const POST = comRequestId("/api/gerar-material", postRota);
