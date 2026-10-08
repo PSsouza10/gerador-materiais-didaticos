@@ -53,3 +53,11 @@ test("login do Preview volta ao endereço do teste; produção não muda", async
   assert.equal(urlLoginPreview({ VERCEL_ENV: "production", VERCEL_BRANCH_URL: "edugera-git-main-x.vercel.app" }), null);
   assert.equal(urlLoginPreview({}), null);
 });
+
+test("DATABASE_URL_TESTE colada com aspas, espaços ou psql ainda funciona (só fora da produção)", () => {
+  const u = "postgresql://u:p@ep-x.us-east-1.aws.neon.tech/neondb?sslmode=require";
+  assert.equal(urlBanco({ VERCEL_ENV: "preview", DATABASE_URL_TESTE: ` "${u}" ` }), u);
+  assert.equal(urlBanco({ VERCEL_ENV: "preview", DATABASE_URL_TESTE: `psql '${u}'` }), u);
+  assert.equal(urlBanco({ VERCEL_ENV: "production", DATABASE_URL_TESTE: u }), null);
+  assert.equal(urlBanco({ VERCEL_ENV: "preview", DATABASE_URL_TESTE: "mysql://x" }), null);
+});
