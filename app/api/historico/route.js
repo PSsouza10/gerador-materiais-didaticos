@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { lerHistorico, sincronizarHistorico, LIMITE_ITENS } from "@/lib/historico";
+import { bancoLigado } from "@/lib/banco";
+import { listarMateriais, sincronizarMateriais } from "@/lib/contas";
+import { garantirImportacao } from "@/lib/importacao";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +20,10 @@ async function getRota() {
   const u = await conta();
   if (!u) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
   try {
+    if (bancoLigado()) {
+      await garantirImportacao(u.email);
+      return NextResponse.json({ itens: await listarMateriais(u.email) });
+    }
     return NextResponse.json({ itens: await lerHistorico(u.email) });
   } catch (e) {
     console.error("Erro ao ler histórico:", e);
@@ -33,7 +40,9 @@ async function postRota(request) {
     if (bruto.length > 200_000) return NextResponse.json({ error: "Lista grande demais." }, { status: 413 });
     const { itens = [], removidos = [] } = JSON.parse(bruto || "{}");
     if (!Array.isArray(itens) || !Array.isArray(removidos)) return NextResponse.json({ error: "Formato inválido." }, { status: 400 });
-    const lista = await sincronizarHistorico(u.email, itens.slice(0, LIMITE_ITENS), removidos.filter((r) => typeof r === "string").slice(0, LIMITE_ITENS));
+    const sincronizar = bancoLigado() ? sincronizarMateriais : sincronizarHistorico;
+    if (bancoLigado()) await garantirImportacao(u.email);
+    const lista = await sincronizar(u.email, itens.slice(0, LIMITE_ITENS), removidos.filter((r) => typeof r === "string").slice(0, LIMITE_ITENS));
     return NextResponse.json({ itens: lista });
   } catch (e) {
     console.error("Erro ao sincronizar histórico:", e);

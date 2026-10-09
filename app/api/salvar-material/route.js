@@ -11,6 +11,8 @@ import { obterNivel } from "@/lib/niveis";
 import { normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
+import { bancoLigado } from "@/lib/banco";
+import { gravarMaterial } from "@/lib/contas";
 
 const BNCC = indexar(bnccDados.habilidades);
 
@@ -81,6 +83,16 @@ async function postRota(request) {
     // só o navegador de quem gerou conhece; no registro fica apenas o hash dela
     const id = randomBytes(8).toString("base64url");
     const chave = randomBytes(18).toString("base64url");
+    const origem = new URL(request.url).origin;
+    // com banco (Fase 1): o material vai para o banco; se o banco falhar, cai no Blob como antes
+    if (bancoLigado()) {
+      try {
+        await gravarMaterial(usuario.email, { id, url: `${origem}/m/${id}`, chave, chaveHash: hashChave(chave), registro });
+        return NextResponse.json({ id, url: `${origem}/m/${id}`, chave });
+      } catch (e) {
+        console.error("Banco indisponível ao salvar; usando o Blob:", e?.message || e);
+      }
+    }
     registro.chaveHash = hashChave(chave);
     await put(caminhoBlob(`materiais/${id}.json`), JSON.stringify(registro), {
       access: "public",
@@ -89,7 +101,6 @@ async function postRota(request) {
       cacheControlMaxAge: 60, // após revogar, cópias em cache expiram em até 1 min
     });
 
-    const origem = new URL(request.url).origin;
     return NextResponse.json({ id, url: `${origem}/m/${id}`, chave });
   } catch (error) {
     console.error("Erro na rota salvar-material:", error);

@@ -5,6 +5,7 @@ import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { CONFIG_PADRAO } from "@/lib/local";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS } from "@/lib/opcoes";
 import Privacidade from "@/components/telas/Privacidade";
+import MinhaConta from "@/components/MinhaConta";
 
 const Campo = ({ icone: Icone, rotulo, ajuda, children }) => (
   <label className="block">
@@ -131,6 +132,8 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
           <Trash2 className="h-3.5 w-3.5" /> Limpar lista
         </button>
       </section>
+
+      <MinhaConta />
     </form>
   );
 }
