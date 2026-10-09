@@ -1,7 +1,7 @@
 # Fase 1 · Parte B — ligar o banco no site real
 
 **Plano para revisão. Nada executado.**
-Versão 3 · 09/10/2026 · site real no commit `4c00a00`, banco desligado
+Versão 4 · 09/10/2026 (ajustes do Paulo: seção 13) · site real no commit `4c00a00`, banco desligado
 
 **Ponto de partida:**
 - Site real: projeto Vercel `gerador-materiais-didaticos`. Tudo fica no Vercel Blob.
@@ -189,3 +189,82 @@ A Parte B só é aprovada se **todos** forem verdadeiros:
 - [ ] Relatório ao Paulo antes de nova tentativa
 
 **Fora da Parte B:** pagamentos, planos, limites, n8n.
+
+
+---
+
+## 13. Ajustes da revisão do Paulo (v4) — valem sobre os itens anteriores
+
+### 13.1 Neon: backup antes e depois
+- `backup-pre` (vazio, antes da migração) **não** substitui backup de dados.
+- Branches adicionais: `pos-estrutura` (após criar as tabelas), `pos-importacao-paulo` (após a conferência 100% da conta do Paulo) e um por dia nos 7 primeiros dias (`dia-1` … `dia-7`).
+- O Neon também guarda histórico de restauração por horário (janela do plano grátis), usado como 2ª linha.
+
+### 13.2 Backup local independente, conferido por SHA-256
+- A cópia dentro do Blob **não** conta como independente.
+- Rota de administrador gera um **pacote .zip** com todos os arquivos de `usuarios/`, `historicos/`, `materiais/`, `apostilas/` + `manifesto.json` (caminho, tamanho, SHA-256). Paulo baixa no computador e guarda também no Google Drive.
+- Conferência: Paulo anexa o .zip aqui; eu recalculo o SHA-256 de cada arquivo e comparo com o manifesto **e** com uma 2ª leitura direta do Blob. Só vale com 100% iguais.
+
+### 13.3 Nada apagado fisicamente (revogação lógica + retenção)
+- Importar **não** apaga nada do Blob.
+- Revogar com banco ligado = **lógico**: `revogado = true` no banco + "lápide" `revogados/<id>.json` no Blob (dupla gravação). O conteúdo continua guardado.
+- A página `/m/<id>` dá 404 se o banco marcar revogado **ou** se existir lápide — nunca cai na cópia do Blob.
+- **Retenção de 30 dias**; depois, a remoção física dos revogados só com a sua autorização (lista mostrada antes).
+
+### 13.4 Divergências Blob × banco
+- Para cada material: SHA-256 do JSON **canônico** (chaves em ordem; o banco reordena campos) do Blob × do banco.
+- Divergente: **não corrige sozinho**; marca `divergente` no relatório, a página continua servindo o banco, e a versão do Blob fica guardada. Decisão caso a caso com você.
+
+### 13.5 Importação: trava, status, timeout, parcial
+**Achado no código atual (a corrigir em P5/P7):** a importação marca "importado" antes de terminar; se a função for interrompida por tempo, a conta fica marcada sem os dados (não há perda — o Blob segue intacto —, mas não haveria nova tentativa). Correção:
+- Coluna `importacao_status`: `pendente` → `em_andamento` (com horário) → `concluida` | `falhou`.
+- Reserva atômica: só começa se `pendente`/`falhou` ou `em_andamento` há mais de 5 min.
+- Trava por conta (`pg_advisory_xact_lock`) dentro da transação.
+- **Todos os dados + `concluida` na MESMA transação**: ou entra tudo, ou nada.
+- Orçamento de 20 s (a função tem 60 s): passou disso, aborta, `falhou`, tenta no próximo login.
+- **Chamadas simultâneas** (duas abas, celular + PC): a 2ª vê `em_andamento`, não importa, e mostra a lista do Blob naquela chamada; na seguinte já vem do banco.
+- Teste automático novo: 6 importações simultâneas da mesma conta → 1 executa, 0 duplicados.
+
+### 13.6 O que a validação compara
+| Medida | Fonte A | Fonte B |
+|---|---|---|
+| caminhos, tamanhos, SHA-256 | manifesto "antes" | Blob "depois" e .zip local |
+| usuários (contas com arquivo) | Blob | contas `concluida` no banco + pendentes |
+| materiais por conta | lista do Blob | banco |
+| links ativos / revogados | Blob + lápides | banco |
+| órfãos (material sem lista) | inventário | inventário (iguais; continuam abrindo) |
+| quebrados (lista sem arquivo) | inventário | banco (item sem conteúdo, mesmo número) |
+| duplicados | — | banco: 0 por id; 0 por (conta, id) |
+| conteúdo | SHA-256 canônico Blob | SHA-256 canônico banco |
+
+### 13.7 Proteção das rotas de backup
+- Só para e-mails em `ADMIN_EMAILS`, conferido **no servidor** pela sessão; sem sessão = 401, não-admin = 403.
+- **Sem parâmetro de conta**: a conta é sempre a da sessão; o pacote geral só existe para admin. Parâmetros extras são ignorados.
+- Resposta com `Cache-Control: no-store` e download direto (não vira arquivo público).
+- Cópias de backup no Blob com acesso **privado** e nome aleatório; o manifesto **não** fica no Blob público.
+- Registro de cada uso (só horário e quantidade, sem e-mail).
+
+### 13.8 Rollback com parte dos usuários já importada
+- **Nível 1 (banco desligado):** o código novo volta a ler o Blob. Como tudo foi gravado também no Blob (materiais novos, lista, uso, lápides de revogação), **importados e não importados veem o mesmo que no banco**. Só o perfil fica de fora (guardado no banco).
+- **Nível 2 (`4c00a00`):** esse código não conhece lápides → antes do Promote, rodar "aplicar revogações": os materiais revogados no período (lista vinda do banco) têm a cópia do Blob removida — **com a sua autorização**, depois de baixados no .zip.
+- **Religar depois:** todas as contas voltam a `pendente`; a importação repete (não duplica: id único) e traz o que foi criado no Blob durante o rollback.
+
+## 14. Ensaio completo no ambiente de teste (antes da virada)
+Os caminhos dos arquivos do Paulo são iguais no teste e no site real (mesma chave do Blob), então a cópia vai para `teste/` sem alteração.
+1. Rota de admin (teste) copia **só os arquivos do Paulo** do Blob real para `teste/`.
+2. Paulo entra no site de teste → importação → conferência 13.6: **29/29, 28/28, 0 duplicados, hashes iguais**.
+3. Falhas simuladas: corte por tempo no meio da importação; banco indisponível; 2 abas ao mesmo tempo; marcador errado.
+4. Revogar 1 material → 404 pela lápide; arquivo continua no Blob.
+5. Gerar 1 apostila (dupla gravação no Blob).
+6. Rollback nível 1 no teste (sem banco) → lista igual; religar → nada duplicado.
+7. Exclusão de conta com os dados copiados → tudo da conta some; nada das outras.
+8. Relatório do ensaio para sua aprovação.
+
+## 15. Materiais divergentes, órfãos e quebrados
+| Caso | Tratamento |
+|---|---|
+| Órfão (arquivo sem lista) | não importa, não apaga; link continua abrindo pelo Blob; aparece no inventário |
+| Quebrado (item sem arquivo) | entra na lista sem conteúdo, marcado "indisponível"; não some da lista |
+| Sem prova de dono (chave não confere) | entra só na lista; conteúdo fica no Blob |
+| Divergente (hash diferente) | relatório; decisão com o Paulo (13.4) |
+| Id repetido em duas contas | fica com quem prova a chave; o outro vê só o item, sem conteúdo |
