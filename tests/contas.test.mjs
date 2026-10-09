@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
 import { definirClienteTeste } from "../lib/banco.js";
 import { listarMigracoes, lerInstrucoes } from "../lib/migracoes.js";
-import { hashChave } from "../lib/chave.js";
+import { hashChave, arquivoEhDaConta } from "../lib/chave.js";
 import * as C from "../lib/contas.js";
 
 const db = new PGlite();
@@ -233,4 +233,30 @@ test("exclusão da conta apaga tudo dela e nada das outras", async () => {
   assert.equal((await linhas("SELECT count(*)::int n FROM materiais WHERE id LIKE 'imp-%'"))[0].n, 0);
   assert.deepEqual(await C.lerPerfil("b@x.br"), antesB);
   assert.equal((await C.contagensDoMes("d@x.br")).geracao, 3);
+});
+
+test("exclusão da conta leva também o material revogado (conteúdo retido)", async () => {
+  const email = "rev-exc@x.br";
+  await C.gravarMaterial(email, { id: "rex-000001", url: "https://e.app/m/rex-000001", chave: "k1", chaveHash: hashChave("k1"), registro: registro("Ativo") });
+  await C.gravarMaterial(email, { id: "rex-000002", url: "https://e.app/m/rex-000002", chave: "k2", chaveHash: hashChave("k2"), registro: registro("Revogado") });
+  await C.revogarMaterial("rex-000002", "k2");
+  // link de outra pessoa colado na lista (sem prova de dono): não entra
+  await C.sincronizarMateriais(email, [{ id: "rex-000003", url: "https://e.app/m/rex-000003", titulo: "Alheio" }]);
+  const apagados = await C.apagarContaBanco(email);
+  assert.deepEqual(apagados.map((m) => m.id).sort(), ["rex-000001", "rex-000002"]);
+  const rev = apagados.find((m) => m.id === "rex-000002");
+  assert.equal(rev.chave, null, "revogado não tem mais chave");
+  assert.equal(rev.chaveHash, hashChave("k2"), "mas o banco guarda a prova de dono");
+  assert.equal((await linhas("SELECT count(*)::int n FROM materiais WHERE id LIKE 'rex-%' AND conteudo IS NOT NULL"))[0].n, 0, "conteúdo retido saiu do banco");
+});
+
+test("arquivo do Blob só é apagado com prova de dono", () => {
+  const meu = { chaveHash: hashChave("minha") };
+  assert.equal(arquivoEhDaConta(meu, { chave: "minha" }), true, "ativo: chave confere");
+  assert.equal(arquivoEhDaConta(meu, { chave: null, chaveHash: hashChave("minha") }), true, "revogado: prova do banco confere");
+  assert.equal(arquivoEhDaConta(meu, { chave: "outra" }), false);
+  assert.equal(arquivoEhDaConta(meu, { chaveHash: hashChave("outra") }), false);
+  assert.equal(arquivoEhDaConta(meu, {}), false);
+  assert.equal(arquivoEhDaConta({}, { chaveHash: hashChave("minha") }), false, "arquivo sem prova nunca é apagado");
+  assert.equal(arquivoEhDaConta(null, { chave: "minha" }), false);
 });

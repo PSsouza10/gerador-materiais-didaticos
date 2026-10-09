@@ -7,7 +7,7 @@ import { lerPerfil, salvarPerfil, apagarContaBanco } from "@/lib/contas";
 import { lerHistoricoBlob, caminhoHistorico } from "@/lib/historico";
 import { caminhoUso } from "@/lib/uso";
 import { caminhoBlob, exclusaoPermitida } from "@/lib/ambiente";
-import { chaveConfere } from "@/lib/chave";
+import { arquivoEhDaConta } from "@/lib/chave";
 
 // Fase 1 — perfil e exclusão da conta.
 //   GET    → { banco, perfil }      (perfil só existe com banco)
@@ -41,12 +41,13 @@ async function putRota(request) {
   return NextResponse.json({ perfil: await salvarPerfil(u.email, dados) });
 }
 
-// Apaga um material do Blob só se a chave provar que ele é desta conta
-async function apagarMaterialBlob(id, chave) {
+// Apaga um material do Blob só se a chave (ativo) ou a prova guardada no banco (revogado)
+// mostrar que ele é desta conta
+async function apagarMaterialBlob(id, prova) {
   try {
     const meta = await head(caminhoBlob(`materiais/${id}.json`));
     const registro = await (await fetch(meta.url, { cache: "no-store" })).json();
-    if (chaveConfere(chave, registro.chaveHash)) {
+    if (arquivoEhDaConta(registro, prova)) {
       await del(meta.url);
       return true;
     }
@@ -83,14 +84,16 @@ async function deleteRota(request) {
   const candidatos = new Map();
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const hist = await lerHistoricoBlob(u.email).catch(() => ({}));
-    for (const m of hist.itens || []) if (m?.id && m?.chave) candidatos.set(m.id, m.chave);
+    for (const m of hist.itens || []) if (m?.id && m?.chave) candidatos.set(m.id, { chave: m.chave });
   }
-  if (bancoLigado()) for (const m of await apagarContaBanco(u.email)) candidatos.set(m.id, m.chave);
+  if (bancoLigado())
+    for (const m of await apagarContaBanco(u.email))
+      candidatos.set(m.id, { chave: m.chave || candidatos.get(m.id)?.chave || null, chaveHash: m.chaveHash });
 
   // links ativos da conta (no banco e/ou no Blob); todos deixam de abrir
   const materiais = candidatos.size;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    for (const [id, chave] of candidatos) await apagarMaterialBlob(id, chave);
+    for (const [id, prova] of candidatos) await apagarMaterialBlob(id, prova);
     await apagarArquivo(caminhoHistorico(u.email));
     await apagarArquivo(caminhoUso(u.email));
   }
