@@ -42,7 +42,11 @@ async function postRota(request) {
     if (!Array.isArray(itens) || !Array.isArray(removidos)) return NextResponse.json({ error: "Formato inválido." }, { status: 400 });
     const sincronizar = bancoLigado() ? sincronizarMateriais : sincronizarHistorico;
     if (bancoLigado()) await garantirImportacao(u.email);
-    const lista = await sincronizar(u.email, itens.slice(0, LIMITE_ITENS), removidos.filter((r) => typeof r === "string").slice(0, LIMITE_ITENS));
+    const limpos = itens.slice(0, LIMITE_ITENS);
+    const fora = removidos.filter((r) => typeof r === "string").slice(0, LIMITE_ITENS);
+    const lista = await sincronizar(u.email, limpos, fora);
+    // Dupla gravação (Parte B): a lista também vai para o arquivo do Blob (rollback sem perda)
+    if (bancoLigado()) await sincronizarHistorico(u.email, lista, fora).catch((e) => console.error("Espelho da lista no Blob falhou:", e?.message || e));
     return NextResponse.json({ itens: lista });
   } catch (e) {
     console.error("Erro ao sincronizar histórico:", e);

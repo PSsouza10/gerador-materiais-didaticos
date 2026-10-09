@@ -88,6 +88,13 @@ async function postRota(request) {
     if (bancoLigado()) {
       try {
         await gravarMaterial(usuario.email, { id, url: `${origem}/m/${id}`, chave, chaveHash: hashChave(chave), registro });
+        // Dupla gravação (Parte B): cópia no Blob, para o link sobreviver a um rollback
+        await put(caminhoBlob(`materiais/${id}.json`), JSON.stringify({ ...registro, chaveHash: hashChave(chave) }), {
+          access: "public",
+          contentType: "application/json",
+          addRandomSuffix: false,
+          cacheControlMaxAge: 60,
+        }).catch((e) => console.error("Espelho do material no Blob falhou:", e?.message || e));
         return NextResponse.json({ id, url: `${origem}/m/${id}`, chave });
       } catch (e) {
         console.error("Banco indisponível ao salvar; usando o Blob:", e?.message || e);

@@ -6,7 +6,7 @@ import { bancoLigado } from "@/lib/banco";
 import { lerPerfil, salvarPerfil, apagarContaBanco } from "@/lib/contas";
 import { lerHistoricoBlob, caminhoHistorico } from "@/lib/historico";
 import { caminhoUso } from "@/lib/uso";
-import { caminhoBlob } from "@/lib/ambiente";
+import { caminhoBlob, exclusaoPermitida } from "@/lib/ambiente";
 import { chaveConfere } from "@/lib/chave";
 
 // Fase 1 — perfil e exclusão da conta.
@@ -22,8 +22,8 @@ const naoLogado = () => NextResponse.json({ error: "Entre com sua conta." }, { s
 async function getRota() {
   const u = authConfigurado ? await usuarioAtual() : null;
   if (!u) return naoLogado();
-  if (!bancoLigado()) return NextResponse.json({ banco: false, perfil: null });
-  return NextResponse.json({ banco: true, perfil: await lerPerfil(u.email) });
+  if (!bancoLigado()) return NextResponse.json({ banco: false, exclusao: false, perfil: null });
+  return NextResponse.json({ banco: true, exclusao: exclusaoPermitida(), perfil: await lerPerfil(u.email) });
 }
 
 async function putRota(request) {
@@ -75,7 +75,8 @@ async function deleteRota(request) {
   }
   // Exclusão só com banco ligado (testada assim). No site real, enquanto o banco
   // de produção não existir, fica desligada também no servidor.
-  if (!bancoLigado()) return NextResponse.json({ error: "Exclusão de conta ainda não disponível." }, { status: 403 });
+  // No site real, a exclusão exige também EXCLUSAO_CONTA=1 (só após a validação final da Parte B)
+  if (!bancoLigado() || !exclusaoPermitida()) return NextResponse.json({ error: "Exclusão de conta ainda não disponível." }, { status: 403 });
   if (corpo.confirmar !== "EXCLUIR") return NextResponse.json({ error: 'Digite EXCLUIR para confirmar.' }, { status: 400 });
 
   // materiais com cópia no Blob: os da lista antiga + os que o banco conhecia

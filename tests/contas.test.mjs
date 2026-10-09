@@ -126,7 +126,7 @@ test("importação do Blob: nada se perde e só roda uma vez", async () => {
   const c = await C.contagensDoMes(email);
   assert.equal(c.geracao, 2); // a de janeiro não conta no mês
   assert.equal(c.correcao, 1);
-  assert.deepEqual(await C.importarDoBlob(email, fontes), { importado: false });
+  assert.deepEqual(await C.importarDoBlob(email, fontes), { importado: false, status: "concluida" });
   assert.equal((await C.sincronizarMateriais(email, [{ id: "imp-000009", url: "https://e.app/m/imp-000009" }])).length, 3, "removido continua fora");
 });
 
@@ -138,6 +138,61 @@ test("importação que falha não deixa nada pela metade e pode repetir", async 
   assert.equal((await C.listarMateriais(email)).length, 0);
   const bom = { ...ruim, uso: async () => ({}) };
   assert.equal((await C.importarDoBlob(email, bom)).importado, true);
+});
+
+test("revogação é lógica: o link some, o conteúdo fica guardado", async () => {
+  await C.gravarMaterial("r@x.br", { id: "rev-000001", url: "https://e.app/m/rev-000001", chave: "kr", chaveHash: hashChave("kr"), registro: registro("Rev") });
+  assert.equal(await C.situacaoMaterial("rev-000001"), "conteudo");
+  assert.deepEqual(await C.revogarMaterial("rev-000001", "kr"), { ok: true });
+  assert.equal(await C.situacaoMaterial("rev-000001"), "revogado");
+  assert.equal(await C.materialPublico("rev-000001"), null);
+  const [l] = await linhas("SELECT conteudo IS NOT NULL AS tem FROM materiais WHERE id = 'rev-000001'");
+  assert.equal(l.tem, true, "conteúdo retido");
+  assert.equal(await C.situacaoMaterial("nao-existe-9"), null);
+});
+
+test("importações simultâneas da mesma conta: só uma executa, nada duplica", async () => {
+  const email = "sim@x.br";
+  const itens = Array.from({ length: 5 }, (_, i) => ({ id: `sim-00000${i}`, url: `https://e.app/m/sim-00000${i}`, titulo: `S${i}`, chave: `c${i}` }));
+  const blob = Object.fromEntries(itens.map((m) => [m.id, { ...registro(m.titulo), chaveHash: hashChave(m.chave) }]));
+  const fontes = { historico: async () => ({ itens }), uso: async () => ({ geracoes: [new Date().toISOString()] }), material: async (id) => blob[id] };
+  const r = await Promise.all(Array.from({ length: 6 }, () => C.importarDoBlob(email, fontes)));
+  assert.equal(r.filter((x) => x.importado).length, 1);
+  assert.equal((await C.listarMateriais(email)).length, 5);
+  assert.equal((await linhas("SELECT count(*)::int n FROM materiais WHERE id LIKE 'sim-%'"))[0].n, 5);
+  assert.equal((await C.contagensDoMes(email)).geracao, 1, "uso não duplicado");
+});
+
+test("importação cortada por tempo: nada entra, fica 'falhou' e repete depois", async () => {
+  const email = "lento@x.br";
+  const itens = [{ id: "len-000001", url: "https://e.app/m/len-000001", titulo: "L", chave: "kl" }];
+  const lento = { historico: async () => ({ itens }), uso: async () => ({}), material: () => new Promise((ok) => setTimeout(() => ok(null), 300)) };
+  await assert.rejects(C.importarDoBlob(email, lento, { orcamentoMs: 50 }), /tempo/);
+  assert.equal((await C.listarMateriais(email)).length, 0);
+  assert.equal((await linhas("SELECT importacao_status s FROM usuarios WHERE conta = $1", [conta(email)]))[0].s, "falhou");
+  assert.equal((await C.importarDoBlob(email, { ...lento, material: async () => null })).importado, true);
+});
+
+test("importação travada há mais de 5 min pode ser retomada; recente não", async () => {
+  const email = "trav@x.br";
+  await C.usuarioId(email);
+  await db.query("UPDATE usuarios SET importacao_status = 'em_andamento', importacao_inicio = now() WHERE conta = $1", [conta(email)]);
+  const f = { historico: async () => ({ itens: [] }), uso: async () => ({}), material: async () => null };
+  assert.deepEqual(await C.importarDoBlob(email, f), { importado: false, status: "em_andamento" });
+  await db.query("UPDATE usuarios SET importacao_inicio = now() - interval '6 minutes' WHERE conta = $1", [conta(email)]);
+  assert.equal((await C.importarDoBlob(email, f)).importado, true);
+});
+
+test("reabrir a importação (religar depois de rollback) não duplica e traz o novo", async () => {
+  const email = "reab@x.br";
+  const base = [{ id: "rea-000001", url: "https://e.app/m/rea-000001", titulo: "A", chave: "ka" }];
+  const blob = { "rea-000001": { ...registro("A"), chaveHash: hashChave("ka") }, "rea-000002": { ...registro("B"), chaveHash: hashChave("kb") } };
+  const f = (itens) => ({ historico: async () => ({ itens }), uso: async () => ({}), material: async (id) => blob[id] });
+  await C.importarDoBlob(email, f(base));
+  await C.reabrirImportacao(email);
+  await C.importarDoBlob(email, f([...base, { id: "rea-000002", url: "https://e.app/m/rea-000002", titulo: "B", chave: "kb" }]));
+  assert.deepEqual((await C.listarMateriais(email)).map((m) => m.id).sort(), ["rea-000001", "rea-000002"]);
+  assert.equal((await linhas("SELECT count(*)::int n FROM materiais WHERE id LIKE 'rea-%'"))[0].n, 2);
 });
 
 test("exclusão da conta apaga tudo dela e nada das outras", async () => {

@@ -21,7 +21,7 @@ export default function MinhaConta() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!vivo || !d) return;
-        setEstado({ banco: d.banco });
+        setEstado({ banco: d.banco, exclusao: !!d.exclusao });
         if (d.perfil) setPerfil(d.perfil);
       })
       .catch(() => {});
@@ -113,6 +113,7 @@ export default function MinhaConta() {
         </section>
       )}
 
+      {estado.exclusao && (
       <section className="rounded-3xl border border-rose-200 bg-rose-50/60 p-6">
         <h2 className="text-base font-bold text-rose-700">Excluir minha conta</h2>
         <p className="mt-1 text-xs text-rose-700">
@@ -127,6 +128,7 @@ export default function MinhaConta() {
           <Trash2 className="h-3.5 w-3.5" /> {apagando ? "Excluindo…" : "Excluir minha conta"}
         </button>
       </section>
+      )}
       {feito && (
         <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">
           {feito}

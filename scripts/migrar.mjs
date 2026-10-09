@@ -3,13 +3,14 @@
 //   node scripts/migrar.mjs status
 //   node scripts/migrar.mjs up                 aplica as que faltam (em transação)
 //   node scripts/migrar.mjs down --confirmar   desfaz SÓ a última aplicada
-//   --somente-teste: fora do teste, sai sem erro (usado no build da Vercel)
-// Recusa produção. Na primeira vez, só aceita um banco VAZIO; depois, só um banco
-// cujo marcador (tabela "ambiente") diga "teste".
+//   --somente-teste: quando não é permitido migrar, sai sem erro (usado no build da Vercel)
+// Produção só com BANCO_PRODUCAO=1. Na primeira vez, só aceita um banco VAZIO e grava o
+// marcador do ambiente ("teste" ou "producao"); depois, só um banco com esse marcador.
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { listarMigracoes, lerInstrucoes, podeMigrar, planejar } from "../lib/migracoes.js";
 import { consultar, emTransacao, marcadorDoBanco } from "../lib/banco.js";
+import { marcadorEsperado } from "../lib/ambiente.js";
 
 const [comando = "status", ...flags] = process.argv.slice(2);
 const somenteTeste = flags.includes("--somente-teste");
@@ -35,8 +36,8 @@ if (aplicadas.length === 0) {
     "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> 'schema_migrations'"
   );
   if (outras[0].n > 0) sair("o banco não está vazio e não tem migrações do EduGera: não vou mexer.");
-} else if (marcador !== "teste") {
-  sair(`o marcador do banco é "${marcador}", não "teste": não vou mexer.`);
+} else if (marcador !== marcadorEsperado()) {
+  sair(`o marcador do banco é "${marcador}", não "${marcadorEsperado()}": não vou mexer.`);
 }
 
 const todas = listarMigracoes(pasta);
@@ -50,6 +51,9 @@ if (comando === "down" && !flags.includes("--confirmar")) sair("para desfazer, r
 for (const m of planejar(todas, aplicadas, comando)) {
   if (comando === "down" && !m.down) sair(`${m.nome} não tem arquivo .down.sql: não dá para desfazer.`);
   const passos = lerInstrucoes(comando === "up" ? m.up : m.down).map((s) => [s]);
+  // 1ª migração de um banco novo: grava o marcador junto, na mesma transação
+  if (comando === "up" && m.nome.startsWith("0001_") && aplicadas.length === 0)
+    passos.push(["INSERT INTO ambiente (nome) VALUES ($1) ON CONFLICT (nome) DO NOTHING", [marcadorEsperado()]]);
   passos.push(
     comando === "up"
       ? ["INSERT INTO schema_migrations (nome) VALUES ($1)", [m.nome]]

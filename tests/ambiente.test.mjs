@@ -61,3 +61,20 @@ test("DATABASE_URL_TESTE colada com aspas, espaços ou psql ainda funciona (só 
   assert.equal(urlBanco({ VERCEL_ENV: "production", DATABASE_URL_TESTE: u }), null);
   assert.equal(urlBanco({ VERCEL_ENV: "preview", DATABASE_URL_TESTE: "mysql://x" }), null);
 });
+
+test("Parte B: banco de produção só com DATABASE_URL_PRODUCAO + BANCO_PRODUCAO=1", async () => {
+  const { exclusaoPermitida, marcadorEsperado, bancoProducaoLigado } = await import("../lib/ambiente.js");
+  const u = "postgresql://u:p@ep-prod-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
+  const t = "postgresql://u:p@ep-teste.us-east-1.aws.neon.tech/neondb?sslmode=require";
+  assert.equal(urlBanco({ VERCEL_ENV: "production", DATABASE_URL_PRODUCAO: u }), null, "sem interruptor: desligado");
+  assert.equal(urlBanco({ VERCEL_ENV: "production", BANCO_PRODUCAO: "1", DATABASE_URL_PRODUCAO: u }), u);
+  assert.equal(urlBanco({ VERCEL_ENV: "production", BANCO_PRODUCAO: "1", DATABASE_URL_TESTE: t }), null, "produção nunca usa o banco de teste");
+  assert.equal(urlBanco({ VERCEL_ENV: "production", BANCO_PRODUCAO: "1", DATABASE_URL: u }), null, "nunca lê DATABASE_URL");
+  assert.equal(urlBanco({ VERCEL_ENV: "preview", DATABASE_URL_PRODUCAO: u, BANCO_PRODUCAO: "1" }), null, "teste nunca usa o banco de produção");
+  assert.equal(bancoProducaoLigado({ VERCEL_ENV: "preview", BANCO_PRODUCAO: "1" }), false);
+  assert.equal(marcadorEsperado({ VERCEL_ENV: "production" }), "producao");
+  assert.equal(marcadorEsperado({ VERCEL_ENV: "preview" }), "teste");
+  assert.equal(exclusaoPermitida({ VERCEL_ENV: "production", BANCO_PRODUCAO: "1" }), false, "exclusão exige interruptor próprio");
+  assert.equal(exclusaoPermitida({ VERCEL_ENV: "production", EXCLUSAO_CONTA: "1" }), true);
+  assert.equal(exclusaoPermitida({ VERCEL_ENV: "preview" }), true);
+});

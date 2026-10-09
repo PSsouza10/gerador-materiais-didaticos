@@ -1,11 +1,10 @@
 -- Fase 0 · base do banco de TESTE. Só cria; não altera nem apaga nada que já exista.
 
--- Marcador: prova qual banco é este. O código só usa o banco se ele disser "teste".
+-- Marcador: prova qual banco é este ("teste" ou "producao"). Quem grava é o script de migração.
 CREATE TABLE IF NOT EXISTS ambiente (
-  nome TEXT PRIMARY KEY CHECK (nome IN ('teste')),
+  nome TEXT PRIMARY KEY CHECK (nome IN ('teste', 'producao')),
   criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-INSERT INTO ambiente (nome) VALUES ('teste') ON CONFLICT (nome) DO NOTHING;
 
 -- Um registro por pedido às rotas da API. Sem e-mail, nome, texto de apostila ou chaves.
 CREATE TABLE IF NOT EXISTS eventos_requisicao (

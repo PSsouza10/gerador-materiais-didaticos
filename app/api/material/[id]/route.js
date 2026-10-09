@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { caminhoBlob } from "@/lib/ambiente";
-import { head, del } from "@vercel/blob";
+import { head, del, put } from "@vercel/blob";
 import { chaveConfere } from "@/lib/chave";
 import { bancoLigado } from "@/lib/banco";
 import { revogarMaterial } from "@/lib/contas";
@@ -27,12 +27,16 @@ async function deleteRota(request, { params }) {
     const r = await revogarMaterial(id, chave).catch(() => null);
     if (r && !r.ok) return NextResponse.json({ error: "Chave de revogação não confere." }, { status: 403 });
     if (r) {
-      // apaga também a cópia antiga do Blob, se houver (senão o link voltaria por ela)
-      try {
-        await del((await head(caminhoBlob(`materiais/${id}.json`))).url);
-      } catch {
-        /* não havia cópia */
-      }
+      // Revogação LÓGICA (Parte B): nada é apagado. Uma "lápide" no Blob impede que o link
+      // volte pela cópia do Blob (inclusive com o banco desligado). Retenção: 30 dias.
+      if (!r.jaRevogado)
+        await put(caminhoBlob(`revogados/${id}.json`), JSON.stringify({ id, revogadoEm: new Date().toISOString() }), {
+          access: "public",
+          contentType: "application/json",
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          cacheControlMaxAge: 60,
+        }).catch((e) => console.error("Lápide no Blob falhou:", e?.message || e));
       return NextResponse.json(r);
     }
   }
