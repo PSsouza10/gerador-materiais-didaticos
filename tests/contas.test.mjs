@@ -195,6 +195,32 @@ test("reabrir a importação (religar depois de rollback) não duplica e traz o 
   assert.equal((await linhas("SELECT count(*)::int n FROM materiais WHERE id LIKE 'rea-%'"))[0].n, 2);
 });
 
+test("reabrir a importação não duplica o uso (68 não vira 136)", async () => {
+  const email = "uso-reab@x.br";
+  const horas = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  let blobUso = { geracoes: [horas(5), horas(4), horas(3)], correcoes: [horas(2)], imagens: [] };
+  const f = { historico: async () => ({ itens: [] }), uso: async () => blobUso, material: async () => null };
+  await C.importarDoBlob(email, f);
+  assert.equal((await C.contagensDoMes(email)).geracao, 3);
+  // espelho duplo: o banco grava com now() e o Blob com o próprio relógio (milésimos diferentes)
+  assert.equal((await C.consumir(email, "geracao", 100)).ok, true);
+  blobUso = { ...blobUso, geracoes: [...blobUso.geracoes, new Date(Date.now() + 7).toISOString()] };
+  assert.equal((await C.contagensDoMes(email)).geracao, 4);
+  // rollback: o site antigo (sem banco) registra 2 usos só no Blob
+  blobUso = { ...blobUso, geracoes: [...blobUso.geracoes, horas(0.1), horas(0.05)] };
+  await C.reabrirImportacao(email);
+  await C.importarDoBlob(email, f);
+  const c = await C.contagensDoMes(email);
+  assert.equal(c.geracao, 6, "banco = Blob (4 + 2 do rollback), sem somar de novo");
+  assert.equal(c.correcao, 1);
+  // repetir não muda nada
+  await C.reabrirImportacao(email);
+  await C.importarDoBlob(email, f);
+  assert.equal((await C.contagensDoMes(email)).geracao, 6);
+  // outra conta não é afetada
+  assert.equal((await C.contagensDoMes("g@x.br")).geracao, 2);
+});
+
 test("exclusão da conta apaga tudo dela e nada das outras", async () => {
   const antesB = await C.lerPerfil("b@x.br");
   const apagados = await C.apagarContaBanco("a@x.br");
