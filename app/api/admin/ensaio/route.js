@@ -6,6 +6,7 @@ import { ehProducao, caminhoBlob } from "@/lib/ambiente";
 import { bancoLigado } from "@/lib/banco";
 import { apagarContaBanco, importarDoBlob, reabrirImportacao, estadoImportacao, listarMateriais } from "@/lib/contas";
 import { caminhoHistoricoBruto, lerHistoricoBlob } from "@/lib/historico";
+import { lerJsonEstrito } from "@/lib/leituraBlob";
 import { caminhoUsoBruto, lerUsoBlob } from "@/lib/uso";
 import { esquecerImportacao } from "@/lib/importacao";
 
@@ -18,10 +19,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-async function materialTeste(id) {
-  const meta = await head(caminhoBlob(`materiais/${id}.json`));
-  return JSON.parse(new TextDecoder().decode(await baixar(meta.url)));
-}
+// mesma regra da importação real: não existe = null; existe e falhou = erro
+const materialTeste = (id) => lerJsonEstrito(caminhoBlob(`materiais/${id}.json`));
 
 async function copiar(caminhoReal) {
   try {

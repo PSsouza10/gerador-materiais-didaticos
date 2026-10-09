@@ -260,3 +260,18 @@ test("arquivo do Blob só é apagado com prova de dono", () => {
   assert.equal(arquivoEhDaConta({}, { chaveHash: hashChave("minha") }), false, "arquivo sem prova nunca é apagado");
   assert.equal(arquivoEhDaConta(null, { chave: "minha" }), false);
 });
+
+test("leitura que falha derruba a importação (fica 'falhou'), e não importa vazio", async () => {
+  const email = "leit@x.br";
+  const itens = [{ id: "lei-000001", url: "https://e.app/m/lei-000001", titulo: "L", chave: "kl" }];
+  const blob = { "lei-000001": { ...registro("L"), chaveHash: hashChave("kl") } };
+  const quebrada = { historico: async () => { throw new Error("leitura do Blob falhou (404)"); }, uso: async () => ({}), material: async (id) => blob[id] };
+  await assert.rejects(C.importarDoBlob(email, quebrada), /falhou/);
+  assert.equal((await linhas("SELECT importacao_status s FROM usuarios WHERE conta = $1", [conta(email)]))[0].s, "falhou");
+  const materialRuim = { historico: async () => ({ itens }), uso: async () => ({}), material: async () => { throw new Error("rede"); } };
+  await assert.rejects(C.importarDoBlob(email, materialRuim));
+  assert.equal((await C.listarMateriais(email)).length, 0, "nada pela metade");
+  const ok = { ...materialRuim, material: async (id) => blob[id] };
+  assert.equal((await C.importarDoBlob(email, ok)).importado, true);
+  assert.equal((await C.materialPublico("lei-000001")).material.tituloDidatico, "L", "veio com o conteúdo");
+});
