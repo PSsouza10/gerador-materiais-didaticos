@@ -63,7 +63,7 @@ test("metadata por página: lang, título, description, canonical, og", async ()
 test("fachada: um h1, mensagem principal, chamadas para /criar, login e links legais", async () => {
   const html = await (await get("/")).text();
   assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, "um h1");
-  assert.match(html, /A apostila que você imaginou\./);
+  assert.match(html.replace(/<[^>]+>/g, "").replace(/\s+/g, " "), /A apostila que você imaginou\. Pronta para ensinar\./);
   assert.match(html, /Criar minha primeira apostila/);
   assert.match(html, /href="\/criar"/, "chamada para o gerador");
   assert.match(html, /href="#como-funciona"/, "Ver como funciona");
@@ -96,7 +96,7 @@ test("/: anônimo vê a fachada, sem redirecionar", async () => {
   const r = await get("/");
   assert.equal(r.status, 200);
   assert.equal(r.headers.get("location"), null);
-  assert.match(await r.text(), /A apostila que você imaginou\./);
+  assert.match((await r.text()).replace(/<[^>]+>/g, "").replace(/\s+/g, " "), /A apostila que você imaginou\./);
   // cookie de sessão inválido também não redireciona
   const falso = await get("/", { headers: { cookie: "next-auth.session-token=invalido" } });
   assert.equal(falso.status, 200, "sessão inválida mostra a fachada");
