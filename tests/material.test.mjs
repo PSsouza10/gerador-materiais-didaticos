@@ -22,3 +22,14 @@ test("tema visual: só 'premium' passa; o resto vira 'padrao'", async () => {
   assert.equal(normalizarMaterial({ tema: "qualquer" }).tema, "padrao");
   assert.equal(normalizarMaterial({}).tema, "padrao");
 });
+
+test("gabarito não repete a mesma frase (resposta + resolução)", async () => {
+  const { juntarResposta, semFrasesRepetidas } = await import("../lib/material.js");
+  assert.equal(
+    juntarResposta("Não. 6 × 7 = 42.", "6 × 7 = 42. Portanto, ele errou: o produto é 42."),
+    "Não. 6 × 7 = 42. Portanto, ele errou: o produto é 42."
+  );
+  // frases diferentes continuam
+  assert.equal(semFrasesRepetidas("3 × 4 = 12. 4 × 3 = 12."), "3 × 4 = 12. 4 × 3 = 12.");
+  assert.equal(juntarResposta("c) 36", "3 × 12 = 36. Portanto, são 36 figurinhas."), "c) 36. 3 × 12 = 36. Portanto, são 36 figurinhas.");
+});
