@@ -13,6 +13,7 @@ export default function MinhaConta() {
   const [confirmar, setConfirmar] = useState("");
   const [apagando, setApagando] = useState(false);
   const [erro, setErro] = useState("");
+  const [feito, setFeito] = useState("");
 
   useEffect(() => {
     let vivo = true;
@@ -52,12 +53,15 @@ export default function MinhaConta() {
     try {
       const r = await fetch("/api/conta", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmar }) });
       if (!r.ok) throw new Error();
+      const { materiais = 0 } = await r.json().catch(() => ({}));
+      setFeito(`Conta excluída. ${materiais === 1 ? "1 link compartilhado apagado" : `${materiais} links compartilhados apagados`}, além da lista, do perfil e do histórico de uso. Saindo…`);
       try {
         window.localStorage.removeItem("edugera:config");
         window.localStorage.removeItem("edugera:materiais");
       } catch {
         /* armazenamento bloqueado */
       }
+      await new Promise((ok) => setTimeout(ok, 3500)); // tempo para ler o resultado
       await signOut({ callbackUrl: "/" });
     } catch {
       setErro("Não foi possível excluir agora. Tente de novo em instantes.");
@@ -122,6 +126,11 @@ export default function MinhaConta() {
           <Trash2 className="h-3.5 w-3.5" /> {apagando ? "Excluindo…" : "Excluir minha conta"}
         </button>
       </section>
+      {feito && (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">
+          {feito}
+        </p>
+      )}
       {erro && (
         <p className="text-xs font-semibold text-rose-600" role="alert">
           {erro}

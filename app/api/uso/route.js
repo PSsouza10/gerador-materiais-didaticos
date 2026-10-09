@@ -17,7 +17,8 @@ async function getRota() {
   } catch (e) {
     console.error("Erro ao consultar uso:", e);
   }
-  return NextResponse.json({ authConfigurado: true, usuario, uso });
+  // o e-mail não volta para o navegador (ele não precisa dele)
+  return NextResponse.json({ authConfigurado: true, usuario: { nome: usuario.nome }, uso });
 }
 
 // request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda

@@ -229,10 +229,23 @@ export default function GeradorApostilas() {
   // ===== FORMULÁRIO =====
   const [form, setForm] = useState(() => formDaConfig(CONFIG_PADRAO));
 
-  // Primeiro acesso logado: se o nome do professor está vazio, usa o da conta Google
+  // Primeiro acesso logado: se o nome do professor está vazio, preenche.
+  // Com banco (perfil da conta), usa o nome do perfil — conta nova ou excluída fica em branco;
+  // sem banco, usa o nome da conta Google como antes.
   useEffect(() => {
-    const nome = sessao?.user?.name;
-    if (nome) setForm((f) => (f.professor?.trim() ? f : { ...f, professor: nome }));
+    const nomeGoogle = sessao?.user?.name;
+    if (!nomeGoogle) return;
+    let vivo = true;
+    fetch("/api/conta", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((d) => {
+        const nome = d?.banco ? d.perfil?.nomeExibicao : nomeGoogle;
+        if (vivo && nome) setForm((f) => (f.professor?.trim() ? f : { ...f, professor: nome }));
+      });
+    return () => {
+      vivo = false;
+    };
   }, [sessao?.user?.name]);
 
   // Preferências e lista salvas no navegador

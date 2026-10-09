@@ -83,9 +83,10 @@ async function deleteRota(request) {
   }
   if (bancoLigado()) for (const m of await apagarContaBanco(u.email)) candidatos.set(m.id, m.chave);
 
-  let materiais = 0;
+  // links ativos da conta (no banco e/ou no Blob); todos deixam de abrir
+  const materiais = candidatos.size;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    for (const [id, chave] of candidatos) if (await apagarMaterialBlob(id, chave)) materiais++;
+    for (const [id, chave] of candidatos) await apagarMaterialBlob(id, chave);
     await apagarArquivo(caminhoHistorico(u.email));
     await apagarArquivo(caminhoUso(u.email));
   }
