@@ -30,7 +30,8 @@ export default function MinhaConta() {
     };
   }, []);
 
-  if (!estado) return null; // sem login: nada a mostrar
+  // sem login, ou sem banco (site real até a Parte B): nada de perfil nem de exclusão
+  if (!estado || !estado.banco) return null;
 
   const salvarPerfil = async () => {
     setErro("");

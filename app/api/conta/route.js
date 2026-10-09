@@ -73,6 +73,9 @@ async function deleteRota(request) {
   } catch {
     /* corpo vazio */
   }
+  // Exclusão só com banco ligado (testada assim). No site real, enquanto o banco
+  // de produção não existir, fica desligada também no servidor.
+  if (!bancoLigado()) return NextResponse.json({ error: "Exclusão de conta ainda não disponível." }, { status: 403 });
   if (corpo.confirmar !== "EXCLUIR") return NextResponse.json({ error: 'Digite EXCLUIR para confirmar.' }, { status: 400 });
 
   // materiais com cópia no Blob: os da lista antiga + os que o banco conhecia
