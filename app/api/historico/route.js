@@ -5,6 +5,25 @@ import { lerHistorico, sincronizarHistorico, LIMITE_ITENS } from "@/lib/historic
 import { bancoLigado } from "@/lib/banco";
 import { listarMateriais, sincronizarMateriais } from "@/lib/contas";
 import { garantirImportacao } from "@/lib/importacao";
+import { listaConfere, esperar } from "@/lib/tentativas";
+
+// Dupla gravação da lista (Parte B) com conferência: grava no Blob, relê e compara com o banco;
+// se divergir, regrava a partir do banco (até 3 vezes) e registra um alerta só com números.
+async function espelharLista(email, lista, fora) {
+  for (let i = 0; i < 3; i++) {
+    try {
+      await sincronizarHistorico(email, lista, fora);
+      const r = listaConfere(await lerHistorico(email), lista);
+      if (r.ok) return true;
+      console.log(JSON.stringify({ app: "edugera", evento: "espelho_divergente", tentativa: i + 1, divergencias: r.divergencias }));
+    } catch (e) {
+      console.error("Espelho da lista no Blob falhou:", e?.message || e);
+    }
+    await esperar(500 * (i + 1));
+  }
+  console.log(JSON.stringify({ app: "edugera", evento: "espelho_pendente" }));
+  return false;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +65,7 @@ async function postRota(request) {
     const fora = removidos.filter((r) => typeof r === "string").slice(0, LIMITE_ITENS);
     const lista = await sincronizar(u.email, limpos, fora);
     // Dupla gravação (Parte B): a lista também vai para o arquivo do Blob (rollback sem perda)
-    if (bancoLigado()) await sincronizarHistorico(u.email, lista, fora).catch((e) => console.error("Espelho da lista no Blob falhou:", e?.message || e));
+    if (bancoLigado()) await espelharLista(u.email, lista, fora);
     return NextResponse.json({ itens: lista });
   } catch (e) {
     console.error("Erro ao sincronizar histórico:", e);

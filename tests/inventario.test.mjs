@@ -47,3 +47,24 @@ test("migração em produção só com o interruptor", () => {
   assert.equal(podeMigrar({ VERCEL_ENV: "production", BANCO_PRODUCAO: "1", DATABASE_URL_PRODUCAO: u }).ok, true);
   assert.equal(podeMigrar({ VERCEL_ENV: "preview", DATABASE_URL_TESTE: u }).ok, true);
 });
+
+test("repetição com espera: aguenta o atraso do Blob e desiste depois do limite", async () => {
+  const { comTentativas } = await import("../lib/tentativas.js");
+  let n = 0;
+  const instavel = async () => {
+    if (++n < 3) throw new Error("ainda não aparece");
+    return "ok";
+  };
+  assert.equal(await comTentativas(instavel, { espera: 1 }), "ok");
+  assert.equal(n, 3);
+  await assert.rejects(comTentativas(async () => { throw new Error("sempre"); }, { tentativas: 3, espera: 1 }), /sempre/);
+});
+
+test("lista do Blob × banco: detecta revogação que não chegou ao espelho", async () => {
+  const { listaConfere } = await import("../lib/tentativas.js");
+  const banco = [{ id: "a", chave: "k" }, { id: "b", revogado: true }];
+  assert.equal(listaConfere([{ id: "a", chave: "k" }, { id: "b", revogado: true }], banco).ok, true);
+  const atrasado = listaConfere([{ id: "a", chave: "k" }, { id: "b", chave: "k2" }], banco);
+  assert.equal(atrasado.ok, false);
+  assert.equal(atrasado.divergencias, 2);
+});
