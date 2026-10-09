@@ -216,3 +216,11 @@ html:has(.fachada) {
     transform: none;
   }
 }
+
+/* ilustração do topo: bordas esquerda e de baixo se fundem ao fundo creme */
+.fachada .mascara-hero {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%), linear-gradient(to top, transparent 0, #000 8%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0, #000 9%), linear-gradient(to top, transparent 0, #000 8%);
+  mask-composite: intersect;
+}

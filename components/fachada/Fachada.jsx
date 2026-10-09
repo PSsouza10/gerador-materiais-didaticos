@@ -26,6 +26,9 @@ import {
   Plus,
   UserRound,
   GraduationCap,
+  UsersRound,
+  Heart,
+  FileText,
 } from "lucide-react";
 import Cabecalho from "./Cabecalho";
 import Vitrine from "./Vitrine";
@@ -47,110 +50,130 @@ function Titulo2({ eyebrow, children, centro = false, id }) {
   );
 }
 
+const PASSOS_HERO = [
+  {
+    icone: FileText,
+    cor: "bg-coral-claro text-coral-escuro",
+    titulo: "Escolha o tema",
+    texto: "Defina o ano, o componente curricular e o tema que deseja trabalhar.",
+  },
+  {
+    icone: Sparkles,
+    cor: "bg-roxo-claro text-roxo-escuro",
+    titulo: "Revise com IA",
+    texto: "Nossa IA cria atividades alinhadas à BNCC que você pode ajustar e personalizar.",
+  },
+  {
+    icone: Printer,
+    cor: "bg-verde-claro text-verde-escuro",
+    titulo: "Imprima e compartilhe",
+    texto: "Baixe os PDFs do aluno e do professor prontos para usar em sala de aula.",
+  },
+];
+
 function Hero() {
   return (
     <section aria-labelledby="titulo-principal" className="relative">
-      {/* fundo editorial: manchas suaves */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
-        <div className="absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-roxo-claro opacity-80 blur-3xl" />
-        <div className="absolute -left-48 bottom-[-180px] h-[420px] w-[420px] rounded-full bg-verde-claro opacity-70 blur-2xl" />
+      {/* fundo editorial: arco verde suave, como na referência */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -bottom-40 -left-40 h-[460px] w-[460px] rounded-full border-[56px] border-verde-claro opacity-80" />
       </div>
 
-      <div className="relative mx-auto grid max-w-[1200px] grid-cols-[minmax(0,1fr)] items-center gap-14 px-5 pb-20 pt-8 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-10 lg:pb-28 lg:pt-14">
-        <div>
-          <p className="surgir inline-flex items-center gap-2 rounded-full bg-verde-claro px-4 py-2 text-sm font-semibold text-verde-escuro">
-            <BookOpenCheck className="h-4 w-4" aria-hidden="true" /> Alinhado à BNCC
+      <div className="relative mx-auto grid max-w-[1680px] grid-cols-[minmax(0,1fr)] items-center gap-8 px-5 pt-4 sm:px-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-0 lg:px-[4.5vw] lg:pt-2">
+        <div className="relative z-10 lg:py-6">
+          <p className="surgir inline-flex items-center gap-2.5 rounded-full bg-verde-claro px-5 py-2.5 text-[15px] font-semibold text-verde-escuro">
+            <BookOpenCheck className="h-5 w-5" aria-hidden="true" /> Alinhado à BNCC
           </p>
           <h1
             id="titulo-principal"
-            className="surgir atraso-1 font-titulo mt-6 text-[2.6rem] font-semibold leading-[1.04] text-marinho sm:text-[3.6rem] xl:text-[4.25rem]"
+            className="surgir atraso-1 font-titulo mt-6 text-[2.75rem] font-semibold leading-[1] tracking-[-0.03em] text-marinho sm:text-[4rem] lg:text-[min(4.7vw,5.6rem)]"
           >
-            A apostila que você imaginou. Pronta para{" "}
-            <span className="whitespace-nowrap">
-              <span className="relative inline-block text-coral">
+            <span className="lg:block lg:whitespace-nowrap">A apostila que você </span>
+            <span className="lg:block lg:whitespace-nowrap">imaginou. Pronta </span>
+            <span className="lg:block lg:whitespace-nowrap">
+              para{" "}
+              <span className="relative inline-block whitespace-nowrap text-coral">
                 ensinar.
-                <svg aria-hidden="true" viewBox="0 0 260 18" className="absolute -bottom-2 left-0 h-[0.32em] w-full" preserveAspectRatio="none">
-                  <path className="traco" d="M3 13c48-8 104-11 164-8 30 1.6 58 4 90 7" fill="none" stroke="#e0592f" strokeWidth="5" strokeLinecap="round" />
+                <svg aria-hidden="true" viewBox="0 0 260 18" className="absolute -bottom-3 left-0 h-[0.26em] w-[88%]" preserveAspectRatio="none">
+                  <path className="traco" d="M3 13c48-8 104-11 164-8 30 1.6 58 4 90 7" fill="none" stroke="#e0592f" strokeWidth="4" strokeLinecap="round" />
                 </svg>
               </span>
             </span>
           </h1>
-          <p className="surgir atraso-2 mt-7 max-w-[560px] text-[1.15rem] leading-relaxed text-tinta sm:text-[1.25rem]">
+          <p className="surgir atraso-2 mt-8 max-w-[620px] text-[1.15rem] leading-relaxed text-tinta sm:text-[1.3rem]">
             Crie materiais visuais alinhados à BNCC, com exercícios, gabarito e PDFs prontos para imprimir — sem começar do zero.
           </p>
-          <div className="surgir atraso-3 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href="/criar" className="btn-primario justify-center">
+          <div className="surgir atraso-3 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <Link href="/criar" className="btn-primario justify-center whitespace-nowrap !px-7 !py-4 !text-[1.1rem]">
               <Sparkles className="h-5 w-5" aria-hidden="true" /> Criar minha primeira apostila
             </Link>
-            <a href="#como-funciona" className="btn-secundario justify-center">
+            <a href="#como-funciona" className="btn-secundario justify-center whitespace-nowrap !px-7 !py-4 !text-[1.1rem]">
               <PlayCircle className="h-5 w-5" aria-hidden="true" /> Ver como funciona
             </a>
           </div>
-          <ul className="surgir atraso-4 mt-10 grid max-w-[560px] grid-cols-1 gap-4 text-[15px] text-tinta sm:grid-cols-3">
-            <li className="flex items-center gap-2.5">
-              <BadgeCheck className="h-5 w-5 shrink-0 text-verde" aria-hidden="true" /> Habilidade BNCC conferida
+          <ul className="surgir atraso-4 mt-10 grid max-w-[640px] grid-cols-1 gap-4 text-[15px] leading-snug text-tinta sm:grid-cols-3">
+            <li className="flex items-center gap-3">
+              <UsersRound className="h-7 w-7 shrink-0 text-marinho" aria-hidden="true" /> Feito por professor, para professores
             </li>
-            <li className="flex items-center gap-2.5">
-              <ListChecks className="h-5 w-5 shrink-0 text-roxo" aria-hidden="true" /> Exercícios com gabarito
+            <li className="flex items-center gap-3">
+              <ShieldCheck className="h-7 w-7 shrink-0 text-marinho" aria-hidden="true" /> Conteúdo alinhado à BNCC
             </li>
-            <li className="flex items-center gap-2.5">
-              <FileDown className="h-5 w-5 shrink-0 text-coral-escuro" aria-hidden="true" /> PDF do aluno e do professor
+            <li className="flex items-center gap-3">
+              <Heart className="h-7 w-7 shrink-0 text-marinho" aria-hidden="true" /> Mais tempo para o que importa
             </li>
           </ul>
         </div>
 
-        <MockupHero />
+        {/* ilustração da apostila (capa, atividades e gabarito) */}
+        <div className="surgir atraso-2 relative -mx-5 sm:mx-0 lg:-mr-16 lg:ml-2">
+          <Image
+            src="/vitrine/hero-apostila.webp"
+            width={1200}
+            height={900}
+            priority
+            sizes="(min-width: 1024px) 720px, 100vw"
+            alt="Apostila ilustrada do EduGera com capa, folha de atividades e gabarito, e os botões PDF do aluno e PDF do professor."
+            className="mascara-hero h-auto w-full"
+          />
+        </div>
+      </div>
+
+      {/* Como funciona: 3 passos, logo abaixo do topo */}
+      <div id="como-funciona" className="relative mx-auto max-w-[1680px] scroll-mt-24 px-5 pb-10 pt-6 sm:px-8 lg:px-[4.5vw] lg:pt-0">
+        <h2 className="sr-only">Como funciona</h2>
+        <ol className="grid gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-stretch md:gap-3">
+          {PASSOS_HERO.flatMap(({ icone: Icone, cor, titulo, texto }, i) => {
+            const cartao = (
+              <li key={titulo} className="papel flex items-center gap-6 !rounded-[18px] px-6 py-6 sm:px-8 sm:py-7">
+                <span className={`flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full ${cor}`}>
+                  <Icone className="h-8 w-8" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 className="font-titulo text-[1.45rem] font-semibold leading-tight text-marinho">
+                    <span className="sr-only">Passo {i + 1}: </span>
+                    {titulo}
+                  </h3>
+                  <p className="mt-1.5 leading-relaxed text-tinta">{texto}</p>
+                </div>
+              </li>
+            );
+            return i < PASSOS_HERO.length - 1
+              ? [
+                  cartao,
+                  <li key={`seta-${i}`} aria-hidden="true" className="hidden items-center justify-center text-marinho/50 md:flex">
+                    <ArrowRight className="h-6 w-6" />
+                  </li>,
+                ]
+              : [cartao];
+          })}
+        </ol>
+        <p className="mt-10 flex items-center justify-center gap-5 text-[12px] font-medium uppercase tracking-[0.42em] text-tinta/80">
+          <span aria-hidden="true" className="h-px w-16 bg-marinho/20 sm:w-32" />
+          Materiais que geram novas histórias
+          <span aria-hidden="true" className="h-px w-16 bg-marinho/20 sm:w-32" />
+        </p>
       </div>
     </section>
-  );
-}
-
-// Composição com prévias reais: capa + página de conteúdo + gabarito, e cartões do que vem junto.
-function MockupHero() {
-  return (
-    <div className="surgir atraso-2 relative mx-auto aspect-[1/1.02] w-full max-w-[560px]" aria-label="Prévia de uma apostila gerada pelo EduGera" role="img">
-      <div aria-hidden="true" className="absolute inset-[6%] rounded-full bg-[radial-gradient(circle_at_40%_40%,#cfc5fa_0%,#e9e3fd_55%,transparent_72%)]" />
-
-      {/* página de conteúdo (atrás) */}
-      <div className="folha-sombra absolute right-[2%] top-[9%] w-[52%] rotate-[5deg] overflow-hidden bg-white">
-        <Image src="/vitrine/conteudo.webp" width={960} height={1064} alt="" priority sizes="300px" className="h-auto w-full" />
-      </div>
-      {/* capa (frente) */}
-      <div className="folha-sombra absolute left-[6%] top-[4%] w-[56%] -rotate-[4deg] overflow-hidden bg-white">
-        <Image src="/vitrine/capa-infografico.webp" width={760} height={1076} alt="" priority sizes="320px" className="h-auto w-full" />
-      </div>
-      {/* gabarito (base) */}
-      <div className="folha-sombra absolute bottom-[3%] right-[0%] w-[58%] rotate-[-2deg] overflow-hidden bg-white">
-        <Image src="/vitrine/gabarito.webp" width={960} height={254} alt="" sizes="330px" className="h-auto w-full" />
-      </div>
-
-      {/* cartões: BNCC, exercícios, gabarito, PDF */}
-      <div className="flutuar absolute left-0 top-[46%] flex items-center gap-2.5 rounded-2xl bg-white px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgba(22,26,79,0.45)] sm:-left-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-verde-claro">
-          <BadgeCheck className="h-5 w-5 text-verde" aria-hidden="true" />
-        </span>
-        <span className="leading-tight">
-          <span className="block text-[11px] font-semibold uppercase tracking-wider text-verde-escuro">BNCC verificada</span>
-          <span className="block text-sm font-bold text-marinho">EF07MA30</span>
-        </span>
-      </div>
-      <div className="flutuar-lento absolute right-[1%] top-[0%] flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgba(22,26,79,0.45)]">
-        <ListChecks className="h-5 w-5 text-roxo" aria-hidden="true" />
-        <span className="text-sm font-bold text-marinho">3 exercícios</span>
-      </div>
-      <div className="flutuar-lento absolute bottom-[20%] left-[4%] flex items-center gap-2 rounded-2xl bg-marinho px-3.5 py-2.5 text-white shadow-[0_14px_30px_-14px_rgba(22,26,79,0.6)]">
-        <ClipboardCheck className="h-5 w-5 text-[#9ee0b6]" aria-hidden="true" />
-        <span className="text-sm font-semibold">Gabarito conferido</span>
-      </div>
-      <div className="absolute -bottom-3 left-[18%] flex gap-2 sm:left-[22%]">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-roxo-claro px-3 py-1.5 text-[13px] font-semibold text-roxo-escuro shadow-sm">
-          <FileDown className="h-4 w-4" aria-hidden="true" /> PDF do aluno
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-coral-claro px-3 py-1.5 text-[13px] font-semibold text-coral-escuro shadow-sm">
-          <FileDown className="h-4 w-4" aria-hidden="true" /> PDF do professor
-        </span>
-      </div>
-    </div>
   );
 }
 
@@ -184,59 +207,6 @@ function Problema() {
         <p className="font-titulo mt-12 max-w-[820px] text-[1.6rem] font-medium italic leading-snug text-marinho sm:text-[1.9rem]">
           O EduGera monta o primeiro rascunho completo. <span className="text-roxo">Você revisa, decide e imprime.</span>
         </p>
-      </div>
-    </section>
-  );
-}
-
-const PASSOS = [
-  {
-    icone: Search,
-    cor: "bg-coral-claro text-coral-escuro",
-    titulo: "Escolha tema e habilidade",
-    texto: "Informe disciplina, etapa, ano e tema. Se quiser, indique a habilidade da BNCC pelo código (como EF07MA30) ou por palavra-chave.",
-  },
-  {
-    icone: Eye,
-    cor: "bg-roxo-claro text-roxo-escuro",
-    titulo: "Revise o material",
-    texto: "Veja a prévia A4 e passe por cada exercício: aprovar, editar, corrigir com IA ou excluir. As conferências automáticas apontam o que olhar.",
-  },
-  {
-    icone: Printer,
-    cor: "bg-verde-claro text-verde-escuro",
-    titulo: "Imprima ou compartilhe",
-    texto: "Baixe o PDF do aluno e o PDF do professor, com gabarito. Ou envie um link para a turma abrir no celular.",
-  },
-];
-
-function ComoFunciona() {
-  return (
-    <section id="como-funciona" aria-labelledby="titulo-como" className="py-20 sm:py-28">
-      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
-        <Titulo2 eyebrow="Como funciona" id="titulo-como" centro>
-          Da ideia à folha impressa em 3 passos
-        </Titulo2>
-        <ol className="relative mt-14 grid gap-6 md:grid-cols-3 md:gap-8">
-          <div aria-hidden="true" className="absolute left-[16%] right-[16%] top-[44px] hidden border-t-2 border-dashed border-marinho/15 md:block" />
-          {PASSOS.map(({ icone: Icone, cor, titulo, texto }, i) => (
-            <li key={titulo} className="papel relative p-7 text-center">
-              <span className={`relative mx-auto flex h-[60px] w-[60px] items-center justify-center rounded-2xl ${cor}`}>
-                <Icone className="h-7 w-7" aria-hidden="true" />
-                <span className="absolute -right-2.5 -top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-marinho text-sm font-bold text-white">
-                  {i + 1}
-                </span>
-              </span>
-              <h3 className="mt-6 text-xl font-bold text-marinho">{titulo}</h3>
-              <p className="mt-2.5 leading-relaxed text-tinta">{texto}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-12 text-center">
-          <Link href="/criar" className="btn-primario">
-            Experimentar agora <ArrowRight className="h-5 w-5" aria-hidden="true" />
-          </Link>
-        </div>
       </div>
     </section>
   );
@@ -529,7 +499,6 @@ export default function Fachada() {
       <main id="conteudo">
         <Hero />
         <Problema />
-        <ComoFunciona />
         <Exemplos />
         <Beneficios />
         <Bncc />
