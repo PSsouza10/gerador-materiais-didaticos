@@ -10,7 +10,7 @@ const CANON = "https://edugera.vercel.app";
 const get = (p, init) => fetch(BASE + p, { redirect: "manual", ...init });
 
 test("cabeçalhos de segurança em todas as páginas públicas", async () => {
-  for (const p of ["/", "/privacidade", "/termos"]) {
+  for (const p of ["/", "/criar", "/privacidade", "/termos"]) {
     const r = await get(p);
     assert.equal(r.status, 200, p);
     const csp = r.headers.get("content-security-policy") || "";
@@ -41,13 +41,13 @@ test("robots.txt e sitemap.xml", async () => {
   assert.match(robots, /Sitemap: https:\/\/edugera\.vercel\.app\/sitemap\.xml/);
   assert.doesNotMatch(robots, /^Host:/m);
   const sitemap = await (await get("/sitemap.xml")).text();
-  for (const p of ["/", "/privacidade", "/termos"]) assert.ok(sitemap.includes(`<loc>${CANON}${p}</loc>`), p);
+  for (const p of ["/", "/criar", "/privacidade", "/termos"]) assert.ok(sitemap.includes(`<loc>${CANON}${p}</loc>`), p);
   assert.doesNotMatch(sitemap, /\/m\/|\/api\//);
 });
 
 test("metadata por página: lang, título, description, canonical, og", async () => {
   const titulos = new Set();
-  for (const p of ["/", "/privacidade", "/termos"]) {
+  for (const p of ["/", "/criar", "/privacidade", "/termos"]) {
     const html = await (await get(p)).text();
     assert.match(html, /<html lang="pt-BR"/, p);
     const titulo = /<title>([^<]+)<\/title>/.exec(html)?.[1];
@@ -57,11 +57,28 @@ test("metadata por página: lang, título, description, canonical, og", async ()
     assert.ok(html.includes(`<link rel="canonical" href="${CANON}${p}"/>`), `${p} canonical`);
     assert.match(html, /<meta property="og:title"/, p);
   }
-  assert.equal(titulos.size, 3, "títulos únicos");
+  assert.equal(titulos.size, 4, "títulos únicos");
 });
 
-test("home: um único h1, campos com id/name/label, rádios nativos", async () => {
+test("fachada: um h1, mensagem principal, chamadas para /criar, login e links legais", async () => {
   const html = await (await get("/")).text();
+  assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, "um h1");
+  assert.match(html, /A apostila que você imaginou\./);
+  assert.match(html, /Criar minha primeira apostila/);
+  assert.match(html, /href="\/criar"/, "chamada para o gerador");
+  assert.match(html, /href="#como-funciona"/, "Ver como funciona");
+  assert.match(html, />\s*Entrar\s*</, "botão Entrar");
+  assert.match(html, /href="\/privacidade"/);
+  assert.match(html, /href="\/termos"/);
+  assert.doesNotMatch(html, /<form[\s>]/, "fachada sem formulário");
+  for (const img of ["capa-infografico", "conteudo", "exercicios", "gabarito", "pdf-aluno", "pdf-professor"]) {
+    assert.ok(html.includes(`vitrine%2F${img}.webp`) || html.includes(`vitrine/${img}.webp`), img);
+    assert.equal((await get(`/vitrine/${img}.webp`)).status, 200, `${img}.webp`);
+  }
+});
+
+test("gerador (/criar): um único h1, campos com id/name/label, rádios nativos", async () => {
+  const html = await (await get("/criar")).text();
   assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, "um h1");
   for (const nome of ["disciplina", "nivel", "tema", "conteudo", "estilo", "capa", "bncc"]) {
     assert.match(html, new RegExp(`id="campo-${nome}"[^>]*name="${nome}"|name="${nome}"[^>]*id="campo-${nome}"`), nome);
