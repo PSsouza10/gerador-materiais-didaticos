@@ -1,105 +1,191 @@
-# Fase 1 · Parte B — ligar o banco no site real (PLANO, não executado)
+# Fase 1 · Parte B — ligar o banco no site real
 
-Situação em 09/10/2026: o site real (edugera.vercel.app, projeto Vercel `gerador-materiais-didaticos`) roda o código da Fase 1 com o banco **desligado** (commit `4c00a00`). Tudo continua no Vercel Blob. O site de teste já usa o banco Neon `edugera-teste` e passou nos testes de exclusão e recriação de conta.
+**Plano para revisão. Nada aqui foi executado.**
+Versão 2 · 09/10/2026 · site real no commit `4c00a00` (banco desligado)
 
-**Princípio:** nada é apagado ou movido do Blob. O banco passa a ser a fonte principal, e o Blob vira cópia de segurança e reserva. Voltar atrás tem de ser possível a qualquer momento.
+## Ponto de partida
+- **Site real:** edugera.vercel.app, projeto Vercel `gerador-materiais-didaticos`. Tudo fica no Vercel Blob (`usuarios/`, `historicos/`, `materiais/`, `apostilas/`).
+- **Conta do Paulo:** 29 materiais na lista, 28 com link ativo, contador de uso em 67. A conta é de administrador.
+- **Outros professores:** podem ter arquivos também. O inventário (item 7) vai dizer quantos são.
+- **Site de teste:** já usa o banco `edugera-teste`. Passou em criação de conta, importação, limite, revogação e exclusão.
+
+**Regra de ouro:** nada é apagado nem movido do Blob durante a Parte B. O banco passa a ser a fonte principal, e o Blob fica como cópia e reserva.
 
 ---
 
-## 0. Antes de começar (bloqueios)
-| # | Item | Por quê |
+## Pré-requisitos (código novo, testado primeiro no site de teste)
+| # | Mudança | Motivo |
 |---|---|---|
-| 0.1 | Investigar o contador de uso parado em 67 (conta admin) | A importação copia esse contador; precisa estar certo antes |
-| 0.2 | **Não trocar** `NEXTAUTH_SECRET` nem `BLOB_READ_WRITE_TOKEN` | Os caminhos dos arquivos de cada professor são calculados com essa chave. Trocar = perder o vínculo com todos os arquivos |
-| 0.3 | Ajustar o marcador do banco (ver 1.3) | Hoje a migração 0001 grava sempre "teste" |
-| 0.4 | Escrever a "dupla gravação" (ver 5.3) | Garante que voltar atrás não perde nada |
+| P1 | Banco de produção só liga com **duas** variáveis: `DATABASE_URL_PRODUCAO` + `BANCO_PRODUCAO=1` | Interruptor que o Paulo liga e desliga sem mexer no código |
+| P2 | Marcador do banco aceita "teste" ou "producao"; o código recusa banco com marcador trocado | Impede o site real de usar o banco de teste, e o contrário |
+| P3 | Migração em produção só com o interruptor ligado | Hoje a migração é bloqueada em produção |
+| P4 | **Interruptor separado `EXCLUSAO_CONTA=1`** para liberar a exclusão em produção | Sem ele, ligar o banco liberaria a exclusão automaticamente |
+| P5 | **Dupla gravação**: material novo, lista e uso também vão para o Blob | Voltar para o `4c00a00` sem perder nada |
+| P6 | Rotas de administrador: `backup`, `inventario` e `conferir` | Itens 1 e 7 |
+| P7 | Importação busca os arquivos em paralelo (até 6 de cada vez) | Login rápido mesmo com 29 materiais |
+| P8 | Investigar o contador de uso parado em 67 | A importação copia esse número |
 
-## 1. Banco Neon separado para produção
-1. **Paulo** cria o projeto `edugera-producao` no Neon: AWS US East 1, só Postgres, plano grátis.
-2. Usar a connection string **com pooling** (`-pooler` no endereço).
-3. Mudanças de código (Claude, testadas no site de teste antes):
-   - `lib/banco.js`: em produção, ler **somente** `DATABASE_URL_PRODUCAO`, e só se `BANCO_PRODUCAO=1`. Essa variável funciona como interruptor geral.
-   - Tabela `ambiente` passa a aceitar `'teste'` ou `'producao'`. O script de migração grava o marcador conforme o ambiente. **O código recusa conectar** se o marcador não bater (produção nunca usa banco "teste", e vice-versa).
-   - `scripts/migrar.mjs`: modo produção só com `--producao --confirmar` e com o interruptor ligado. No build da Vercel, a migração de produção só roda nessa condição.
-4. Teste automático novo: produção sem interruptor = banco desligado; marcador trocado = recusa.
+**Nunca trocar** `NEXTAUTH_SECRET` nem `BLOB_READ_WRITE_TOKEN`. Os caminhos dos arquivos de cada professor são calculados com eles; trocar desliga todos os arquivos das contas.
 
-## 2. Variáveis de ambiente (Vercel → `gerador-materiais-didaticos`)
-| Variável | Tipo | Ambiente | Quem |
-|---|---|---|---|
-| `DATABASE_URL_PRODUCAO` | Secret | **só Production** | Paulo cola |
-| `BANCO_PRODUCAO` | Config, valor `1` | **só Production** | Paulo, no dia da virada |
-| `DATABASE_URL_TESTE` | Secret | só Preview | já existe, não muda |
-| `NEXTAUTH_SECRET`, `BLOB_READ_WRITE_TOKEN` | — | — | **não mexer** |
+---
 
-O interruptor `BANCO_PRODUCAO` é criado por último, no dia da virada. Sem ele, mesmo com a URL colada, o banco não liga.
+## 1. Backup dos 29 materiais (e de todo o resto)
+São três cópias independentes:
+1. **No próprio Blob:** a rota `POST /api/admin/backup` (só administrador) copia cada arquivo de `usuarios/`, `historicos/`, `materiais/` e `apostilas/` para `backup/2026-MM-DD/<mesmo caminho>`. Ela usa a cópia do próprio Blob, que é feita no servidor e não altera o original.
+   - Gera `backup/2026-MM-DD/manifesto.json` com, para cada arquivo: caminho, tamanho, data e **impressão digital SHA-256** do conteúdo. Não tem e-mail nem nome: os caminhos são códigos.
+2. **No computador do Paulo:**
+   - baixar o `manifesto.json`;
+   - em **Minhas Apostilas → Exportar backup**, baixar o arquivo com a lista dos 29;
+   - baixar `GET /api/admin/backup?conta=minha`, um JSON com o **conteúdo completo** dos 29 materiais dele.
+3. **No Neon:** branch `backup-2026-MM-DD` do banco de produção vazio, criado logo antes de ligar (1 clique, Paulo).
 
-## 3. Backup do Vercel Blob
-1. Rota de administrador nova `/api/admin/backup`, só para e-mails em ADMIN_EMAILS. Ela copia, dentro do próprio Blob, cada arquivo de `usuarios/`, `historicos/`, `materiais/` e `apostilas/` para `backup/AAAA-MM-DD/...`. A cópia é feita pelo servidor e não apaga nada.
-2. Gera um manifesto `backup/AAAA-MM-DD/manifesto.json` com caminho, tamanho e data de cada arquivo. Não contém e-mails: os caminhos são códigos.
-3. Uso atual: cerca de 5 MB de 1 GB. O backup cabe com folga.
-4. Antes de cada migração no banco de produção: criar no Neon o branch `backup-AAAA-MM-DD` (Paulo, 1 clique).
+O backup só conta como feito quando o número de arquivos copiados é igual ao do inventário e todas as impressões digitais conferem.
 
-## 4. Inventário dos materiais atuais
-Rota de administrador `/api/admin/inventario`, só leitura. Devolve números, sem dados pessoais:
-- quantidade de arquivos de uso (≈ contas que já geraram), de listas de histórico e de materiais compartilhados;
-- total de itens nas listas e quantos têm link ativo;
-- **órfãos**: materiais no Blob que não aparecem em nenhuma lista (continuam abrindo pelo link);
-- **quebrados**: itens da lista cujo arquivo não existe mais.
+## 2. Links compartilhados preservados
+- O endereço não muda: `https://edugera.vercel.app/m/<id>`. O `id` do banco é o **mesmo** id do Blob, e é a chave única da tabela.
+- A página `/m/<id>` procura **primeiro no banco** e, se não achar, **no Blob**, como hoje. Material de quem ainda não entrou, ou que não foi importado, continua abrindo pelo Blob.
+- Nenhum arquivo `materiais/<id>.json` é apagado durante a Parte B, exceto quando o próprio professor revoga o link (item 12).
 
-O inventário é salvo junto do backup. Referência atual da conta do Paulo: 29 itens, 28 links ativos.
+## 3. Associação de cada material ao professor certo
+- Os arquivos não têm e-mail; o caminho é um código calculado a partir do e-mail. **Não dá para saber o dono sem o professor entrar.** Por isso a associação acontece **no login de cada professor**, quando o sistema sabe o e-mail.
+- No 1º login com banco:
+  1. a conta é criada (`usuarios.conta` = código do e-mail; o e-mail não é gravado);
+  2. o sistema lê a lista antiga desse professor (`historicos/<código>.json`);
+  3. para cada item, abre `materiais/<id>.json` e **só traz o conteúdo se a chave de revogação da lista conferir com a do arquivo**. Essa é a prova de que o material é dele;
+  4. item sem prova entra só na lista, sem conteúdo, e o link continua abrindo pelo Blob;
+  5. os eventos de uso do mês vêm de `usuarios/<código>.json`.
+- **Proteção contra "roubo":** se outra conta colou um link alheio na própria lista, ela não fica com o material. Quem prova a chave toma o lugar (há teste automático).
+- **Um professor não vê o material de outro:** toda consulta filtra pela conta logada (há teste automático).
 
-## 5. Migração dos materiais
-### 5.1 Como associar material ↔ professor
-- Os arquivos do Blob não têm e-mail: o caminho é um código calculado a partir do e-mail. **Não dá para descobrir o dono de um arquivo sem o professor entrar.** Por isso a importação é feita **no login de cada professor**. Esse código já existe e foi testado (`lib/importacao.js`).
-- No login: a conta é criada no banco e os dados antigos vêm do Blob, nesta ordem:
-  1. lista "Minhas Apostilas";
-  2. conteúdo dos links — só quando a chave de revogação confere, o que prova que o material é daquela conta;
-  3. eventos de uso.
-- Importa uma vez por conta, dentro de uma transação: se falhar, nada fica pela metade e tenta de novo no próximo acesso.
-- Quem colou o link de outra pessoa não "rouba" o material: quem prova a chave fica com ele (há teste automático para isso).
+## 4. Criação do banco Neon `edugera-producao`
+1. **Paulo:** no Neon, clicar em **Novo projeto**:
+   - nome `edugera-producao`;
+   - região **AWS US East 1 (N. Virginia)**, a mesma do site;
+   - só **Postgres** ligado.
+2. **Paulo:** clicar em **Connect** e copiar a connection string **com pooling** (endereço com `-pooler`, terminando em `sslmode=require`). Não enviar ao Claude.
+3. O banco nasce vazio. As tabelas são criadas pela migração (item 6), não à mão.
+4. Plano grátis: 0,5 GB. O uso esperado fica abaixo de 10 MB.
 
-### 5.2 Quem nunca entrar de novo
-Os materiais dessa pessoa ficam no Blob e **o link `/m/<id>` continua abrindo**: a página procura no banco e, se não achar, procura no Blob. Ninguém perde link compartilhado.
+## 5. Variáveis na Vercel (projeto `gerador-materiais-didaticos`)
+| Variável | Tipo | Ambiente | Quando | Quem |
+|---|---|---|---|---|
+| `DATABASE_URL_PRODUCAO` | Secret | **só Production** | dia anterior à virada | Paulo |
+| `BANCO_PRODUCAO` = `1` | Config | **só Production** | na virada | Paulo |
+| `EXCLUSAO_CONTA` = `1` | Config | **só Production** | só depois da validação final | Paulo |
+| `DATABASE_URL_TESTE` | Secret | só Preview | já existe | não muda |
+| `IA_SIMULADA` | Config | só Preview | já existe | não muda |
+| `NEXTAUTH_SECRET`, `BLOB_READ_WRITE_TOKEN`, `NEXTAUTH_URL` | — | — | — | **não mexer** |
 
-### 5.3 Dupla gravação (proteção para voltar atrás)
-Durante os primeiros 30 dias com banco ligado:
-- material novo é gravado **no banco e também no Blob**;
-- a lista "Minhas Apostilas" também é sincronizada no arquivo do Blob.
+Sem `BANCO_PRODUCAO=1`, o banco não liga em produção, mesmo com a URL colada.
 
-Assim, se for preciso desligar o banco, nada criado nesse período se perde. Depois de 30 dias estáveis, a dupla gravação é desligada (decisão do Paulo).
+## 6. Como será a migração
+Ela tem duas partes.
+- **Estrutura (tabelas):** roda sozinha no deploy, só se `BANCO_PRODUCAO=1`. As tabelas são criadas em transação e há arquivo para desfazer (`.down.sql`). Na primeira vez, o script exige um banco vazio e grava o marcador "producao".
+- **Dados:** professor por professor, **no login**, como descrito no item 3. Não existe "migração em massa", porque não dá para saber o dono sem o login.
+  - Material de quem nunca voltar continua no Blob, com o link funcionando.
+  - **Ensaio antes da virada:** no site de teste, o administrador copia **só os próprios arquivos** reais para a pasta `teste/`, entra no site de teste e roda a conferência do item 7. A virada só acontece se o ensaio der 100%.
 
-### 5.4 Ensaio com dados reais antes da virada
-No site de teste, o administrador copia **só os próprios arquivos** do Blob real para a pasta `teste/` e entra no site de teste. A importação roda sobre essa cópia, e comparamos: itens, links ativos, contador. Só depois a virada no site real.
+## 7. Validação de quantidade e integridade
+A rota `GET /api/admin/conferir` (só administrador, só a própria conta) compara o Blob com o banco:
+| Conferência | Esperado |
+|---|---|
+| Itens da lista no Blob × no banco | iguais (29) |
+| Conjunto de ids | idêntico, nenhum a mais nem a menos |
+| Links ativos (com chave, não revogados) | iguais (28) |
+| Conteúdo: SHA-256 do JSON no Blob × no banco | igual para cada material com prova |
+| Uso do mês (Blob × banco) | igual |
+| Ids duplicados no banco | 0 (o banco não permite) |
 
-## 6. Plano de rollback
-| Situação | Ação | Perda |
-|---|---|---|
-| Erro logo após ligar | Paulo apaga `BANCO_PRODUCAO` → redeploy (≈2 min) → site volta ao Blob | nenhuma (dupla gravação) |
-| Erro no código novo | Vercel → Deployments → deploy anterior → *Promote to Production* | nenhuma |
-| Migração com problema | `npm run migrar -- down --confirmar` ou restaurar o branch `backup-AAAA-MM-DD` no Neon | nenhuma |
-| Arquivo do Blob corrompido | copiar de volta de `backup/AAAA-MM-DD/` | nenhuma |
+Além disso, o **inventário geral** (todos os professores, só números) é tirado antes e depois:
+- quantidade de contas, listas, itens e links ativos;
+- **órfãos:** arquivo de material sem lista;
+- **quebrados:** item de lista sem arquivo.
 
-## 7. Checklist de validação (no dia da virada)
-- [ ] Backup feito e manifesto conferido (quantidade = inventário)
-- [ ] Branch de backup no Neon criado
-- [ ] `/api/saude` em produção continua 404; marcador do banco de produção = "producao"
-- [ ] Login do Paulo: lista com os mesmos 29+ itens, mesmos links ativos, contador igual ao de antes
-- [ ] Abrir 3 links antigos `/m/<id>` (do banco e de órfão do Blob): todos abrem
-- [ ] Gerar apostila real: entra na lista, link abre, PDF do aluno e do professor saem
-- [ ] Revogar um link de teste: deixa de abrir
-- [ ] Conta de outro professor (2ª conta Google) não vê nada do Paulo
-- [ ] Limite do plano grátis: a 6ª geração do mês é bloqueada numa conta comum
-- [ ] Desligar e religar o interruptor e conferir que nada some (teste do rollback)
-- [ ] Logs da Vercel sem erro de banco por 24 h
+Os números do Blob não podem mudar com a virada.
 
-## 8. Estratégia de publicação sem perda de dados
-1. **Código** (0.1, 0.3, 0.4 e seções 1, 3 e 4) vai primeiro para o site de teste, com testes automáticos e o ensaio da 5.4.
-2. Publicar o código no site real **com o interruptor desligado**: nada muda para os professores.
-3. Rodar backup e inventário em produção (só leitura e cópia).
-4. **Paulo** cria `edugera-producao` e cola `DATABASE_URL_PRODUCAO` (só Production).
-5. Em horário de pouco uso (noite ou fim de semana): criar o branch de backup no Neon e ligar `BANCO_PRODUCAO=1`. O redeploy roda a migração.
-6. Paulo entra no site e confere o checklist 7.
-7. Observação por 7 dias; dupla gravação mantida por 30 dias.
-8. Exclusão de conta no site real só é liberada depois do item 7 aprovado.
+## 8. Testes de login, geração, biblioteca e PDF (depois de ligar)
+1. **Login:** sair e entrar de novo com a conta Google do Paulo; a conta é criada no banco e a importação roda.
+2. **Biblioteca:** a lista mostra os 29 itens, com títulos, datas e links iguais aos de antes.
+3. **Links antigos:** abrir 3 deles: um importado, um sem prova (servido pelo Blob) e um revogado (precisa dar 404).
+4. **Geração real:** gerar uma apostila; ela entra no topo da lista (30) e o link abre.
+5. **Dupla gravação:** a apostila nova também aparece no arquivo do Blob (conferência pelo item 7).
+6. **PDF:** "PDF do aluno" e "PDF do professor" geram o arquivo.
+7. **Uso:** o contador sobe 1.
+8. **Isolamento:** uma 2ª conta Google entra e vê lista vazia, sem nada do Paulo.
+9. **Limite:** numa conta comum, a 6ª geração do mês é bloqueada (planos e limites não mudam).
 
-**Fora desta etapa:** pagamentos, planos, limites novos, n8n.
+## 9. Rollback para o commit `4c00a00`
+Dois níveis, do mais rápido ao mais completo:
+1. **Desligar o banco (≈2 min):** Paulo apaga `BANCO_PRODUCAO` na Vercel e faz Redeploy. O site volta a usar só o Blob, com o código novo.
+2. **Voltar ao `4c00a00` (instantâneo):** Vercel → Deployments → deploy do `4c00a00` (09/10, 08:57) → **Promote to Production**. Alternativa: `git revert` dos commits da Parte B e push.
+
+Graças à dupla gravação (P5), o que foi criado durante a Parte B também está no Blob, e o `4c00a00` enxerga tudo. Só o **perfil** (nome, escola, disciplinas), que é novo, fica apenas no banco. O banco não é apagado no rollback; ele fica parado para religar depois.
+
+## 10. Sem perda e sem duplicação
+| Risco | Proteção |
+|---|---|
+| Material duplicado | `id` é chave única no banco; importação usa "se já existe, não insere" |
+| Importação rodando duas vezes | a conta tem `importado_em`, e só a 1ª chamada "reserva" a importação |
+| Importação pela metade | tudo numa transação; se falhar, nada fica e tenta de novo no próximo login |
+| Dois aparelhos sincronizando | regras do histórico de hoje: revogado não volta, removido não reaparece |
+| Perda no Blob | nada é apagado; backup triplo (item 1) |
+| Perda no rollback | dupla gravação (P5) |
+| Chave do servidor trocada | proibido trocar `NEXTAUTH_SECRET` e o token do Blob |
+
+## 11. Sem interromper o site
+- O deploy da Vercel troca de versão de uma vez, sem tempo fora do ar.
+- A migração de estrutura só cria tabelas vazias (segundos, durante o build). O site antigo segue no ar até o novo ficar pronto.
+- A importação é por professor, no login: só aquele login leva 2 a 5 segundos a mais, uma única vez. Os outros não percebem.
+- **Horário:** à noite ou no fim de semana, quando há menos uso.
+
+## 12. Links compartilhados e revogação
+- **Material importado:** revogar marca "revogado" no banco, apaga o conteúdo do banco **e apaga a cópia do Blob**. Sem isso o link voltaria pela reserva (já é assim no teste).
+- **Material só no Blob:** revogar funciona como hoje (chave confere → apaga o arquivo).
+- **Revogado antes da virada:** chega ao banco já como revogado e continua 404.
+- A chave de revogação nunca vai para a página pública; no banco fica só a impressão digital dela.
+
+## 13. Exclusão de conta protegida até a validação final
+- Hoje, em produção, a exclusão está **escondida e bloqueada** porque o banco está desligado.
+- Com P4, ligar o banco **não** libera a exclusão: ela exige também `EXCLUSAO_CONTA=1`, criada pelo Paulo **só depois** de todo o checklist aprovado.
+- Antes de liberar, mais um teste de exclusão no site de teste, com dados reais copiados (como no ensaio do item 6).
+- Com a exclusão liberada, ela apaga a conta, a lista, os links e o uso **daquele professor**, inclusive as cópias no Blob. O backup do dia da virada continua guardado por 30 dias. Depois disso, o Paulo decide se apaga o backup, em respeito à LGPD.
+
+---
+
+## Checklist de execução
+**Preparação (sem mudar nada para os professores)**
+- [ ] P1 a P8 prontos, com testes automáticos passando
+- [ ] Ensaio no site de teste com cópia dos dados reais do Paulo: conferência 100%
+- [ ] Teste de exclusão repetido no site de teste
+- [ ] Código publicado no site real **com interruptores desligados**; o site continua igual (login, gerar, lista, PDF)
+- [ ] Inventário geral "antes" salvo
+- [ ] Backup no Blob feito; manifesto conferido (quantidade e SHA-256)
+- [ ] Paulo baixou o manifesto, o "Exportar backup" e o backup completo da conta dele
+- [ ] Paulo criou `edugera-producao` no Neon e colou `DATABASE_URL_PRODUCAO` (só Production)
+
+**Virada (noite ou fim de semana)**
+- [ ] Paulo cria o branch `backup-AAAA-MM-DD` no Neon
+- [ ] Paulo cria `BANCO_PRODUCAO=1` (só Production) e faz Redeploy
+- [ ] Deploy concluído; migração aplicou 0001, 0002 e 0003; marcador "producao"
+- [ ] `/api/saude` em produção continua **404**
+- [ ] Paulo sai e entra de novo → conferência (item 7) 100%
+- [ ] Testes do item 8 (1 a 9) aprovados
+- [ ] Inventário geral "depois": números do Blob iguais aos de "antes"
+- [ ] 24 h sem erro de banco nos registros da Vercel
+
+**Depois**
+- [ ] 7 dias estáveis → Paulo cria `EXCLUSAO_CONTA=1` (opcional)
+- [ ] 30 dias estáveis → decisão de desligar a dupla gravação e apagar o backup
+
+## Checklist de rollback
+- [ ] Anotar o horário e o que deu errado (sem dados pessoais)
+- [ ] **Nível 1:** apagar `BANCO_PRODUCAO` → Redeploy → aguardar ~2 min
+- [ ] Conferir: login, lista com os mesmos itens, links abrem, gerar, PDF
+- [ ] Se ainda houver erro, **nível 2:** Deployments → deploy do `4c00a00` → **Promote to Production**
+- [ ] Conferir de novo: `/api/uso` sem e-mail, botão de exclusão escondido, lista e links ok
+- [ ] Rodar o inventário: números do Blob iguais aos de antes da virada
+- [ ] Se algum arquivo do Blob estiver corrompido: copiar de volta de `backup/AAAA-MM-DD/` (rota de administrador, só com autorização do Paulo)
+- [ ] **Não** apagar o banco `edugera-producao`: fica parado para análise
+- [ ] Relatório ao Paulo antes de qualquer nova tentativa
+
+**Fora da Parte B:** pagamentos, planos, limites, n8n.
