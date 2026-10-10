@@ -185,3 +185,13 @@ body {
   }
   .moldura-impressao[data-tema="premium"] { border: 0.8mm solid #1f5f6e; }
 }
+
+/* Capa "História que Ensina" no PDF: o html2canvas desenha as fontes Fredoka/Figtree
+   alguns px abaixo do lugar. Só no palco do PDF (a prévia não muda), cada texto sobe o
+   quanto foi medido no teste visual (tests/capas.visual.mjs). Caixas e fundos não mexem. */
+.palco-pdf .capa-historia [data-capa="titulo"] { position: relative; top: -0.26em; }
+.palco-pdf .capa-historia [data-capa="logo"] span { position: relative; top: -9px; }
+.palco-pdf .capa-historia [data-capa="disciplina"] > span { position: relative; top: -7px; }
+.palco-pdf .capa-historia .texto-pdf,
+.palco-pdf .capa-historia [data-capa="identificacao"] p,
+.palco-pdf .capa-historia [data-capa="rodape"] span { position: relative; top: -6px; }

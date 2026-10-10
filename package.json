@@ -11,9 +11,12 @@
     "test:publico": "node --test tests/publico.e2e.mjs",
     "auditar": "node scripts/auditar.mjs",
     "migrar": "node scripts/migrar.mjs",
-    "vercel-build": "node scripts/migrar.mjs up --somente-teste && next build"
+    "vercel-build": "node scripts/migrar.mjs up --somente-teste && next build",
+    "test:capas": "node --test tests/capas.visual.mjs"
   },
   "dependencies": {
+    "@fontsource/figtree": "^5.3.0",
+    "@fontsource/fraunces": "^5.3.0",
     "@fontsource/fredoka": "^5.3.0",
     "@neondatabase/serverless": "^1.2.0",
     "@types/node": "20.6.2",
@@ -35,6 +38,7 @@
     "typescript": "5.2.2"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.2.17"
+    "@electric-sql/pglite": "^0.2.17",
+    "playwright-core": "^1.56.1"
   }
 }
