@@ -56,10 +56,14 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
       return null;
     }
     if (p.id === "escola") {
-      // Escola: sem preço e sem cobrança por enquanto
-      return (
-        <span className="btn-secundario w-full cursor-not-allowed justify-center opacity-60" aria-disabled="true">
-          Em breve
+      // Escola: sem preço e sem cobrança. "Fale conosco" vira link só quando houver SUPORTE_EMAIL.
+      return suporte ? (
+        <a href={`mailto:${suporte}?subject=${encodeURIComponent("EduGera — plano Escola")}`} className="btn-secundario w-full justify-center">
+          <Mail className="h-4 w-4" aria-hidden="true" /> Em breve — fale conosco
+        </a>
+      ) : (
+        <span className="btn-secundario w-full cursor-not-allowed justify-center opacity-70" aria-disabled="true">
+          Em breve — fale conosco
         </span>
       );
     }

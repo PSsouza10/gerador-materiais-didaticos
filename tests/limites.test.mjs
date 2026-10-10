@@ -121,3 +121,15 @@ test("migração 0004 preserva todo o histórico (sobe e desce sem perder linha)
   for (const i of lerInstrucoes(m4.up)) await banco.query(i);
   assert.equal(await foto(), original);
 });
+
+test("migração 0004 é idempotente: rodar de novo não duplica coluna, índice nem tabela", async () => {
+  const banco = new PGlite();
+  const ms = listarMigracoes(new URL("../db/migracoes", import.meta.url).pathname);
+  for (const m of ms) for (const i of lerInstrucoes(m.up)) await banco.query(i);
+  const m4 = ms.find((m) => m.nome.startsWith("0004_"));
+  for (let vez = 0; vez < 2; vez++) for (const i of lerInstrucoes(m4.up)) await banco.query(i); // de novo, 2x
+  const n = async (sql) => (await banco.query(sql)).rows[0].n;
+  assert.equal(await n("SELECT count(*)::int AS n FROM information_schema.columns WHERE table_name = 'eventos_uso' AND column_name = 'request_id'"), 1);
+  assert.equal(await n("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_name = 'assinaturas'"), 1);
+  assert.equal(await n("SELECT count(*)::int AS n FROM pg_indexes WHERE indexname IN ('eventos_uso_request_idx', 'assinaturas_ativa_idx')"), 2);
+});
