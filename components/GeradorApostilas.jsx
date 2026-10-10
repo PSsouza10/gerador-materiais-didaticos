@@ -49,6 +49,7 @@ import { slugify } from "@/lib/material";
 import { verificarUnidades } from "@/lib/unidades";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { LIMITES, QUANTIDADES } from "@/lib/validacao";
+import { avisoTransicao } from "@/lib/planos";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
@@ -189,6 +190,7 @@ export default function GeradorApostilas() {
 
   const [config, setConfig] = useState(CONFIG_PADRAO);
   const [materiais, setMateriais] = useState([]);
+  const [biblioteca, setBiblioteca] = useState({ ocultos: 0, limite: null }); // limite do plano (servidor)
   const [paginacao, setPaginacao] = useState({ paginas: 1, paginasFolha: 1, capa: false });
   // Aviso da primeira visita: some depois do "Entendi" (lembrado neste navegador)
   const [avisoIaVisto, setAvisoIaVisto] = useState(true);
@@ -261,7 +263,11 @@ export default function GeradorApostilas() {
   // Logado: junta a lista deste aparelho com a da conta (a mesma no computador e no celular)
   const sincronizar = (mudancas) =>
     statusSessao === "authenticated" &&
-    sincronizarComConta(mudancas).then((lista) => lista && setMateriais(lista));
+    sincronizarComConta(mudancas).then((r) => {
+      if (!r) return;
+      setMateriais(r.itens);
+      setBiblioteca({ ocultos: r.ocultos, limite: r.limite });
+    });
   useEffect(() => {
     if (statusSessao === "authenticated") sincronizar({ itens: lerMateriais() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -640,7 +646,8 @@ export default function GeradorApostilas() {
           <div className="px-4 sm:px-6 md:px-8 pb-10">
             <MinhasApostilas
               materiais={materiais}
-              limite={conta.uso?.biblioteca ?? null}
+              limite={biblioteca.limite ?? conta.uso?.biblioteca ?? null}
+              ocultos={biblioteca.ocultos}
               irPara={setActive}
               onRemover={(id) => {
                 setMateriais(removerMaterial(id));
@@ -862,6 +869,12 @@ export default function GeradorApostilas() {
             {conta.authConfigurado === false && (
               <p role="status" className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                 A geração está desativada até o login ser configurado neste site. Você ainda pode ver o exemplo e testar a prévia e o PDF.
+              </p>
+            )}
+            {sessao?.user && conta.uso?.transicao && conta.uso?.restantes !== 0 && (
+              <p role="status" className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                {avisoTransicao(conta.uso.transicao)}{" "}
+                <a href="/planos" className="font-semibold underline">Ver planos</a>
               </p>
             )}
             {sessao?.user && conta.uso?.restantes === 0 && (

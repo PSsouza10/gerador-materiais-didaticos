@@ -176,9 +176,10 @@ test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de 
   const r = await get("/planos");
   assert.equal(r.status, 200);
   const t = await textoDe(r);
-  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 29,90", "R$ 299", "A definir", "Em breve", "nenhuma cobrança"])
+  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 29,90", "R$ 299", "Em breve", "nenhuma cobrança", "Suporte em breve"])
     assert.ok(t.includes(x), `falta "${x}"`);
-  assert.match(t, /2 gerações de apostila por mês/);
+  assert.match(t, /2 gerações de apostila por mês \(1 por dia\)/);
+  assert.doesNotMatch(t, /COLOCAREI|prioridade de processamento|Fale conosco/i);
   assert.match(t, /30 gerações por mês/);
   assert.match(t, /Biblioteca com até 5 materiais/);
   assert.doesNotMatch(t, /checkout|cartão de crédito|stripe|mercado ?pago/i);
@@ -194,12 +195,21 @@ test("/uso: anônimo volta para o início; logado vê o painel", async (t) => {
   const r = await get("/uso", { headers: { cookie } });
   assert.equal(r.status, 200);
   const txt = await textoDe(r);
-  for (const x of ["Uso e limites", "Grátis", "Gerações neste mês", "Gerações hoje", "Materiais na biblioteca", "Nenhuma cobrança"])
+  for (const x of ["Uso e limites", "Grátis", "Gerações neste mês", "Gerações hoje", "Materiais na biblioteca", "Nenhuma cobrança", "Suporte em breve"])
     assert.ok(txt.includes(x), `falta "${x}"`);
   const uso = await (await get("/api/uso", { headers: { cookie } })).json();
   assert.equal(uso.uso.plano.id, "gratis");
-  assert.equal(uso.uso.limite, 2);
-  assert.equal(uso.uso.biblioteca, 5);
+  if (process.env.TRANSICAO) {
+    // regra antiga até o próximo ciclo: sem limite diário nem de biblioteca, com aviso
+    assert.equal(uso.uso.hoje.limite, null);
+    assert.equal(uso.uso.biblioteca, null);
+    assert.ok(uso.uso.transicao?.novosLimitesEm);
+    assert.ok(txt.includes("A partir de"), "aviso da transição no painel");
+  } else {
+    assert.equal(uso.uso.limite, 2);
+    assert.equal(uso.uso.hoje.limite, 1);
+    assert.equal(uso.uso.biblioteca, 5);
+  }
 });
 
 test("/api/assinatura: sem login 401; nunca cobra", async () => {

@@ -3,7 +3,7 @@ import { comRequestId } from "@/lib/requestId";
 import { caminhoBlob, iaSimulada } from "@/lib/ambiente";
 import { put } from "@vercel/blob";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirImagem, devolverImagem, ehPremium } from "@/lib/uso";
+import { consumirImagem, devolverImagem, temPremium } from "@/lib/uso";
 import { normalizarEstilo } from "@/lib/opcoes";
 import { limparTexto, LIMITES } from "@/lib/validacao";
 
@@ -64,8 +64,10 @@ async function processar(request, ctx) {
     }
     const usuario = await usuarioAtual();
     if (!usuario) return NextResponse.json({ error: "Entre com sua conta para gerar ilustrações." }, { status: 401 });
-    poster = poster && ehPremium(usuario.email);
-    historia = historia && ehPremium(usuario.email);
+    // capa Premium: plano Pro, administrador ou lista de transição (lib/uso.js)
+    const premium = (poster || historia) && (await temPremium(usuario.email));
+    poster = poster && premium;
+    historia = historia && premium;
     const img = await consumirImagem(usuario.email, ctx.requestId);
     if (img?.ok) ctx.consumidoPor = usuario.email;
     if (!img?.ok) {

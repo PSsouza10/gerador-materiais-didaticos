@@ -11,7 +11,7 @@ import "@/components/fachada/fachada.css";
 // Página de planos. Preços e limites vêm de lib/planos.js.
 // Não há checkout: no site publicado os planos pagos aparecem como "Em breve";
 // no site de teste dá para SIMULAR a assinatura (nada é cobrado).
-export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao }) {
+export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, aviso = null }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(null);
   const [msg, setMsg] = useState("");
@@ -56,11 +56,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
       return null;
     }
     if (p.id === "escola") {
-      return suporte ? (
-        <a href={`mailto:${suporte}?subject=${encodeURIComponent("EduGera — plano Escola")}`} className="btn-secundario w-full justify-center">
-          <Mail className="h-4 w-4" aria-hidden="true" /> Fale conosco
-        </a>
-      ) : (
+      // Escola: sem preço e sem cobrança por enquanto
+      return (
         <span className="btn-secundario w-full cursor-not-allowed justify-center opacity-60" aria-disabled="true">
           Em breve
         </span>
@@ -116,6 +113,11 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           <p className="mx-auto mt-4 max-w-[60ch] text-[17px] leading-relaxed text-tinta">
             Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita.
           </p>
+          {aviso && (
+            <p role="status" className="mx-auto mt-5 max-w-[62ch] rounded-2xl bg-roxo-claro px-4 py-3 text-[15px] font-medium text-marinho">
+              {aviso}
+            </p>
+          )}
           {simulacao && (
             <p className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900">
               <FlaskConical className="h-4 w-4" aria-hidden="true" /> Site de teste: a assinatura é só simulada, sem pagamento.
@@ -198,7 +200,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
                   </th>
                   {planos.map((p) => (
                     <td key={p.id} className="px-3 py-2.5 text-marinho">
-                      {p.emBreve ? "A definir" : valorLimite(p.limites[chave])}
+                      {p.emBreve ? "Em breve" : valorLimite(p.limites[chave])}
                     </td>
                   ))}
                 </tr>
@@ -215,7 +217,13 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           </p>
           <p className="flex items-start gap-2">
             <Mail className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-            Suporte: {suporte ? <a className="underline" href={`mailto:${suporte}`}>{suporte}</a> : suportePadrao}
+            {suporte ? (
+              <>
+                Suporte: <a className="underline" href={`mailto:${suporte}`}>{suporte}</a>
+              </>
+            ) : (
+              suportePadrao
+            )}
           </p>
         </section>
       </main>

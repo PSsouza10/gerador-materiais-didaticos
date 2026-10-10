@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Gauge, CalendarDays, Sparkles, ShieldCheck, Wand2, Image as Imagem, BookMarked, Mail, Zap } from "lucide-react";
+import { ArrowLeft, Gauge, CalendarDays, Sparkles, ShieldCheck, Wand2, Image as Imagem, BookMarked, Mail, Info } from "lucide-react";
 
 // Painel "Uso e limites" (app/uso/page.jsx). Sem estado: os números chegam prontos do servidor.
 const TIPOS = { geracao: "Geração de apostila", revisao: "Revisão de conteúdo", correcao: "Correção de exercício", imagem: "Ilustração" };
@@ -40,7 +40,7 @@ function Barra({ icone: Icone, titulo, usados, limite, renova, legenda }) {
   );
 }
 
-export default function PainelUso({ uso, materiais, recentes, suporte, nome }) {
+export default function PainelUso({ uso, materiais, recentes, suporte, suporteTexto, aviso, nome }) {
   if (!uso)
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -70,13 +70,14 @@ export default function PainelUso({ uso, materiais, recentes, suporte, nome }) {
               {uso.plano.nome}
               {uso.assinatura?.origem === "simulada" ? " (simulado)" : uso.assinatura?.origem === "manual" ? " (liberado)" : ""}
             </p>
-            {uso.prioridade && (
-              <p className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700">
-                <Zap className="h-3.5 w-3.5" aria-hidden="true" /> Prioridade de processamento
-              </p>
-            )}
           </div>
         </div>
+
+        {aviso && (
+          <p role="status" className="mt-6 flex items-start gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-[15px] text-indigo-900">
+            <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /> {aviso}
+          </p>
+        )}
 
         {bloqueado && (
           <div role="alert" className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-[15px] text-rose-900">
@@ -102,10 +103,14 @@ export default function PainelUso({ uso, materiais, recentes, suporte, nome }) {
             limite={null}
             legenda={uso.imagens.porGeracao === null ? "· sem limite" : `· até ${uso.imagens.porGeracao} por apostila`}
           />
-          <Barra icone={BookMarked} titulo="Materiais na biblioteca" usados={materiais ?? 0} limite={uso.biblioteca} />
+          <Barra icone={BookMarked} titulo="Materiais na biblioteca" usados={materiais?.visiveis ?? 0} limite={uso.biblioteca} />
         </section>
         <p className="mt-2 text-[12.5px] text-slate-500">
-          {uso.biblioteca !== null ? `Biblioteca: "Minhas Apostilas" mostra os ${uso.biblioteca} materiais mais recentes; os outros continuam guardados.` : ""}
+          {uso.biblioteca !== null
+            ? `Biblioteca: "Minhas Apostilas" mostra os ${uso.biblioteca} materiais mais recentes${
+                materiais && materiais.total > materiais.visiveis ? ` (${materiais.total - materiais.visiveis} guardados, com os links funcionando)` : ""
+              }. Nada é apagado.`
+            : ""}
         </p>
 
         <section className="mt-8 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -144,7 +149,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, nome }) {
             Ver planos
           </Link>
           <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
-            <Mail className="h-4 w-4" aria-hidden="true" /> Suporte: {suporte}
+            <Mail className="h-4 w-4" aria-hidden="true" /> {suporte ? `Suporte: ${suporte}` : suporteTexto}
           </span>
         </div>
         <p className="mt-4 text-[12.5px] text-slate-500">Nenhuma cobrança é feita no EduGera neste momento.</p>

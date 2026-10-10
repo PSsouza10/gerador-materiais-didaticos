@@ -6,6 +6,21 @@ import { bancoLigado } from "@/lib/banco";
 import { listarMateriais, sincronizarMateriais } from "@/lib/contas";
 import { garantirImportacao } from "@/lib/importacao";
 import { listaConfere, esperar } from "@/lib/tentativas";
+import { limiteBiblioteca } from "@/lib/uso";
+import { limitarBiblioteca } from "@/lib/planos";
+
+// Biblioteca do plano (Grátis: só os N mais recentes). Aplicado AQUI, no servidor, só na
+// resposta: nada é apagado, o espelho no Blob recebe a lista inteira e os links /m/ seguem
+// funcionando. Com o upgrade, o limite some e a lista inteira volta.
+async function resposta(email, lista) {
+  let limite = null;
+  try {
+    limite = await limiteBiblioteca(email);
+  } catch (e) {
+    console.error("Limite da biblioteca indisponível:", e?.message || e);
+  }
+  return NextResponse.json(limitarBiblioteca(lista, limite));
+}
 
 // Dupla gravação da lista (Parte B) com conferência: grava no Blob, relê e compara com o banco;
 // se divergir, regrava a partir do banco (até 3 vezes) e registra um alerta só com números.
@@ -41,9 +56,9 @@ async function getRota() {
   try {
     if (bancoLigado()) {
       await garantirImportacao(u.email);
-      return NextResponse.json({ itens: await listarMateriais(u.email) });
+      return resposta(u.email, await listarMateriais(u.email));
     }
-    return NextResponse.json({ itens: await lerHistorico(u.email) });
+    return resposta(u.email, await lerHistorico(u.email));
   } catch (e) {
     console.error("Erro ao ler histórico:", e);
     return NextResponse.json({ error: "Não foi possível ler o histórico." }, { status: 500 });
@@ -66,7 +81,7 @@ async function postRota(request) {
     const lista = await sincronizar(u.email, limpos, fora);
     // Dupla gravação (Parte B): a lista também vai para o arquivo do Blob (rollback sem perda)
     if (bancoLigado()) await espelharLista(u.email, lista, fora);
-    return NextResponse.json({ itens: lista });
+    return resposta(u.email, lista);
   } catch (e) {
     console.error("Erro ao sincronizar histórico:", e);
     return NextResponse.json({ error: "Não foi possível sincronizar o histórico." }, { status: 500 });

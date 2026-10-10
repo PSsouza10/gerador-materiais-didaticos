@@ -100,3 +100,24 @@ test("excluir a conta leva junto as assinaturas", async () => {
   await C.apagarContaBanco(e);
   assert.equal((await linhas("SELECT count(*)::int AS n FROM assinaturas s LEFT JOIN usuarios u ON u.id = s.usuario_id WHERE u.id IS NULL"))[0].n, 0);
 });
+
+test("migração 0004 preserva todo o histórico (sobe e desce sem perder linha)", async () => {
+  const banco = new PGlite();
+  const ms = listarMigracoes(new URL("../db/migracoes", import.meta.url).pathname);
+  const antes = ms.filter((m) => m.nome < "0004");
+  const m4 = ms.find((m) => m.nome.startsWith("0004_"));
+  for (const m of antes) for (const i of lerInstrucoes(m.up)) await banco.query(i);
+  await banco.query("INSERT INTO usuarios (conta) VALUES ('c1'), ('c2')");
+  await banco.query("INSERT INTO eventos_uso (usuario_id, tipo, criado_em) SELECT 1, 'geracao', now() - (n || ' days')::interval FROM generate_series(1, 40) AS n");
+  await banco.query("INSERT INTO eventos_uso (usuario_id, tipo) VALUES (2, 'imagem'), (2, 'revisao')");
+  await banco.query("INSERT INTO materiais (id, usuario_id, titulo) VALUES ('mat-1', 1, 'A'), ('mat-2', 2, 'B')");
+  const foto = async () => JSON.stringify((await banco.query("SELECT id, usuario_id, tipo, criado_em FROM eventos_uso ORDER BY id")).rows) + JSON.stringify((await banco.query("SELECT id, titulo FROM materiais ORDER BY id")).rows);
+  const original = await foto();
+  for (const i of lerInstrucoes(m4.up)) await banco.query(i);
+  assert.equal(await foto(), original, "subir a 0004 não mexe no histórico");
+  assert.equal((await banco.query("SELECT count(*)::int AS n FROM eventos_uso WHERE request_id IS NOT NULL")).rows[0].n, 0, "usos antigos ficam sem código (não inventa)");
+  for (const i of lerInstrucoes(m4.down)) await banco.query(i);
+  assert.equal(await foto(), original, "desfazer a 0004 também não perde nada");
+  for (const i of lerInstrucoes(m4.up)) await banco.query(i);
+  assert.equal(await foto(), original);
+});

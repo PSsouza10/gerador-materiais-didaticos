@@ -5,7 +5,7 @@ import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import { hashChave } from "@/lib/chave";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { ehPremium } from "@/lib/uso";
+import { temPremium } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
 import { CAPAS, normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
@@ -41,6 +41,7 @@ async function postRota(request) {
       return NextResponse.json({ error: "Material grande demais para salvar." }, { status: 413 });
     }
     const { form = {}, material = {}, urlImagem } = JSON.parse(bruto);
+    const premium = await temPremium(usuario.email); // plano Pro, administrador ou lista de transição
 
     // Só grava campos conhecidos — nada de conteúdo arbitrário vindo do navegador
     const registro = {
@@ -59,11 +60,11 @@ async function postRota(request) {
         escola: str(form.escola, 120),
         turma: str(form.turma, 60),
         // capa pôster é Premium: quem não tem o plano guarda a capa escolar
-        capa: CAPAS.some((c) => c.id === normalizarCapa(form.capa) && c.premium) && !ehPremium(usuario.email) ? "escolar" : normalizarCapa(form.capa),
+        capa: CAPAS.some((c) => c.id === normalizarCapa(form.capa) && c.premium) && !premium ? "escolar" : normalizarCapa(form.capa),
       },
       material: {
         ...normalizarMaterial(material, form.tema),
-        tema: material?.tema === "premium" && ehPremium(usuario.email) ? "premium" : "padrao",
+        tema: material?.tema === "premium" && premium ? "premium" : "padrao",
         // o servidor confere o código na base oficial (não confia no navegador)
         bncc: (() => {
           const cod = material.bncc?.codigo || form.bncc;
