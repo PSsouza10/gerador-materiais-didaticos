@@ -255,7 +255,7 @@ const CapaComfy = forwardRef(function CapaComfy({ form, material, urlImagem, exe
         )}
         <div className="mt-8 grid flex-none grid-cols-[1fr_130px_130px] gap-5 text-[11px] text-[#c9c9d1]">
           <span className="border-b border-white/30 pb-1">Nome:</span>
-          <span className="border-b border-white/30 pb-1">Turma:</span>
+          <span className="border-b border-white/30 pb-1">Turma: {form.turma || ""}</span>
           <span className="border-b border-white/30 pb-1">Data: ___/___/___</span>
         </div>
       </div>

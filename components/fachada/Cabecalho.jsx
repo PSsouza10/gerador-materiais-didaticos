@@ -10,6 +10,7 @@ const LINKS = [
   { href: "#exemplos", rotulo: "Exemplos" },
   { href: "#bncc", rotulo: "BNCC" },
   { href: "#perguntas", rotulo: "Perguntas" },
+  { href: "/planos", rotulo: "Planos" },
 ];
 
 // Cabeçalho da fachada: navegação por âncoras, "Entrar" (Google) e acesso direto ao gerador.

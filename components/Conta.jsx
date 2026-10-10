@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
-import { LogIn, LogOut, ChevronDown, Infinity as Infinito } from "lucide-react";
+import { LogIn, LogOut, ChevronDown, Gauge, BadgeCheck, Infinity as Infinito } from "lucide-react";
 
 // Medidor de gerações do mês
 export function MedidorUso({ uso, compacto = false }) {
@@ -14,13 +14,16 @@ export function MedidorUso({ uso, compacto = false }) {
     );
   const pct = uso.limite ? Math.min(100, (uso.usados / uso.limite) * 100) : 100;
   return (
-    <span className="inline-flex items-center gap-2 text-[11.5px] font-semibold text-slate-700" title="Gerações do plano grátis neste mês">
+    <span className="inline-flex items-center gap-2 text-[11.5px] font-semibold text-slate-700" title={`Gerações do plano ${uso.plano?.nome || "Grátis"} neste mês`}>
       {!compacto && (
         <span className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
           <span className={`block h-full ${uso.restantes === 0 ? "bg-rose-500" : "bg-indigo-500"}`} style={{ width: `${pct}%` }} />
         </span>
       )}
       {uso.usados} de {uso.limite} gerações este mês
+      {!compacto && uso.hoje?.limite !== null && uso.hoje?.limite !== undefined && uso.hoje.limite < uso.limite && (
+        <span className="text-slate-500">· hoje {uso.hoje.usados}/{uso.hoje.limite}</span>
+      )}
     </span>
   );
 }
@@ -76,13 +79,19 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
           <p className="truncate text-sm font-bold text-slate-800">{u.name}</p>
           <p className="truncate text-xs text-slate-600">{u.email}</p>
           <div className="mt-3 rounded-xl bg-slate-50 p-2.5">
-            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">{uso?.premium ? "Plano Premium" : "Plano grátis"}</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">{`Plano ${uso?.plano?.nome || "Grátis"}`}{uso?.premium ? " · Premium" : ""}</p>
             <MedidorUso uso={uso} />
           </div>
+          <a href="/uso" role="menuitem" className="mt-2 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <Gauge className="h-4 w-4" /> Uso e limites
+          </a>
+          <a href="/planos" role="menuitem" className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <BadgeCheck className="h-4 w-4" /> Planos
+          </a>
           <button type="button"
             role="menuitem"
             onClick={() => signOut()}
-            className="mt-3 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="mt-1 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <LogOut className="h-4 w-4" /> Sair
           </button>

@@ -18,7 +18,7 @@ export const maxDuration = 60;
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
-async function postRota(request) {
+async function postRota(request, _contexto, requestId) {
   if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
@@ -34,8 +34,8 @@ async function postRota(request) {
   if (!ex || !txt(ex.enunciado)) return NextResponse.json({ error: "Exercício inválido." }, { status: 400 });
 
   try {
-    const c = await consumirCorrecao(usuario.email);
-    if (!c.ok) return NextResponse.json({ error: `Você usou as ${c.limite} correções deste mês.` }, { status: 429 });
+    const c = await consumirCorrecao(usuario.email, requestId);
+    if (!c.ok) return NextResponse.json({ error: `Você usou as ${c.limite} correções deste mês do plano ${c.plano}. O limite renova no dia 1º.` }, { status: 429 });
   } catch (e) {
     console.error("Erro ao registrar correção:", e);
     return NextResponse.json({ error: "Não foi possível registrar a correção agora." }, { status: 503 });

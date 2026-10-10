@@ -261,7 +261,7 @@ const CapaInfografico = forwardRef(function CapaInfografico({ form, material, ur
       <div className="absolute inset-x-10 bottom-[58px] rounded-2xl bg-white px-5 py-3.5 shadow-[0_4px_0_#e0e7ff]">
         <div className="grid grid-cols-[1fr_130px_150px] gap-x-5 text-[12px] text-slate-500">
           <span className="border-b border-slate-300 pb-1">Nome:</span>
-          <span className="border-b border-slate-300 pb-1">Turma:</span>
+          <span className="border-b border-slate-300 pb-1">Turma: {form.turma || ""}</span>
           <span className="border-b border-slate-300 pb-1">Data: ___/___/___</span>
         </div>
       </div>

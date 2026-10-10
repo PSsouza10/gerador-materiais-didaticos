@@ -30,7 +30,7 @@ const BNCC = indexar(bnccDados.habilidades);
 
 const erroJson = (mensagem, status) => NextResponse.json({ error: mensagem }, { status });
 
-async function postRota(request) {
+async function postRota(request, _contexto, requestId) {
   let body;
   try {
     body = await request.json();
@@ -52,18 +52,18 @@ async function postRota(request) {
   if (!usuario) return erroJson("Entre com sua conta para gerar materiais.", 401);
   let uso;
   try {
-    uso = await consumirGeracao(usuario.email);
+    uso = await consumirGeracao(usuario.email, requestId);
   } catch (e) {
     console.error("Erro ao registrar uso:", e);
     return erroJson("Não foi possível verificar seu limite agora. Tente de novo.", 503);
   }
   if (!uso.ok) {
     return NextResponse.json(
-      { error: `Você usou as ${uso.limite} gerações grátis deste mês. O limite renova no dia 1º.`, uso },
+      { error: uso.mensagem, motivo: uso.motivo, limiteAtingido: true, uso },
       { status: 429 }
     );
   }
-  const devolver = () => devolverGeracao(usuario.email);
+  const devolver = () => devolverGeracao(usuario.email, requestId);
 
   // Modelo de texto: MODELO_TEXTO na Vercel (padrão gpt-4o). Só o administrador
   // pode escolher outro por pedido, para comparar na bateria de qualidade.

@@ -191,7 +191,7 @@ const CapaEscolar = forwardRef(function CapaEscolar({ form, material, urlImagem,
         <div className="grid grid-cols-[1fr_140px] gap-x-6 gap-y-5 text-[12px] text-slate-500">
           <span className="border-b border-slate-300 pb-1">Nome:</span>
           <span className="border-b border-slate-300 pb-1">Nº:</span>
-          <span className="border-b border-slate-300 pb-1">Turma:</span>
+          <span className="border-b border-slate-300 pb-1">Turma: {form.turma || ""}</span>
           <span className="border-b border-slate-300 pb-1">Data: ___/___/___</span>
         </div>
       </div>

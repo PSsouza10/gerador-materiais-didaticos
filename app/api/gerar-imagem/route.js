@@ -66,7 +66,7 @@ async function processar(request, ctx) {
     if (!usuario) return NextResponse.json({ error: "Entre com sua conta para gerar ilustrações." }, { status: 401 });
     poster = poster && ehPremium(usuario.email);
     historia = historia && ehPremium(usuario.email);
-    const img = await consumirImagem(usuario.email);
+    const img = await consumirImagem(usuario.email, ctx.requestId);
     if (img?.ok) ctx.consumidoPor = usuario.email;
     if (!img?.ok) {
       return NextResponse.json({ error: "A ilustração acompanha uma geração de material; gere o material primeiro." }, { status: 429 });
@@ -183,10 +183,10 @@ async function processar(request, ctx) {
 
 // Se a ilustração falhar depois de reservada, devolve a vaga: o professor pode
 // tentar de novo sem precisar gastar outra geração de material.
-async function postRota(request) {
-  const ctx = { consumidoPor: null };
+async function postRota(request, _contexto, requestId) {
+  const ctx = { consumidoPor: null, requestId };
   const res = await processar(request, ctx);
-  if (res.status >= 400 && ctx.consumidoPor) await devolverImagem(ctx.consumidoPor);
+  if (res.status >= 400 && ctx.consumidoPor) await devolverImagem(ctx.consumidoPor, requestId);
   return res;
 }
 

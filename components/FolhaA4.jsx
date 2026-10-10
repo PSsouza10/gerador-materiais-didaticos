@@ -91,7 +91,7 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </div>
         <div className="mt-3 grid grid-cols-[1fr_120px_110px] gap-4 text-[11px] text-slate-500">
           <span className="border-b border-slate-300 pb-1">Nome:</span>
-          <span className="border-b border-slate-300 pb-1">Turma:</span>
+          <span className="border-b border-slate-300 pb-1">Turma: {form.turma || ""}</span>
           <span className="border-b border-slate-300 pb-1">Data: ___/___/___</span>
         </div>
       </header>

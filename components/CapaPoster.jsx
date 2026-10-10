@@ -250,7 +250,7 @@ const CapaPoster = forwardRef(function CapaPoster({ form, material, urlImagem, e
       {/* identificação do aluno */}
       <div className="absolute inset-x-10 bottom-[100px] grid grid-cols-[1fr_120px_130px] gap-4 text-[11.5px]" style={{ color: PETROLEO_ESCURO }}>
         <span className="border-b-2 pb-1" style={{ borderColor: "#c9bda3" }}>Nome:</span>
-        <span className="border-b-2 pb-1" style={{ borderColor: "#c9bda3" }}>Turma:</span>
+        <span className="border-b-2 pb-1" style={{ borderColor: "#c9bda3" }}>Turma: {form.turma || ""}</span>
         <span className="border-b-2 pb-1" style={{ borderColor: "#c9bda3" }}>Data: ___/___/___</span>
       </div>
 

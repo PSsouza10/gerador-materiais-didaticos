@@ -10,7 +10,7 @@ const CANON = "https://edugera.vercel.app";
 const get = (p, init) => fetch(BASE + p, { redirect: "manual", ...init });
 
 test("cabeçalhos de segurança em todas as páginas públicas", async () => {
-  for (const p of ["/", "/criar", "/privacidade", "/termos"]) {
+  for (const p of ["/", "/criar", "/planos", "/privacidade", "/termos"]) {
     const r = await get(p);
     assert.equal(r.status, 200, p);
     const csp = r.headers.get("content-security-policy") || "";
@@ -145,4 +145,63 @@ test("/: logado é redirecionado para /criar; logout volta para a fachada", asyn
   guardar(sair);
   const depois = await get("/", { headers: { cookie: cookie() } });
   assert.equal(depois.status, 200, "após logout: fachada");
+});
+
+// ---------- planos e painel de uso ----------
+async function entrarTeste(email) {
+  const jar = new Map();
+  const guardar = (r) => {
+    for (const c of r.headers.getSetCookie?.() || []) {
+      const [par] = c.split(";");
+      const i = par.indexOf("=");
+      jar.set(par.slice(0, i), par.slice(i + 1));
+    }
+  };
+  const cookie = () => [...jar].map(([k, v]) => `${k}=${v}`).join("; ");
+  const csrfR = await get("/api/auth/csrf");
+  guardar(csrfR);
+  const { csrfToken } = await csrfR.json();
+  guardar(
+    await get("/api/auth/callback/teste", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", cookie: cookie() },
+      body: new URLSearchParams({ csrfToken, email, callbackUrl: `${BASE}/criar`, json: "true" }),
+    })
+  );
+  return cookie();
+}
+const textoDe = async (r) => (await r.text()).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de nenhuma cobrança", async () => {
+  const r = await get("/planos");
+  assert.equal(r.status, 200);
+  const t = await textoDe(r);
+  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 29,90", "R$ 299", "A definir", "Em breve", "nenhuma cobrança"])
+    assert.ok(t.includes(x), `falta "${x}"`);
+  assert.match(t, /2 gerações de apostila por mês/);
+  assert.match(t, /30 gerações por mês/);
+  assert.match(t, /Biblioteca com até 5 materiais/);
+  assert.doesNotMatch(t, /checkout|cartão de crédito|stripe|mercado ?pago/i);
+});
+
+test("/uso: anônimo volta para o início; logado vê o painel", async (t) => {
+  const anon = await get("/uso");
+  assert.ok([307, 308].includes(anon.status), `anônimo redireciona (${anon.status})`);
+  assert.equal(new URL(anon.headers.get("location"), BASE).pathname, "/");
+  const provedores = await (await get("/api/auth/providers")).json().catch(() => ({}));
+  if (!provedores.teste) return t.skip("login de teste desligado (rode com AUTH_TESTE=1)");
+  const cookie = await entrarTeste("professor.planos@example.com");
+  const r = await get("/uso", { headers: { cookie } });
+  assert.equal(r.status, 200);
+  const txt = await textoDe(r);
+  for (const x of ["Uso e limites", "Grátis", "Gerações neste mês", "Gerações hoje", "Materiais na biblioteca", "Nenhuma cobrança"])
+    assert.ok(txt.includes(x), `falta "${x}"`);
+  const uso = await (await get("/api/uso", { headers: { cookie } })).json();
+  assert.equal(uso.uso.plano.id, "gratis");
+  assert.equal(uso.uso.limite, 2);
+  assert.equal(uso.uso.biblioteca, 5);
+});
+
+test("/api/assinatura: sem login 401; nunca cobra", async () => {
+  assert.equal((await get("/api/assinatura", { method: "POST", body: "{}" })).status, 401);
 });

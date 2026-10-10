@@ -40,7 +40,7 @@ function BarraBackup({ onExportar, onImportar, total, msg, setMsg }) {
   );
 }
 
-export default function MinhasApostilas({ materiais, onRemover, onRevogar, onExportar, onImportar, irPara }) {
+export default function MinhasApostilas({ materiais: todos, limite = null, onRemover, onRevogar, onExportar, onImportar, irPara }) {
   const [busca, setBusca] = useState("");
   const [disciplina, setDisciplina] = useState("");
   const [copiado, setCopiado] = useState(null);
@@ -48,6 +48,13 @@ export default function MinhasApostilas({ materiais, onRemover, onRevogar, onExp
   const [erro, setErro] = useState("");
   const [msgBackup, setMsgBackup] = useState("");
 
+  // Plano com biblioteca limitada (lib/planos.js): mostra só os N mais recentes.
+  // Os outros NÃO são apagados: continuam na conta e no backup, e voltam ao mudar de plano.
+  const materiais = useMemo(
+    () => (limite ? [...todos].sort((a, b) => String(b.criadoEm).localeCompare(String(a.criadoEm))).slice(0, limite) : todos),
+    [todos, limite]
+  );
+  const ocultos = todos.length - materiais.length;
   const disciplinas = useMemo(() => [...new Set(materiais.map((m) => m.disciplina))].sort(), [materiais]);
   const q = busca.trim().toLowerCase();
   const lista = materiais.filter(
@@ -127,8 +134,20 @@ export default function MinhasApostilas({ materiais, onRemover, onRevogar, onExp
         <p className="text-xs text-slate-600" aria-live="polite">
           {lista.length} de {materiais.length} {materiais.length === 1 ? "material" : "materiais"}
         </p>
-        <BarraBackup onExportar={onExportar} onImportar={onImportar} total={materiais.length} msg={msgBackup} setMsg={setMsgBackup} />
+        <BarraBackup onExportar={onExportar} onImportar={onImportar} total={todos.length} msg={msgBackup} setMsg={setMsgBackup} />
       </div>
+
+      {limite && (
+        <p role="status" className={`rounded-xl px-4 py-2.5 text-sm ${ocultos > 0 ? "border border-amber-200 bg-amber-50 text-amber-900" : "bg-slate-50 text-slate-600"}`}>
+          Seu plano mostra até {limite} materiais na biblioteca.
+          {ocultos > 0
+            ? ` ${ocultos} ${ocultos === 1 ? "material mais antigo está guardado" : "materiais mais antigos estão guardados"} e ${ocultos === 1 ? "volta" : "voltam"} com a biblioteca completa do Pro. O backup inclui todos.`
+            : ""}{" "}
+          <a href="/planos" className="font-semibold underline">
+            Ver planos
+          </a>
+        </p>
+      )}
 
       {erro && (
         <p role="alert" className="rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-700">

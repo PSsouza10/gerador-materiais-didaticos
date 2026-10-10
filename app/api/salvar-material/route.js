@@ -57,6 +57,7 @@ async function postRota(request) {
         estilo: normalizarEstilo(form.estilo),
         dificuldade: obterNivel(form.dificuldade).id,
         escola: str(form.escola, 120),
+        turma: str(form.turma, 60),
         // capa pôster é Premium: quem não tem o plano guarda a capa escolar
         capa: CAPAS.some((c) => c.id === normalizarCapa(form.capa) && c.premium) && !ehPremium(usuario.email) ? "escolar" : normalizarCapa(form.capa),
       },

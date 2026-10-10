@@ -17,7 +17,7 @@ export const maxDuration = 90;
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 200) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
-async function postRota(request) {
+async function postRota(request, _contexto, requestId) {
   if (!provedorRevisorPadrao()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
@@ -35,8 +35,8 @@ async function postRota(request) {
   if (JSON.stringify(material).length > 60000) return NextResponse.json({ error: "Apostila grande demais para revisar." }, { status: 413 });
 
   try {
-    const c = await consumirRevisao(usuario.email);
-    if (!c.ok) return NextResponse.json({ error: `Você usou as ${c.limite} revisões de conteúdo deste mês.` }, { status: 429 });
+    const c = await consumirRevisao(usuario.email, requestId);
+    if (!c.ok) return NextResponse.json({ error: `Você usou as ${c.limite} revisões de conteúdo deste mês do plano ${c.plano}. O limite renova no dia 1º.` }, { status: 429 });
   } catch (e) {
     console.error("Erro ao registrar revisão:", e);
     return NextResponse.json({ error: "Não foi possível registrar a revisão agora." }, { status: 503 });

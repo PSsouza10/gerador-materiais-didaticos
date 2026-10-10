@@ -32,6 +32,7 @@ import {
   CalendarRange,
   ShieldCheck,
   ListOrdered,
+  UsersRound,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import RevisaoExercicios from "@/components/RevisaoExercicios";
@@ -159,6 +160,7 @@ const NAV = [
 const formDaConfig = (cfg) => ({
   professor: cfg.professor,
   escola: cfg.escola,
+  turma: "",
   bncc: "",
   habilidade: "",
   bnccVerificada: false,
@@ -284,6 +286,7 @@ export default function GeradorApostilas() {
         ...EXEMPLO_FORM,
         capa: capaEfetiva,
         professor: nomeProfessor || EXEMPLO_FORM.professor,
+        turma: form.turma || "",
         escola: form.escola?.trim() || (nomeProfessor ? "" : EXEMPLO_FORM.escola),
       };
   const materialPreview = gerado ? material : { ...EXEMPLO, tema: premium ? "premium" : "padrao" };
@@ -400,6 +403,7 @@ export default function GeradorApostilas() {
           ? "Sem conexão com o servidor. Verifique a internet e tente novamente."
           : e.message || "Não foi possível gerar o conteúdo."
       );
+      atualizarUso(); // ex.: limite atingido — o aviso e o botão refletem na hora
     } finally {
       setLoading(false);
     }
@@ -636,6 +640,7 @@ export default function GeradorApostilas() {
           <div className="px-4 sm:px-6 md:px-8 pb-10">
             <MinhasApostilas
               materiais={materiais}
+              limite={conta.uso?.biblioteca ?? null}
               irPara={setActive}
               onRemover={(id) => {
                 setMateriais(removerMaterial(id));
@@ -722,6 +727,12 @@ export default function GeradorApostilas() {
                   </Field>
                 </div>
               )}
+
+              <div className="sm:col-span-2">
+                <Field label="Turma" icon={UsersRound} optional name="turma">
+                  <input value={form.turma || ""} onChange={set("turma")} maxLength={LIMITES.turma} className="ipt" placeholder='Ex.: "7º ano B — tarde" (aparece no cabeçalho e na capa)' />
+                </Field>
+              </div>
 
               {/* Task 3.1 — autocomplete BNCC com descrição oficial */}
               <div className="sm:col-span-2">
@@ -855,7 +866,11 @@ export default function GeradorApostilas() {
             )}
             {sessao?.user && conta.uso?.restantes === 0 && (
               <p role="status" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                Você usou as {conta.uso.limite} gerações grátis deste mês. O limite renova no dia 1º.
+                {conta.uso.hoje?.restantes === 0 && (conta.uso.limite === null || conta.uso.usados < conta.uso.limite)
+                  ? `Você chegou ao limite de ${conta.uso.hoje.limite} gerações por dia do plano ${conta.uso.plano?.nome || "Grátis"}. Amanhã você pode gerar de novo.`
+                  : `Você usou as ${conta.uso.limite} gerações deste mês do plano ${conta.uso.plano?.nome || "Grátis"}. O limite renova no dia 1º.`}{" "}
+                <a href="/planos" className="font-semibold underline">Ver planos</a> ·{" "}
+                <a href="/uso" className="font-semibold underline">Meu uso</a>
               </p>
             )}
 
