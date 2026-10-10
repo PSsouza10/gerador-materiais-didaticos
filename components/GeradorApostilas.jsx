@@ -737,7 +737,8 @@ export default function GeradorApostilas() {
 
               <div className="sm:col-span-2">
                 <Field label="Turma" icon={UsersRound} optional name="turma">
-                  <input value={form.turma || ""} onChange={set("turma")} maxLength={LIMITES.turma} className="ipt" placeholder='Ex.: "7º ano B — tarde" (aparece no cabeçalho e na capa)' />
+                  <input value={form.turma || ""} onChange={set("turma")} maxLength={LIMITES.turma} className="ipt" placeholder='Ex.: "7º ano B — tarde" (aparece no cabeçalho e na capa)' aria-describedby="ajuda-turma" />
+                  <p id="ajuda-turma" className="mt-1 text-[11.5px] text-slate-600">Só a identificação da turma. Não escreva nomes de alunos.</p>
                 </Field>
               </div>
 
@@ -835,7 +836,10 @@ export default function GeradorApostilas() {
                 </Field>
                 {/* fora do Field: ele só liga label/id quando há um único campo dentro */}
                 {capaEhPremium && !premium && (
-                  <p className="mt-1.5 text-[11.5px] text-amber-700">Esta capa faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
+                  <p className="mt-1.5 text-[11.5px] text-amber-700">
+                    Esta capa faz parte do plano Pro. Sem ele, sai a capa escolar.{" "}
+                    <a href="/planos" className="font-semibold underline">Ver planos</a>
+                  </p>
                 )}
               </div>
             </div>

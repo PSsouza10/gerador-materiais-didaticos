@@ -133,3 +133,13 @@ test("migração 0004 é idempotente: rodar de novo não duplica coluna, índice
   assert.equal(await n("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_name = 'assinaturas'"), 1);
   assert.equal(await n("SELECT count(*)::int AS n FROM pg_indexes WHERE indexname IN ('eventos_uso_request_idx', 'assinaturas_ativa_idx')"), 2);
 });
+
+test("últimos usos: em ordem de data, mesmo quando importados fora de ordem", async () => {
+  const e = "ordem@x.br";
+  await C.consumir(e, "revisao", 30);
+  const id = await C.usuarioId(e);
+  // como na importação do Blob: um uso mais ANTIGO gravado DEPOIS
+  await db.query("INSERT INTO eventos_uso (usuario_id, tipo, criado_em) VALUES ($1, 'imagem', greatest(date_trunc('month', now()), now() - interval '1 minute'))", [id]);
+  const ult = await C.ultimosUsos(e, 5);
+  assert.deepEqual(ult.map((u) => u.tipo), ["revisao", "imagem"], "o mais recente primeiro");
+});

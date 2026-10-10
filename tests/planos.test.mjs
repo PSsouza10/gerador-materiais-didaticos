@@ -121,7 +121,7 @@ test("transição: em produção o Grátis segue a regra antiga até o próximo 
   // quem já passou de 2 neste mês NÃO fica bloqueado agora (segue a regra antiga, com o valor da Vercel)
   const r = resumoDoUso({ mes: { geracao: 3 }, dia: { geracao: 0 } }, { plano: antes });
   assert.equal(r.restantes, 2);
-  assert.match(avisoTransicao(antes.transicao), /A partir de 1º de novembro, o plano Grátis passa a ter 2 gerações por mês \(1 por dia\).*5 materiais.*continuam guardados/);
+  assert.match(avisoTransicao(antes.transicao), /A partir de 1º de novembro de 2026, o plano Grátis passa a ter 2 gerações por mês \(1 por dia\).*5 materiais.*continuam guardados/);
   // no ciclo novo, a regra nova; e o mês começa do zero (o histórico continua lá, só não conta)
   const depois = planoVigente(PLANOS.gratis, new Date("2026-11-01T00:00:00Z"), prod);
   assert.equal(depois.limites.geracoesMes, 2);
