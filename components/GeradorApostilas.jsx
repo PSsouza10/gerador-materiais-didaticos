@@ -275,7 +275,8 @@ export default function GeradorApostilas() {
   // No exemplo, o nome e a escola são os do professor (formulário, Configurações ou conta Google)
   // Premium: capa pôster 3D + páginas no mesmo estilo. Sem o plano, a capa pôster vira a escolar.
   const premium = !!conta.uso?.premium;
-  const capaEfetiva = form.capa === "poster" && !premium ? "escolar" : form.capa;
+  const capaEhPremium = CAPAS.some((c) => c.id === form.capa && c.premium);
+  const capaEfetiva = capaEhPremium && !premium ? "escolar" : form.capa;
   const nomeProfessor = form.professor?.trim() || sessao?.user?.name || "";
   const formPreview = gerado
     ? form
@@ -815,8 +816,8 @@ export default function GeradorApostilas() {
                   </select>
                 </Field>
                 {/* fora do Field: ele só liga label/id quando há um único campo dentro */}
-                {form.capa === "poster" && !premium && (
-                  <p className="mt-1.5 text-[11.5px] text-amber-700">A capa pôster 3D faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
+                {capaEhPremium && !premium && (
+                  <p className="mt-1.5 text-[11.5px] text-amber-700">Esta capa faz parte do plano Premium. Sem ele, sai a capa escolar.</p>
                 )}
               </div>
             </div>

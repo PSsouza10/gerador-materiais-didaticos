@@ -8,7 +8,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { ehPremium } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { obterNivel } from "@/lib/niveis";
-import { normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
+import { CAPAS, normalizarCapa, normalizarEstilo } from "@/lib/opcoes";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 import { bancoLigado } from "@/lib/banco";
@@ -58,7 +58,7 @@ async function postRota(request) {
         dificuldade: obterNivel(form.dificuldade).id,
         escola: str(form.escola, 120),
         // capa pôster é Premium: quem não tem o plano guarda a capa escolar
-        capa: normalizarCapa(form.capa) === "poster" && !ehPremium(usuario.email) ? "escolar" : normalizarCapa(form.capa),
+        capa: CAPAS.some((c) => c.id === normalizarCapa(form.capa) && c.premium) && !ehPremium(usuario.email) ? "escolar" : normalizarCapa(form.capa),
       },
       material: {
         ...normalizarMaterial(material, form.tema),
