@@ -176,7 +176,7 @@ test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de 
   const r = await get("/planos");
   assert.equal(r.status, 200);
   const t = await textoDe(r);
-  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 29,90", "R$ 299", "Em breve", "nenhuma cobrança", "Suporte em breve"])
+  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 39,90", "R$ 399", "Em breve", "nenhuma cobrança", "Suporte em breve"])
     assert.ok(t.includes(x), `falta "${x}"`);
   assert.match(t, /2 gerações de apostila por mês \(1 por dia\)/);
   assert.doesNotMatch(t, /COLOCAREI|prioridade de processamento/i);
