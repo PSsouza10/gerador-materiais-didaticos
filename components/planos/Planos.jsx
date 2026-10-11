@@ -160,8 +160,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
                   {atual === p.id && <span className="rounded-full bg-verde-claro px-2.5 py-1 text-[12px] font-bold text-verde-escuro">Atual</span>}
                 </div>
                 <p className="mt-4 flex items-baseline gap-1.5">
-                  <span className="font-titulo text-[2.1rem] font-semibold text-marinho">{formatarPreco(p)}</span>
-                  {p.preco ? <span className="text-[15px] text-tinta">{rotuloPeriodo(p.periodo)}</span> : null}
+                  <span className="font-titulo text-[2.1rem] font-semibold text-marinho">{formatarPreco(p.precoMensal ? { preco: p.precoMensal } : p)}</span>
+                  {p.preco ? <span className="text-[15px] text-tinta">{p.precoMensal ? "por mês, no plano anual" : rotuloPeriodo(p.periodo)}</span> : null}
                 </p>
                 <ul className="mt-5 flex-1 space-y-2.5 text-[15px] text-tinta">
                   {p.recursos.map((r) => (

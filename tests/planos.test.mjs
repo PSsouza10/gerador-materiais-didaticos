@@ -33,7 +33,8 @@ test("valores provisórios pedidos pelo Paulo", () => {
   assert.ok(PLANOS.pro_mensal.limites.imagensPorGeracao > g.imagensPorGeracao, "Pro: mais imagens");
   assert.equal(formatarPreco(PLANOS.gratis), "R$ 0");
   assert.equal(formatarPreco(PLANOS.pro_mensal), "R$ 39,90");
-  assert.equal(formatarPreco(PLANOS.pro_anual), "R$ 399");
+  assert.equal(formatarPreco(PLANOS.pro_anual), "R$ 358,80");
+  assert.equal(formatarPreco({ preco: PLANOS.pro_anual.precoMensal }), "R$ 29,90");
   assert.equal(formatarPreco(PLANOS.escola), "Em breve", "Escola sem preço");
   assert.equal(PLANOS.escola.preco, null);
   assert.equal(PLANOS.escola.contratavel, false, "Escola sem cobrança");
