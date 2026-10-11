@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   ListOrdered,
   UsersRound,
+  ClipboardList,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import RevisaoExercicios from "@/components/RevisaoExercicios";
@@ -42,6 +43,7 @@ import SeletorBNCC from "@/components/SeletorBNCC";
 import Dashboard from "@/components/telas/Dashboard";
 import MinhasApostilas from "@/components/telas/MinhasApostilas";
 import Configuracoes from "@/components/telas/Configuracoes";
+import PlanoAula from "@/components/telas/PlanoAula";
 import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
 import { exportarPdf } from "@/lib/pdf";
@@ -154,6 +156,7 @@ const EXEMPLO = {
 const NAV = [
   { name: "Dashboard", curto: "Início", icon: LayoutDashboard, descricao: "Visão geral dos seus materiais." },
   { name: "Gerar Material", curto: "Gerar", icon: Sparkles, descricao: "Crie apostilas e fichas de estudo alinhadas à BNCC." },
+  { name: "Plano de Aula", curto: "Plano", icon: ClipboardList, descricao: "Plano de aula na estrutura do Currículo Paulista." },
   { name: "Minhas Apostilas", curto: "Apostilas", icon: BookMarked, descricao: "Materiais gerados neste navegador." },
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
@@ -659,6 +662,11 @@ export default function GeradorApostilas() {
             />
           </div>
         )}
+        {active === "Plano de Aula" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <PlanoAula professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} aoGerar={atualizarUso} />
+          </div>
+        )}
         {active === "Configurações" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
             <Configuracoes
@@ -1070,7 +1078,7 @@ export default function GeradorApostilas() {
       {/* ===== NAVEGAÇÃO INFERIOR (celular) ===== */}
       <nav
         aria-label="Seções"
-        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200 bg-white/95 md:hidden"
+        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white/95 md:hidden"
       >
         {NAV.map(({ name, curto, icon: Icon }) => {
           const on = active === name;
