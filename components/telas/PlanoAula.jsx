@@ -1,10 +1,29 @@
 "use client";
-import React, { useState } from "react";
-import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMarked, FileUp, PenLine } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMarked, FileUp, PenLine, FileText, ShieldCheck, Trash2, FolderOpen } from "lucide-react";
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
-import { AULAS, LIMITES_PLANO, planoParaTexto } from "@/lib/planoAula";
+import { AULAS, LIMITES_PLANO, planoParaTexto, adicionarPlanoNaLista } from "@/lib/planoAula";
+
+// Planos salvos NESTE navegador (como as preferências): não vão para o servidor
+const K_PLANOS = "edugera:planos";
+const lerPlanos = () => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(K_PLANOS) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+};
+const gravarPlanos = (l) => {
+  try {
+    window.localStorage.setItem(K_PLANOS, JSON.stringify(l));
+  } catch {
+    /* armazenamento cheio ou bloqueado: segue sem salvar */
+  }
+};
+const nomeArquivo = (pl) => `plano-de-aula-${String(pl.identificacao.tema || "edugera").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 50)}`;
 
 // "Plano de Aula": gera um plano na estrutura do Currículo Paulista (conta como 1 geração).
 // O plano não é guardado no servidor: o professor imprime/salva em PDF ou copia o texto.
@@ -55,6 +74,10 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
   const [erro, setErro] = useState("");
   const [gerando, setGerando] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [correcoes, setCorrecoes] = useState(null); // null = sem revisão; [] = revisado sem correções
+  const [salvos, setSalvos] = useState([]);
+  const [baixando, setBaixando] = useState(false);
+  useEffect(() => setSalvos(lerPlanos()), []);
   const set = (k) => (e) =>
     setF((x) => {
       const n = { ...x, [k]: e.target.value };
@@ -91,6 +114,11 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
       if (!r.ok) throw new Error(j.error || "Não foi possível gerar o plano.");
       setPlano(j.plano);
       setAvisos(j.avisos || []);
+      setCorrecoes(j.revisado ? j.correcoes || [] : null);
+      const origem = fonte === "apostila" ? { tipo: "apostila", id: apostila, titulo: materiais.find((m) => m.id === apostila)?.titulo || "" } : fonte === "pdf" ? { tipo: "pdf", titulo: pdf?.nome || "" } : null;
+      const nova = adicionarPlanoNaLista(lerPlanos(), j.plano, origem);
+      gravarPlanos(nova);
+      setSalvos(nova);
       aoGerar?.();
     } catch (e) {
       setErro(e instanceof TypeError ? "Sem conexão com o servidor." : e.message);
@@ -106,6 +134,35 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
     w.document.close();
     w.focus();
     setTimeout(() => w.print(), 300);
+  };
+  const baixarWord = async () => {
+    setBaixando(true);
+    try {
+      const { planoParaDocx } = await import("@/lib/planoDocx");
+      const blob = await planoParaDocx(plano);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${nomeArquivo(plano)}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch (e) {
+      console.error(e);
+      setErro("Não foi possível gerar o arquivo do Word.");
+    } finally {
+      setBaixando(false);
+    }
+  };
+  const abrirSalvo = (item) => {
+    setPlano(item.plano);
+    setAvisos([]);
+    setCorrecoes(null);
+  };
+  const removerSalvo = (id) => {
+    const nova = salvos.filter((x) => x.id !== id);
+    gravarPlanos(nova);
+    setSalvos(nova);
   };
   const copiar = async () => {
     try {
@@ -223,9 +280,16 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
         ) : (
           <div>
             <div className="mb-4 flex flex-wrap gap-2">
+              <button type="button" onClick={baixarWord} disabled={baixando} className="btn-prev">{baixando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />} Baixar Word</button>
               <button type="button" onClick={imprimir} className="btn-prev"><Printer className="h-3.5 w-3.5" /> Imprimir / salvar PDF</button>
               <button type="button" onClick={copiar} className="btn-prev">{copiado ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copiado ? "Copiado" : "Copiar texto"}</button>
             </div>
+            {correcoes && (
+              <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[13px] text-emerald-900">
+                <p className="flex items-center gap-1.5 font-semibold"><ShieldCheck className="h-4 w-4" /> Revisado automaticamente{correcoes.length ? `: ${correcoes.length} ${correcoes.length === 1 ? "correção" : "correções"}` : ", sem correções"}</p>
+                {correcoes.length > 0 && <ul className="ml-5 mt-1 list-disc">{correcoes.map((c, k) => <li key={k}>{c}</li>)}</ul>}
+              </div>
+            )}
             {avisos.length > 0 && (
               <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[13px] text-amber-900"><Info className="mt-0.5 h-4 w-4 shrink-0" /> Confira: {avisos.join("; ")}.</p>
             )}
@@ -254,6 +318,26 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
           </div>
         )}
       </section>
+
+      {salvos.length > 0 && (
+        <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-violet-500" /> Meus planos ({salvos.length})</h2>
+          <p className="mb-3 text-[12.5px] text-slate-600">Ficam salvos neste navegador. Para guardar em outro lugar, baixe em Word ou PDF.</p>
+          <ul className="divide-y divide-slate-100">
+            {salvos.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+                <span className="min-w-0 flex-1">
+                  <b className="text-slate-800">{s.plano.identificacao.tema}</b>
+                  <span className="text-slate-500"> · {[s.plano.identificacao.componente, s.plano.identificacao.etapa].filter(Boolean).join(" · ")} · {new Date(s.criadoEm).toLocaleDateString("pt-BR")}</span>
+                  {s.origem?.titulo && <span className="block text-[12px] text-slate-500">A partir de: {s.origem.tipo === "pdf" ? "PDF" : "apostila"} “{s.origem.titulo}”</span>}
+                </span>
+                <button type="button" onClick={() => abrirSalvo(s)} className="btn-prev">Abrir</button>
+                <button type="button" onClick={() => removerSalvo(s.id)} className="btn-prev" aria-label={`Remover o plano ${s.plano.identificacao.tema}`}><Trash2 className="h-3.5 w-3.5" /></button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

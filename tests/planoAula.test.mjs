@@ -1,7 +1,7 @@
 // Plano de aula (Currículo Paulista): pedido, normalização e texto
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila } from "../lib/planoAula.js";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, adicionarPlanoNaLista, LIMITE_PLANOS_SALVOS } from "../lib/planoAula.js";
 import { PLANO_SIMULADO, respostaSimulada } from "../lib/iaSimulada.js";
 
 const base = { disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "7", tema: "Volume", aulas: 2, bncc: "EF07MA30" };
@@ -56,4 +56,29 @@ test("plano a partir de apostila do EduGera ou de PDF", () => {
   assert.match(montarPromptPlano(d, "", { tipo: "apostila", texto: t }), /MATERIAL BASE: uma apostila criada no EduGera[\s\S]*Volume no dia a dia/);
   assert.match(montarPromptPlano(d, "", { tipo: "pdf" }), /MATERIAL BASE: o PDF anexo/);
   assert.equal(validarPedidoPlano({ ...base, tema: "" }).ok, false, "sem base, o tema continua obrigatório");
+});
+
+test("revisão automática: corrige sem perder habilidade oficial nem número de aulas", () => {
+  const d = validarPedidoPlano({ ...base, aulas: 2 }).dados;
+  const pl = normalizarPlano(PLANO_SIMULADO, d, { c: "EF07MA30", t: "oficial" });
+  const prompt = montarPromptRevisaoPlano(pl, "EF07MA30 — oficial");
+  assert.match(prompt, /volume com capacidade/);
+  assert.match(prompt, /"correcoes"/);
+  assert.equal(respostaSimulada(prompt).correcoes.length, 1, "simulação reconhece o pedido de revisão");
+  const corrigido = { ...PLANO_SIMULADO.plano_de_aula, objetivos: ["Calcular o volume (espaço ocupado) de blocos"], habilidades: [{ codigo: "EF99XX99", descricao: "inventada" }] };
+  const a = aplicarRevisaoPlano(pl, { correcoes: ["Objetivo confundia volume e capacidade"], plano_de_aula: corrigido }, d);
+  assert.equal(a.aplicada, true);
+  assert.deepEqual(a.plano.objetivos, ["Calcular o volume (espaço ocupado) de blocos"]);
+  assert.deepEqual(a.plano.habilidades, [{ codigo: "EF07MA30", descricao: "oficial" }], "habilidade oficial é mantida");
+  // revisão que perde aulas é ignorada
+  const ruim = aplicarRevisaoPlano(pl, { correcoes: ["x"], plano_de_aula: { ...corrigido, aulas: [corrigido.aulas[0]] } }, d);
+  assert.equal(ruim.aplicada, false);
+  assert.equal(ruim.plano, pl);
+});
+
+test("planos salvos: mais novo primeiro, com limite", () => {
+  let l = [];
+  for (let i = 0; i < LIMITE_PLANOS_SALVOS + 5; i++) l = adicionarPlanoNaLista(l, { n: i }, null);
+  assert.equal(l.length, LIMITE_PLANOS_SALVOS);
+  assert.equal(l[0].plano.n, LIMITE_PLANOS_SALVOS + 4);
 });

@@ -5,7 +5,7 @@ import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila } from "@/lib/planoAula";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano } from "@/lib/planoAula";
 import { bancoLigado } from "@/lib/banco";
 import { materiaisDaConta } from "@/lib/contas";
 import { lerHistorico } from "@/lib/historico";
@@ -35,7 +35,7 @@ async function apostilaDaConta(email, id) {
 // Plano de aula (estrutura do Currículo Paulista). Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 90;
+export const maxDuration = 150; // geração + revisão
 
 const BNCC = indexar(bnccDados.habilidades);
 const SISTEMA = "Você é coordenador pedagógico de uma rede que segue o Currículo Paulista e a BNCC. Escreve planos de aula claros e realistas. Responda em português do Brasil, só com JSON válido.";
@@ -96,13 +96,29 @@ async function postRota(request, _contexto, requestId) {
     console.error("Plano de aula: IA falhou", r.status, r.erro);
     return NextResponse.json({ error: "Não foi possível gerar o plano agora. Tente de novo em instantes." }, { status: 502 });
   }
-  const plano = normalizarPlano(r.json, d, oficial);
+  let plano = normalizarPlano(r.json, d, oficial);
+  // Revisão automática: segunda leitura procura erros conceituais e corrige (sem gastar outra geração)
+  let correcoes = [];
+  let revisado = false;
+  if (plano.aulas.length && plano.objetivos.length) {
+    const sistemaRev = "Você é coordenador pedagógico rigoroso. Corrige erros conceituais em planos de aula. Responda em português do Brasil, só com JSON válido.";
+    const promptRev = montarPromptRevisaoPlano(plano, oficial ? `${oficial.c} — ${oficial.t}` : "");
+    const rv = temOpenAI()
+      ? await openaiJson({ sistema: sistemaRev, prompt: promptRev, modelo: process.env.MODELO_REVISOR || "gpt-4o", temperatura: 0.1 })
+      : await geminiJson({ sistema: sistemaRev, prompt: promptRev, temperatura: 0.1 });
+    if (rv.ok) {
+      const a = aplicarRevisaoPlano(plano, rv.json, d);
+      plano = a.plano;
+      correcoes = a.correcoes;
+      revisado = a.aplicada;
+    } else console.error("Revisão do plano falhou (segue sem revisão):", rv.status, rv.erro);
+  }
   const problemas = problemasDoPlano(plano, d);
   if (!plano.aulas.length || !plano.objetivos.length) {
     await devolverGeracao(usuario.email, requestId);
     return NextResponse.json({ error: "A IA devolveu um plano incompleto. Tente gerar de novo." }, { status: 502 });
   }
-  return NextResponse.json({ plano, avisos: problemas, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
+  return NextResponse.json({ plano, avisos: problemas, revisado, correcoes, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
 }
 
 export const POST = comRequestId("/api/gerar-plano", postRota);
