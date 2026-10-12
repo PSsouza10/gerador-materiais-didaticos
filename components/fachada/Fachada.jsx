@@ -474,6 +474,12 @@ function Rodape() {
               <a href="#perguntas" className="hover:text-roxo">Perguntas</a>
             </li>
             <li>
+              <Link href="/atividades" className="hover:text-roxo">Atividades por ano</Link>
+            </li>
+            <li>
+              <Link href="/planos" className="hover:text-roxo">Planos</Link>
+            </li>
+            <li>
               <Link href="/privacidade" className="hover:text-roxo">Privacidade</Link>
             </li>
             <li>

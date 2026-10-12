@@ -41,8 +41,38 @@ test("robots.txt e sitemap.xml", async () => {
   assert.match(robots, /Sitemap: https:\/\/edugera\.vercel\.app\/sitemap\.xml/);
   assert.doesNotMatch(robots, /^Host:/m);
   const sitemap = await (await get("/sitemap.xml")).text();
-  for (const p of ["/", "/criar", "/privacidade", "/termos"]) assert.ok(sitemap.includes(`<loc>${CANON}${p}</loc>`), p);
+  for (const p of ["/", "/criar", "/planos", "/atividades", "/atividades/matematica", "/atividades/matematica/7-ano", "/privacidade", "/termos"])
+    assert.ok(sitemap.includes(`<loc>${CANON}${p}</loc>`), p);
+  assert.match(robots, /Allow: \/atividades/);
   assert.doesNotMatch(sitemap, /\/m\/|\/api\//);
+});
+
+test("/atividades: páginas por disciplina e ano, links internos sem 404", async () => {
+  const sitemap = await (await get("/sitemap.xml")).text();
+  const caminhos = [...sitemap.matchAll(/<loc>https:\/\/edugera\.vercel\.app(\/atividades[^<]*)<\/loc>/g)].map((m) => m[1]);
+  assert.ok(caminhos.length >= 50, `páginas de atividades: ${caminhos.length}`);
+  const conferidos = new Set();
+  for (const p of ["/atividades", "/atividades/matematica", "/atividades/matematica/7-ano", "/atividades/portugues/1-ano"]) {
+    const r = await get(p);
+    assert.equal(r.status, 200, p);
+    const html = await r.text();
+    assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, `${p}: um h1`);
+    assert.ok(html.includes(`<link rel="canonical" href="${CANON}${p}"/>`), `${p} canonical`);
+    assert.match(html, /href="\/criar"/, `${p}: chamada para /criar`);
+    // todo link interno /atividades/... da página precisa existir (sem link quebrado)
+    for (const [, href] of html.matchAll(/href="(\/atividades[^"#?]*)"/g)) {
+      if (conferidos.has(href)) continue;
+      conferidos.add(href);
+      assert.ok(caminhos.includes(href), `${p} → ${href} não está no sitemap`);
+      assert.equal((await get(href)).status, 200, `${p} → ${href}`);
+    }
+  }
+  const ano = await (await get("/atividades/matematica/7-ano")).text();
+  assert.match(ano, /EF07MA\d\d/, "habilidades reais da BNCC");
+  assert.match(ano, /"@type":"FAQPage"/);
+  assert.match(ano, /"@type":"BreadcrumbList"/);
+  for (const p of ["/atividades/matematica/99-ano", "/atividades/fisica/7-ano", "/atividades/inexistente", "/atividades/lingua-inglesa/1-ano"])
+    assert.equal((await get(p)).status, 404, p);
 });
 
 test("metadata por página: lang, título, description, canonical, og", async () => {

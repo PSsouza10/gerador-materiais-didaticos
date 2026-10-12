@@ -11,6 +11,8 @@ export const metadata = {
   title: "EduGera · Apostilas BNCC",
   description: DESCRICAO,
   applicationName: "EduGera",
+  robots: { index: true, follow: true },
+  keywords: ["apostilas BNCC", "atividades BNCC", "gerador de atividades", "fichas de estudo", "exercícios com gabarito", "BNCC por ano"],
   openGraph: {
     type: "website",
     locale: "pt_BR",
