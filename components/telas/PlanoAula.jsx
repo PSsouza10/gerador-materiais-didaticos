@@ -113,7 +113,18 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
     try {
       const r = await fetch("/api/gerar-plano", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Não foi possível gerar o plano.");
+      if (!r.ok) {
+        // respostas da própria Vercel (sem JSON): pedido grande demais ou tempo esgotado
+        const codigo = r.headers.get("x-request-id") || r.headers.get("x-vercel-id") || "";
+        const msg =
+          j.error ||
+          (r.status === 413
+            ? "O PDF ficou grande demais para enviar. Tente um arquivo menor ou só as páginas do conteúdo da aula."
+            : r.status === 504
+              ? "A IA demorou demais para ler o material. Tente de novo; se for PDF, envie só as páginas do conteúdo da aula."
+              : `Não foi possível gerar o plano (erro ${r.status}).`);
+        throw new Error(codigo ? `${msg} (código: ${codigo.slice(0, 40)})` : msg);
+      }
       let pl = j.plano;
       setPlano(pl);
       setAvisos(j.avisos || []);

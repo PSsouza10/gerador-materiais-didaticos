@@ -1,7 +1,7 @@
 // Plano de aula (Currículo Paulista): pedido, normalização e texto
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, adicionarPlanoNaLista, LIMITE_PLANOS_SALVOS, urlIlustracaoValida } from "../lib/planoAula.js";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, adicionarPlanoNaLista, LIMITE_PLANOS_SALVOS, urlIlustracaoValida, mensagemFalhaPlano } from "../lib/planoAula.js";
 import { PLANO_SIMULADO, respostaSimulada } from "../lib/iaSimulada.js";
 
 const base = { disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "7", tema: "Volume", aulas: 2, bncc: "EF07MA30" };
@@ -88,4 +88,15 @@ test("ilustração do plano: só do armazenamento do EduGera", () => {
   assert.equal(urlIlustracaoValida("https://site-qualquer.com/x.png"), null);
   assert.equal(urlIlustracaoValida('javascript:alert(1)'), null);
   assert.equal(urlIlustracaoValida(undefined), null);
+});
+
+test("mensagemFalhaPlano: explica ao professor o que fazer", () => {
+  const longo = [{ status: 400, erro: '{"error":{"code":"context_length_exceeded","message":"maximum context length"}}' }];
+  assert.match(mensagemFalhaPlano(longo, { comPdf: true }), /grande demais.*só as páginas/);
+  assert.doesNotMatch(mensagemFalhaPlano(longo, { comPdf: false }), /PDF/);
+  assert.match(mensagemFalhaPlano([{ status: 400, erro: "Invalid file data: unable to process PDF" }], { comPdf: true }), /não conseguiu abrir este PDF/);
+  assert.match(mensagemFalhaPlano([{ status: 429, erro: "insufficient_quota", semCredito: true }]), /sem crédito/);
+  assert.match(mensagemFalhaPlano([{ status: 0, erro: "AbortError: timeout" }]), /demorou demais/);
+  assert.match(mensagemFalhaPlano([{ status: 500, erro: "x" }]), /Tente de novo/);
+  assert.match(mensagemFalhaPlano(), /Tente de novo/);
 });

@@ -5,7 +5,7 @@ import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida } from "@/lib/planoAula";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida, mensagemFalhaPlano } from "@/lib/planoAula";
 import { bancoLigado } from "@/lib/banco";
 import { materiaisDaConta } from "@/lib/contas";
 import { lerHistorico } from "@/lib/historico";
@@ -88,19 +88,33 @@ async function postRota(request, _contexto, requestId) {
 
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;
   const prompt = montarPromptPlano(d, oficial ? `${oficial.c} — ${oficial.t} (texto oficial)` : "", base);
-  let r = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.4, arquivo }) : { ok: false };
-  // o Gemini é reserva só sem PDF (o envio de arquivo é pela OpenAI)
-  if (!r.ok && !arquivo && temGemini()) r = await geminiJson({ sistema: SISTEMA, prompt, temperatura: 0.4 });
+  const inicio = Date.now();
+  const falhas = [];
+  let r = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.4, arquivo }) : { ok: false, erro: "OpenAI ausente" };
+  if (!r.ok) {
+    falhas.push(r);
+    console.error("Plano de aula: OpenAI falhou", { request_id: requestId, comPdf: !!arquivo, kb: arquivo ? Math.round((arquivo.base64.length * 3) / 4 / 1024) : 0, status: r.status, erro: r.erro });
+    // reserva: o Gemini também lê o PDF (inlineData)
+    if (temGemini()) {
+      r = await geminiJson({ sistema: SISTEMA, prompt, temperatura: 0.4, arquivo });
+      if (!r.ok) {
+        falhas.push(r);
+        console.error("Plano de aula: Gemini falhou", { request_id: requestId, comPdf: !!arquivo, status: r.status, erro: r.erro });
+      }
+    }
+  }
   if (!r.ok) {
     await devolverGeracao(usuario.email, requestId); // erro nosso: o professor não perde a geração
-    console.error("Plano de aula: IA falhou", r.status, r.erro);
-    return NextResponse.json({ error: "Não foi possível gerar o plano agora. Tente de novo em instantes." }, { status: 502 });
+    return NextResponse.json({ error: mensagemFalhaPlano(falhas, { comPdf: !!arquivo }) }, { status: 502 });
   }
   let plano = normalizarPlano(r.json, d, oficial);
   // Revisão automática: segunda leitura procura erros conceituais e corrige (sem gastar outra geração)
   let correcoes = [];
   let revisado = false;
-  if (plano.aulas.length && plano.objetivos.length) {
+  // Revisão só se ainda houver tempo (PDF grande deixa a 1ª leitura lenta; o limite da função é maxDuration)
+  const tempoDeSobra = Date.now() - inicio < 75_000;
+  if (!tempoDeSobra) console.error("Plano de aula: revisão pulada por tempo", { request_id: requestId, ms: Date.now() - inicio });
+  if (tempoDeSobra && plano.aulas.length && plano.objetivos.length) {
     const sistemaRev = "Você é coordenador pedagógico rigoroso. Corrige erros conceituais em planos de aula. Responda em português do Brasil, só com JSON válido.";
     const promptRev = montarPromptRevisaoPlano(plano, oficial ? `${oficial.c} — ${oficial.t}` : "");
     const rv = temOpenAI()
