@@ -100,3 +100,39 @@ test("mensagemFalhaPlano: explica ao professor o que fazer", () => {
   assert.match(mensagemFalhaPlano([{ status: 500, erro: "x" }]), /Tente de novo/);
   assert.match(mensagemFalhaPlano(), /Tente de novo/);
 });
+
+test("plano a partir de material sem tema/ano/habilidade: tema do material, código conferido e texto oficial", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { indexar, resolverCodigo, DISCIPLINA_PARA_COMPONENTE, cobreAno } = await import("../lib/bncc.js");
+  const { habilidadesCandidatas } = await import("../lib/planoAula.js");
+  const bncc = JSON.parse(readFileSync(new URL("../data/bncc-habilidades.json", import.meta.url))).habilidades;
+  const mapa = indexar(bncc);
+  const d = validarPedidoPlano({ disciplina: "História", nivel: "Ensino Fundamental", ano: "", tema: "", aulas: 2 }, { temBase: true }).dados;
+  assert.equal(d.temaDoMaterial, true);
+  // a IA recebe a lista oficial da disciplina e é mandada escolher dela
+  const cand = habilidadesCandidatas(bncc, d, DISCIPLINA_PARA_COMPONENTE[d.disciplina], cobreAno);
+  assert.ok(cand.length > 50 && cand.some((c) => c.startsWith("EF09HI19 — ")));
+  const prompt = montarPromptPlano(d, "", { tipo: "pdf" }, cand);
+  assert.match(prompt, /LISTA OFICIAL DE HABILIDADES[\s\S]*EF09HI19 — /);
+  assert.match(prompt, /identifique pelo material/);
+  assert.match(prompt, /"tema": "\.\.\."/);
+  // caso real: a IA usou EF09HI08 com texto inventado sobre o regime militar
+  const ia = { plano_de_aula: { tema: "Ditadura civil-militar no Brasil", unidade_tematica: "Regime Militar no Brasil", habilidades: [{ codigo: "EF09HI08", descricao: "Identificar e analisar os impactos do regime militar..." }, { codigo: "EF09HI99", descricao: "inventado" }], objetivos: ["x"], aulas: [{ titulo: "A", desenvolvimento: "y" }, { titulo: "B", desenvolvimento: "z" }], avaliacao: { criterios: ["c"] } } };
+  const pl = normalizarPlano(ia, d, null, (c) => resolverCodigo(mapa, c));
+  assert.equal(pl.identificacao.tema, "Ditadura civil-militar no Brasil", "nunca 'conforme o material base'");
+  assert.deepEqual(pl.habilidades.map((h) => h.codigo), ["EF09HI08"], "código inexistente sai");
+  assert.match(pl.habilidades[0].descricao, /diversidade/, "texto sempre o oficial da BNCC");
+  assert.equal(pl.identificacao.etapa, "Ensino Fundamental — 9º ano", "ano vem do código");
+  // sem tema da IA: usa a unidade temática
+  assert.equal(normalizarPlano({ plano_de_aula: { ...ia.plano_de_aula, tema: "" } }, d, null, (c) => resolverCodigo(mapa, c)).identificacao.tema, "Regime Militar no Brasil");
+  // nenhum código válido: avisa o professor
+  const sem = normalizarPlano({ plano_de_aula: { ...ia.plano_de_aula, habilidades: [{ codigo: "XX" }] } }, d, null, (c) => resolverCodigo(mapa, c));
+  assert.ok(problemasDoPlano(sem, d).some((x) => /habilidade da BNCC não identificada/.test(x)));
+  // professor informou tema e ano: nada muda
+  const d2 = validarPedidoPlano({ disciplina: "História", nivel: "Ensino Fundamental", ano: "8", tema: "Revolução Francesa", aulas: 2 }, { temBase: true }).dados;
+  const pl2 = normalizarPlano(ia, d2, null, (c) => resolverCodigo(mapa, c));
+  assert.equal(pl2.identificacao.tema, "Revolução Francesa");
+  assert.equal(pl2.identificacao.etapa, "Ensino Fundamental — 8º ano");
+  // lista grande demais não vai cortada
+  assert.deepEqual(habilidadesCandidatas(bncc, { nivel: "Ensino Fundamental", ano: "" }, DISCIPLINA_PARA_COMPONENTE["Português"], cobreAno), []);
+});

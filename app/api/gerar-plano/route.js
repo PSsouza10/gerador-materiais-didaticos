@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
-import { indexar, resolverCodigo } from "@/lib/bncc";
+import { indexar, resolverCodigo, DISCIPLINA_PARA_COMPONENTE, cobreAno } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao, podePlanoAulaPdf } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida, mensagemFalhaPlano } from "@/lib/planoAula";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida, mensagemFalhaPlano, habilidadesCandidatas } from "@/lib/planoAula";
 import { bancoLigado } from "@/lib/banco";
 import { materiaisDaConta } from "@/lib/contas";
 import { lerHistorico } from "@/lib/historico";
@@ -89,7 +89,8 @@ async function postRota(request, _contexto, requestId) {
   }
 
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;
-  const prompt = montarPromptPlano(d, oficial ? `${oficial.c} — ${oficial.t} (texto oficial)` : "", base);
+  const candidatas = oficial || d.bncc ? [] : habilidadesCandidatas(bnccDados.habilidades, d, DISCIPLINA_PARA_COMPONENTE[d.disciplina] || [], cobreAno);
+  const prompt = montarPromptPlano(d, oficial ? `${oficial.c} — ${oficial.t} (texto oficial)` : "", base, candidatas);
   const inicio = Date.now();
   const falhas = [];
   let r = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.4, arquivo }) : { ok: false, erro: "OpenAI ausente" };
@@ -109,7 +110,7 @@ async function postRota(request, _contexto, requestId) {
     await devolverGeracao(usuario.email, requestId); // erro nosso: o professor não perde a geração
     return NextResponse.json({ error: mensagemFalhaPlano(falhas, { comPdf: !!arquivo }) }, { status: 502 });
   }
-  let plano = normalizarPlano(r.json, d, oficial);
+  let plano = normalizarPlano(r.json, d, oficial, (c) => resolverCodigo(BNCC, c));
   // Revisão automática: segunda leitura procura erros conceituais e corrige (sem gastar outra geração)
   let correcoes = [];
   let revisado = false;
