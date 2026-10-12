@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import {
   PLANOS, ORDEM_PLANOS, PLANO_ADMIN, obterPlano, teto, formatarPreco, suporteEmail, SUPORTE_TEXTO_PADRAO, planoVigente, limitesTransicao, inicioNovosLimites,
-  limitarBiblioteca, avisoTransicao, INICIO_NOVOS_LIMITES,
+  limitarBiblioteca, avisoTransicao, INICIO_NOVOS_LIMITES, RECURSOS_COMPARACAO,
   inicioDoDia, mensagemLimite, contagensDoArquivo, resumoDoUso, motivoBloqueio, proximoMes,
 } from "../lib/planos.js";
 
@@ -23,7 +23,8 @@ test("valores provisórios pedidos pelo Paulo", () => {
   assert.equal(PLANOS.pro_mensal.limites.biblioteca, null, "Pro: biblioteca completa");
   // sem fila real: nada de "prioridade de processamento"
   for (const p of Object.values(PLANOS)) assert.ok(!p.recursos.some((r) => /prioridade/i.test(r)), p.id);
-  assert.ok(PLANOS.pro_mensal.recursos.includes("Limites maiores e recursos Pro"));
+  // sem frase vaga: o Pro diz o que tem
+  for (const p of Object.values(PLANOS)) assert.ok(!p.recursos.some((r) => /recursos Pro|^Mais /i.test(r)), p.id);
   // capa Premium faz parte do Pro (regra final); o Grátis não tem
   assert.equal(PLANOS.pro_mensal.capaPremium, true);
   assert.equal(PLANOS.pro_anual.capaPremium, true);
@@ -39,8 +40,37 @@ test("valores provisórios pedidos pelo Paulo", () => {
   assert.equal(PLANOS.escola.preco, null);
   assert.equal(PLANOS.escola.contratavel, false, "Escola sem cobrança");
   assert.deepEqual(ORDEM_PLANOS, ["gratis", "pro_mensal", "pro_anual", "escola"]);
-  for (const r of ["PDF do aluno", "PDF do professor", "Exercícios e gabarito", "Revisão básica", "Biblioteca com até 5 materiais"])
-    assert.ok(PLANOS.gratis.recursos.includes(r), r);
+  for (const r of [/PDF do aluno e do professor/, /gabarito/, /Plano de aula por tema ou a partir da apostila/, /10 revisões/, /5 materiais/])
+    assert.ok(PLANOS.gratis.recursos.some((x) => r.test(x)), String(r));
+  // números citados nos recursos batem com os limites (nada escrito à mão diferente da regra)
+  assert.ok(PLANOS.pro_mensal.recursos.includes(`60 revisões e 150 correções por mês`));
+  assert.equal(PLANOS.pro_mensal.limites.revisoesMes, 60);
+  assert.equal(PLANOS.pro_mensal.limites.correcoesMes, 150);
+});
+
+test("plano de aula: tema e apostila em todos os planos; PDF só no Pro (e Escola/admin)", () => {
+  assert.equal(PLANOS.gratis.planoAulaPdf, false);
+  assert.equal(PLANOS.pro_mensal.planoAulaPdf, true);
+  assert.equal(PLANOS.pro_anual.planoAulaPdf, true);
+  assert.equal(PLANOS.escola.planoAulaPdf, true);
+  assert.equal(PLANO_ADMIN.planoAulaPdf, true);
+  assert.ok(PLANOS.gratis.fora.includes("Plano de aula a partir de PDF"));
+  const linha = (rot) => RECURSOS_COMPARACAO.find(([r]) => r === rot)[1];
+  assert.equal(linha("Plano de aula a partir de PDF próprio")(PLANOS.gratis), false);
+  assert.equal(linha("Plano de aula a partir de PDF próprio")(PLANOS.pro_mensal), true);
+  assert.equal(linha("Plano de aula a partir da apostila do EduGera")(PLANOS.gratis), true);
+  assert.equal(linha("Plano de aula por tema (Currículo Paulista)")(PLANOS.gratis), true);
+  assert.equal(linha("Biblioteca completa")(PLANOS.gratis), false);
+  assert.equal(linha("Biblioteca completa")(PLANOS.pro_anual), true);
+  assert.equal(linha("Capa Premium “História que Ensina”")(PLANOS.gratis), false);
+  // na transição (produção até 1º/11) o Grátis mantém o PDF, com aviso; depois perde
+  const prod = { VERCEL_ENV: "production" };
+  const antes = planoVigente(PLANOS.gratis, new Date("2026-10-20T12:00:00Z"), prod);
+  assert.equal(antes.planoAulaPdf, true);
+  assert.match(avisoTransicao(antes.transicao), /plano de aula a partir de PDF passa a ser do plano Pro/);
+  assert.equal(planoVigente(PLANOS.gratis, new Date("2026-11-01T00:00:00Z"), prod).planoAulaPdf, false);
+  assert.equal(resumoDoUso({ mes: {}, dia: {} }, { plano: PLANOS.gratis }).planoAulaPdf, false);
+  assert.equal(resumoDoUso({ mes: {}, dia: {} }, { plano: PLANOS.pro_mensal }).planoAulaPdf, true);
 });
 
 test("limites ficam só em lib/planos.js (sem número solto nas rotas)", () => {

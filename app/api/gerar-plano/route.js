@@ -3,7 +3,7 @@ import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirGeracao, devolverGeracao } from "@/lib/uso";
+import { consumirGeracao, devolverGeracao, podePlanoAulaPdf } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida, mensagemFalhaPlano } from "@/lib/planoAula";
 import { bancoLigado } from "@/lib/banco";
@@ -57,6 +57,8 @@ async function postRota(request, _contexto, requestId) {
   let base = null;
   let arquivo = null;
   if (fonte?.tipo === "pdf") {
+    if (!(await podePlanoAulaPdf(usuario.email)))
+      return NextResponse.json({ error: "O plano de aula a partir de PDF é do plano Pro. No seu plano, gere a partir de um tema ou de uma apostila do EduGera.", motivo: "recurso_pro" }, { status: 403 });
     const b64 = typeof fonte.base64 === "string" ? fonte.base64.replace(/^data:[^,]*,/, "") : "";
     const bytes = Math.floor((b64.length * 3) / 4);
     if (!b64 || bytes > PDF_MAX) return NextResponse.json({ error: "Envie um PDF de até 3 MB." }, { status: 400 });

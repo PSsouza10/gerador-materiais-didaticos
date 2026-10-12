@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMarked, FileUp, PenLine, FileText, ShieldCheck, Trash2, FolderOpen } from "lucide-react";
+import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMarked, FileUp, PenLine, FileText, ShieldCheck, Trash2, FolderOpen, Lock } from "lucide-react";
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
@@ -64,7 +64,7 @@ const FONTES = [
   { id: "pdf", rotulo: "Anexar PDF", icone: FileUp },
 ];
 
-export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar }) {
+export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar, pdfLiberado = true }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
   const [pdf, setPdf] = useState(null); // { nome, base64, tamanho }
@@ -105,6 +105,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
 
   const gerar = async () => {
     if (fonte === "apostila" && !apostila) return setErro("Escolha uma apostila.");
+    if (fonte === "pdf" && !pdfLiberado) return setErro("O plano de aula a partir de PDF é do plano Pro.");
     if (fonte === "pdf" && !pdf) return setErro("Anexe o PDF.");
     if (fonte === "tema" && !f.tema.trim()) return setErro("Preencha o tema.");
     setErro("");
@@ -218,6 +219,11 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
               <label key={id} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-700 hover:border-indigo-200"}`}>
                 <input type="radio" name="fonte-plano" value={id} checked={fonte === id} onChange={() => setFonte(id)} className="sr-only" />
                 <Icone className="h-4 w-4" aria-hidden="true" /> {rotulo}
+                {id === "pdf" && !pdfLiberado && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10.5px] font-bold text-amber-900">
+                    <Lock className="h-3 w-3" aria-hidden="true" /> Pro
+                  </span>
+                )}
               </label>
             ))}
           </div>
@@ -234,7 +240,18 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
               <p className="mt-1 text-[11.5px] text-slate-600">O plano usa os conceitos, a situação e os exercícios da apostila.</p>
             </div>
           )}
-          {fonte === "pdf" && (
+          {fonte === "pdf" && !pdfLiberado && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] text-amber-950">
+              <p className="flex items-start gap-2 font-semibold">
+                <Lock className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /> Disponível no plano Pro
+              </p>
+              <p className="mt-1">
+                No Pro, o plano sai do seu próprio material: livro, apostila da rede ou qualquer PDF. No seu plano, gere a partir de um tema ou de uma apostila do EduGera.
+              </p>
+              <a href="/planos" className="mt-2 inline-block font-semibold underline">Ver planos</a>
+            </div>
+          )}
+          {fonte === "pdf" && pdfLiberado && (
             <div className="mt-3">
               <input type="file" accept="application/pdf,.pdf" onChange={(e) => escolherPdf(e.target.files?.[0])} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" aria-label="PDF do material" />
               {pdf && <p className="mt-1 text-[12px] text-slate-700">{pdf.nome} · {(pdf.tamanho / 1024 / 1024).toFixed(1)} MB</p>}

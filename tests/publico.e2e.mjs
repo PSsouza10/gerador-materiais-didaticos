@@ -208,11 +208,13 @@ test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de 
   const t = await textoDe(r);
   for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 39,90", "R$ 29,90", "R$ 358,80", "Em breve", "nenhuma cobrança", "Suporte em breve"])
     assert.ok(t.includes(x), `falta "${x}"`);
-  assert.match(t, /2 gerações de apostila por mês \(1 por dia\)/);
+  assert.match(t, /2 gerações por mês \(1 por dia\)/);
+  assert.match(t, /O que cada plano inclui/);
+  assert.match(t, /Plano de aula a partir de PDF próprio/);
   assert.doesNotMatch(t, /COLOCAREI|prioridade de processamento/i);
   assert.match(t, /Em breve — fale conosco/);
   assert.match(t, /30 gerações por mês/);
-  assert.match(t, /Biblioteca com até 5 materiais/);
+  assert.match(t, /Biblioteca com os 5 materiais mais recentes/);
   assert.doesNotMatch(t, /checkout|cartão de crédito|stripe|mercado ?pago/i);
 });
 

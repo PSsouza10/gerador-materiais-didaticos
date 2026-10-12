@@ -3,9 +3,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Check, ArrowLeft, ArrowRight, Loader2, FlaskConical, Mail, Info } from "lucide-react";
+import { Check, X, ArrowLeft, ArrowRight, Loader2, FlaskConical, Mail, Info } from "lucide-react";
 import Marca from "@/components/fachada/Marca";
-import { formatarPreco, rotuloPeriodo, ROTULOS_LIMITES, valorLimite } from "@/lib/planos";
+import { formatarPreco, rotuloPeriodo, ROTULOS_LIMITES, RECURSOS_COMPARACAO, valorLimite } from "@/lib/planos";
 import "@/components/fachada/fachada.css";
 
 // Página de planos. Preços e limites vêm de lib/planos.js.
@@ -170,6 +170,15 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
                       {r}
                     </li>
                   ))}
+                  {(p.fora || []).map((r) => (
+                    <li key={r} className="flex gap-2 text-tinta/60">
+                      <X className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+                      <span>
+                        <span className="sr-only">Não inclui: </span>
+                        {r}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
                 <div className="mt-6">
                   <Botao p={p} />
@@ -179,7 +188,47 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           })}
         </section>
 
-        <section className="papel mt-10 overflow-x-auto p-2 sm:p-4" aria-labelledby="comparar">
+        <section className="papel relative mt-10 overflow-x-auto p-2 sm:p-4" aria-labelledby="recursos">
+          <h2 id="recursos" className="font-titulo px-3 pt-2 text-[1.4rem] font-semibold text-marinho">
+            O que cada plano inclui
+          </h2>
+          <table className="mt-3 w-full min-w-[620px] text-left text-[14.5px]">
+            <thead>
+              <tr className="border-b border-marinho/10 text-marinho">
+                <th scope="col" className="px-3 py-2.5 font-semibold">
+                  Recurso
+                </th>
+                {planos.map((p) => (
+                  <th key={p.id} scope="col" className="px-3 py-2.5 font-semibold">
+                    {p.nome}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {RECURSOS_COMPARACAO.map(([rotulo, tem]) => (
+                <tr key={rotulo} className="border-b border-marinho/5 last:border-0">
+                  <th scope="row" className="px-3 py-2.5 font-medium text-tinta">
+                    {rotulo}
+                  </th>
+                  {planos.map((p) => (
+                    <td key={p.id} className="px-3 py-2.5">
+                      {p.emBreve ? (
+                        <span className="text-tinta">Em breve</span>
+                      ) : tem(p) ? (
+                        <><Check className="h-5 w-5 text-verde-escuro" aria-hidden="true" /><span className="sr-only">Inclui</span></>
+                      ) : (
+                        <><X className="h-5 w-5 text-tinta/50" aria-hidden="true" /><span className="sr-only">Não inclui</span></>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="papel mt-6 overflow-x-auto p-2 sm:p-4" aria-labelledby="comparar">
           <h2 id="comparar" className="font-titulo px-3 pt-2 text-[1.4rem] font-semibold text-marinho">
             Limites de cada plano
           </h2>
