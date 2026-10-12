@@ -4,7 +4,7 @@ import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMa
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
-import { AULAS, LIMITES_PLANO, planoParaTexto, adicionarPlanoNaLista } from "@/lib/planoAula";
+import { AULAS, LIMITES_PLANO, planoParaTexto, adicionarPlanoNaLista, urlIlustracaoValida } from "@/lib/planoAula";
 
 // Planos salvos NESTE navegador (como as preferências): não vão para o servidor
 const K_PLANOS = "edugera:planos";
@@ -38,7 +38,7 @@ function htmlParaImpressao(pl) {
 h1{font-size:16pt;text-align:center;margin:0 0 10px}h2{font-size:12pt;background:#eef;padding:4px 6px;margin:14px 0 6px}
 table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}th{width:32%;background:#f6f6f6}
 .aula{border:1px solid #bbb;padding:6px 8px;margin:6px 0;page-break-inside:avoid}ul{margin:4px 0 4px 18px;padding:0}.rodape{margin-top:18px;font-size:9pt;color:#555}</style></head><body>
-<h1>PLANO DE AULA</h1><table>${linha("Professor(a)", i.professor)}${linha("Escola", i.escola)}${linha("Turma", i.turma)}${linha("Componente curricular", i.componente)}${linha("Etapa / ano", i.etapa)}${linha("Período", i.periodo)}${linha("Número de aulas", String(i.aulas))}${linha("Tema", i.tema)}</table>
+<h1>PLANO DE AULA</h1>${urlIlustracaoValida(pl.ilustracao) ? `<p style="text-align:center"><img src="${esc(pl.ilustracao)}" alt="" style="max-width:70%;max-height:220px"></p>` : ""}<table>${linha("Professor(a)", i.professor)}${linha("Escola", i.escola)}${linha("Turma", i.turma)}${linha("Componente curricular", i.componente)}${linha("Etapa / ano", i.etapa)}${linha("Período", i.periodo)}${linha("Número de aulas", String(i.aulas))}${linha("Tema", i.tema)}</table>
 <h2>Unidade temática</h2><p>${esc(pl.unidadeTematica)}</p><h2>Objeto de conhecimento</h2><p>${esc(pl.objetoConhecimento)}</p>
 <h2>Habilidade(s)</h2>${ul(pl.habilidades.map((h) => [h.codigo, h.descricao].filter(Boolean).join(" — ")))}
 <h2>Objetivos</h2>${ul(pl.objetivos)}<h2>Desenvolvimento</h2>
@@ -77,6 +77,8 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
   const [correcoes, setCorrecoes] = useState(null); // null = sem revisão; [] = revisado sem correções
   const [salvos, setSalvos] = useState([]);
   const [baixando, setBaixando] = useState(false);
+  const [comIlustracao, setComIlustracao] = useState(false); // opção paga: desmarcada por padrão
+  const [ilustrando, setIlustrando] = useState(false);
   useEffect(() => setSalvos(lerPlanos()), []);
   const set = (k) => (e) =>
     setF((x) => {
@@ -112,11 +114,28 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
       const r = await fetch("/api/gerar-plano", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Não foi possível gerar o plano.");
-      setPlano(j.plano);
+      let pl = j.plano;
+      setPlano(pl);
       setAvisos(j.avisos || []);
       setCorrecoes(j.revisado ? j.correcoes || [] : null);
+      // ilustração nova só se o professor marcou e a apostila não trouxe uma
+      if (comIlustracao && !pl.ilustracao) {
+        setIlustrando(true);
+        try {
+          const ri = await fetch("/api/gerar-imagem", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tema: pl.identificacao.tema, disciplina: pl.identificacao.componente, estilo: "Vetor Ilustrado", capa: "escolar" }) });
+          const ji = await ri.json().catch(() => ({}));
+          if (ri.ok && urlIlustracaoValida(ji.urlImagem)) {
+            pl = { ...pl, ilustracao: ji.urlImagem };
+            setPlano(pl);
+          } else if (!ri.ok) setAvisos((a) => [...a, `ilustração não gerada (${ji.error || "erro"})`]);
+        } catch {
+          setAvisos((a) => [...a, "ilustração não gerada (sem conexão)"]);
+        } finally {
+          setIlustrando(false);
+        }
+      }
       const origem = fonte === "apostila" ? { tipo: "apostila", id: apostila, titulo: materiais.find((m) => m.id === apostila)?.titulo || "" } : fonte === "pdf" ? { tipo: "pdf", titulo: pdf?.nome || "" } : null;
-      const nova = adicionarPlanoNaLista(lerPlanos(), j.plano, origem);
+      const nova = adicionarPlanoNaLista(lerPlanos(), pl, origem);
       gravarPlanos(nova);
       setSalvos(nova);
       aoGerar?.();
@@ -263,6 +282,16 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
             <p className="mt-1 text-[11.5px] text-slate-600">Não escreva nomes ou dados pessoais de alunos: este texto é enviado à IA.</p>
           </div>
         </div>
+        {fonte !== "apostila" ? (
+          <label className="mt-4 flex items-start gap-2 text-[13px] text-slate-700">
+            <input type="checkbox" checked={comIlustracao} onChange={(e) => setComIlustracao(e.target.checked)} className="mt-0.5" />
+            <span>
+              Incluir ilustração do tema <span className="text-slate-500">(gera uma imagem com IA; usa a ilustração da sua geração)</span>
+            </span>
+          </label>
+        ) : (
+          <p className="mt-4 text-[12.5px] text-slate-600">Se a apostila tiver ilustração, ela entra no plano automaticamente.</p>
+        )}
         {erro && (
           <p role="alert" className="mt-4 flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {erro}
@@ -270,7 +299,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
         )}
         <button type="button" onClick={gerar} disabled={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75">
           {gerando ? <Loader2 className="h-5 w-5 animate-spin" /> : <ClipboardList className="h-5 w-5" />}
-          {gerando ? "Gerando o plano…" : plano ? "Gerar novamente" : "Gerar plano de aula"}
+          {ilustrando ? "Gerando a ilustração…" : gerando ? "Gerando e revisando o plano…" : plano ? "Gerar novamente" : "Gerar plano de aula"}
         </button>
       </section>
 
@@ -295,6 +324,10 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
             )}
             <article className="space-y-3 text-[14px] leading-relaxed text-slate-800">
               <h3 className="text-center text-base font-extrabold">PLANO DE AULA — {plano.identificacao.tema}</h3>
+              {urlIlustracaoValida(plano.ilustracao) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={plano.ilustracao} alt={`Ilustração sobre ${plano.identificacao.tema}`} className="mx-auto max-h-56 rounded-xl object-contain" />
+              )}
               <p className="text-[13px] text-slate-600">{[plano.identificacao.componente, plano.identificacao.etapa, plano.identificacao.turma, `${plano.identificacao.aulas} aula(s)`, plano.identificacao.periodo].filter(Boolean).join(" · ")}</p>
               <p><b>Unidade temática:</b> {plano.unidadeTematica}</p>
               <p><b>Objeto de conhecimento:</b> {plano.objetoConhecimento}</p>

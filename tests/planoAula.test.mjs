@@ -1,7 +1,7 @@
 // Plano de aula (Currículo Paulista): pedido, normalização e texto
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, adicionarPlanoNaLista, LIMITE_PLANOS_SALVOS } from "../lib/planoAula.js";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, adicionarPlanoNaLista, LIMITE_PLANOS_SALVOS, urlIlustracaoValida } from "../lib/planoAula.js";
 import { PLANO_SIMULADO, respostaSimulada } from "../lib/iaSimulada.js";
 
 const base = { disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "7", tema: "Volume", aulas: 2, bncc: "EF07MA30" };
@@ -81,4 +81,11 @@ test("planos salvos: mais novo primeiro, com limite", () => {
   for (let i = 0; i < LIMITE_PLANOS_SALVOS + 5; i++) l = adicionarPlanoNaLista(l, { n: i }, null);
   assert.equal(l.length, LIMITE_PLANOS_SALVOS);
   assert.equal(l[0].plano.n, LIMITE_PLANOS_SALVOS + 4);
+});
+
+test("ilustração do plano: só do armazenamento do EduGera", () => {
+  assert.equal(urlIlustracaoValida("https://abc.public.blob.vercel-storage.com/apostilas/x.png"), "https://abc.public.blob.vercel-storage.com/apostilas/x.png");
+  assert.equal(urlIlustracaoValida("https://site-qualquer.com/x.png"), null);
+  assert.equal(urlIlustracaoValida('javascript:alert(1)'), null);
+  assert.equal(urlIlustracaoValida(undefined), null);
 });

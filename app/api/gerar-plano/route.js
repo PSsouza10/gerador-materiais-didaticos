@@ -5,7 +5,7 @@ import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano } from "@/lib/planoAula";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida } from "@/lib/planoAula";
 import { bancoLigado } from "@/lib/banco";
 import { materiaisDaConta } from "@/lib/contas";
 import { lerHistorico } from "@/lib/historico";
@@ -83,7 +83,7 @@ async function postRota(request, _contexto, requestId) {
       await devolverGeracao(usuario.email, requestId);
       return NextResponse.json({ error: "Não encontrei essa apostila na sua conta." }, { status: 404 });
     }
-    base = { tipo: "apostila", texto: resumoDaApostila(registro) };
+    base = { tipo: "apostila", texto: resumoDaApostila(registro), ilustracao: urlIlustracaoValida(registro.urlImagem) };
   }
 
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;
@@ -113,6 +113,8 @@ async function postRota(request, _contexto, requestId) {
       revisado = a.aplicada;
     } else console.error("Revisão do plano falhou (segue sem revisão):", rv.status, rv.erro);
   }
+  // a apostila já tem ilustração: o plano reaproveita (sem custo)
+  if (base?.ilustracao) plano = { ...plano, ilustracao: base.ilustracao };
   const problemas = problemasDoPlano(plano, d);
   if (!plano.aulas.length || !plano.objetivos.length) {
     await devolverGeracao(usuario.email, requestId);
