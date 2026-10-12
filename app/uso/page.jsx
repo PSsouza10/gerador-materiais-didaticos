@@ -4,7 +4,7 @@ import { consultarUso, ultimosUsos, limiteBiblioteca } from "@/lib/uso";
 import { bancoLigado } from "@/lib/banco";
 import { listarMateriais } from "@/lib/contas";
 import { lerHistorico } from "@/lib/historico";
-import { suporteEmail, SUPORTE_TEXTO_PADRAO, avisoTransicao } from "@/lib/planos";
+import { suporteEmail, suporteWhatsapp, SUPORTE_TEXTO_PADRAO, avisoTransicao } from "@/lib/planos";
 import PainelUso from "@/components/planos/PainelUso";
 
 export const dynamic = "force-dynamic";
@@ -31,5 +31,5 @@ export default async function PaginaUso() {
   } catch (e) {
     console.error("Painel de uso indisponível:", e?.message || e);
   }
-  return <PainelUso uso={uso} materiais={materiais} recentes={recentes} suporte={suporteEmail()} suporteTexto={SUPORTE_TEXTO_PADRAO} aviso={avisoTransicao(uso?.transicao)} nome={usuario.nome || ""} />;
+  return <PainelUso uso={uso} materiais={materiais} recentes={recentes} suporte={suporteEmail()} suporteTexto={SUPORTE_TEXTO_PADRAO} whatsapp={suporteWhatsapp()} aviso={avisoTransicao(uso?.transicao)} nome={usuario.nome || ""} />;
 }

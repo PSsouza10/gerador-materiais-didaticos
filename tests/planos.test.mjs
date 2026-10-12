@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "fs";
 import {
-  PLANOS, ORDEM_PLANOS, PLANO_ADMIN, obterPlano, teto, formatarPreco, suporteEmail, SUPORTE_TEXTO_PADRAO, planoVigente, limitesTransicao, inicioNovosLimites,
+  PLANOS, ORDEM_PLANOS, PLANO_ADMIN, obterPlano, teto, formatarPreco, suporteEmail, suporteWhatsapp, SUPORTE_TEXTO_PADRAO, planoVigente, limitesTransicao, inicioNovosLimites,
   limitarBiblioteca, avisoTransicao, INICIO_NOVOS_LIMITES, RECURSOS_COMPARACAO,
   inicioDoDia, mensagemLimite, contagensDoArquivo, resumoDoUso, motivoBloqueio, proximoMes,
 } from "../lib/planos.js";
@@ -85,8 +85,14 @@ test("limites ficam só em lib/planos.js (sem número solto nas rotas)", () => {
 
 test("suporte: sem e-mail inventado; placeholder até o Paulo informar", () => {
   assert.equal(SUPORTE_TEXTO_PADRAO, "Suporte em breve");
-  assert.equal(suporteEmail({}), null);
-  assert.equal(suporteEmail({ SUPORTE_EMAIL: "não é e-mail" }), null);
+  assert.equal(suporteEmail({}), "contato.edugera@gmail.com");
+  assert.equal(suporteEmail({ SUPORTE_EMAIL: "não é e-mail" }), "contato.edugera@gmail.com");
+  const w = suporteWhatsapp({});
+  assert.equal(w.numero, "5511995614459");
+  assert.equal(w.rotulo, "(11) 99561-4459");
+  assert.match(w.link, /^https:\/\/wa\.me\/5511995614459\?text=/);
+  assert.equal(suporteWhatsapp({ SUPORTE_WHATSAPP: "(11) 98888-7777" }).numero, "5511988887777");
+  assert.equal(suporteWhatsapp({ SUPORTE_WHATSAPP: "abc" }).numero, "5511995614459");
   assert.equal(suporteEmail({ SUPORTE_EMAIL: " suporte@escola.br " }), "suporte@escola.br");
 });
 

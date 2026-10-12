@@ -2,7 +2,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consultarUso } from "@/lib/uso";
 import { bancoLigado } from "@/lib/banco";
 import { simulacaoAssinatura } from "@/lib/ambiente";
-import { PLANOS, ORDEM_PLANOS, suporteEmail, SUPORTE_TEXTO_PADRAO, planoVigente, avisoTransicao } from "@/lib/planos";
+import { PLANOS, ORDEM_PLANOS, suporteEmail, suporteWhatsapp, SUPORTE_TEXTO_PADRAO, planoVigente, avisoTransicao } from "@/lib/planos";
 import Planos from "@/components/planos/Planos";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +31,7 @@ export default async function PaginaPlanos() {
       assinatura={uso?.assinatura || null}
       simulacao={!!usuario && simulacaoAssinatura() && bancoLigado()}
       suporte={suporteEmail()}
+      whatsapp={suporteWhatsapp()}
       suportePadrao={SUPORTE_TEXTO_PADRAO}
       aviso={avisoTransicao(planoVigente(PLANOS.gratis).transicao)}
     />

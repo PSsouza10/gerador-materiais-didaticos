@@ -40,7 +40,7 @@ function Barra({ icone: Icone, titulo, usados, limite, renova, legenda }) {
   );
 }
 
-export default function PainelUso({ uso, materiais, recentes, suporte, suporteTexto, aviso, nome }) {
+export default function PainelUso({ uso, materiais, recentes, suporte, suporteTexto, whatsapp = null, aviso, nome }) {
   if (!uso)
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -151,6 +151,11 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
           <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
             <Mail className="h-4 w-4" aria-hidden="true" /> {suporte ? `Suporte: ${suporte}` : suporteTexto}
           </span>
+          {whatsapp && (
+            <a href={whatsapp.link} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-indigo-700 underline">
+              WhatsApp {whatsapp.rotulo}
+            </a>
+          )}
         </div>
         <p className="mt-4 text-[12.5px] text-slate-500">Nenhuma cobrança é feita no EduGera neste momento.</p>
       </div>

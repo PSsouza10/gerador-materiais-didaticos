@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { suporteEmail, suporteWhatsapp } from "@/lib/planos";
 
 // Moldura simples e legível para as páginas públicas (privacidade, termos).
 export const ATUALIZADO_EM = "12 de outubro de 2026";
-export const CONTATO = "contato.edugera@gmail.com"; // mesmo endereço de SUPORTE_EMAIL na Vercel
+export const CONTATO = suporteEmail();
+const WHATSAPP = suporteWhatsapp();
 
 export default function PaginaLegal({ titulo, children }) {
   return (
@@ -23,6 +25,9 @@ export default function PaginaLegal({ titulo, children }) {
           </Link>
           <a href={`mailto:${CONTATO}`} className="text-indigo-600 hover:underline">
             Contato
+          </a>
+          <a href={WHATSAPP.link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+            WhatsApp {WHATSAPP.rotulo}
           </a>
         </nav>
       </article>

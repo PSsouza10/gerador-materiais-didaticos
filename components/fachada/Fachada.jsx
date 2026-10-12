@@ -34,6 +34,9 @@ import Cabecalho from "./Cabecalho";
 import Vitrine from "./Vitrine";
 import Marca from "./Marca";
 import "./fachada.css";
+import { SUPORTE_EMAIL_PADRAO, suporteWhatsapp } from "@/lib/planos";
+
+const WHATSAPP = suporteWhatsapp({});
 
 // Fachada pública do EduGera ("/"). O gerador fica em /criar, sem mudanças.
 // Regras de conteúdo: nada de números, depoimentos ou avaliações inventados;
@@ -484,6 +487,12 @@ function Rodape() {
             </li>
             <li>
               <Link href="/termos" className="hover:text-roxo">Termos de Uso</Link>
+            </li>
+            <li>
+              <a href={`mailto:${SUPORTE_EMAIL_PADRAO}`} className="hover:text-roxo">Contato</a>
+            </li>
+            <li>
+              <a href={WHATSAPP.link} target="_blank" rel="noopener noreferrer" className="hover:text-roxo">WhatsApp {WHATSAPP.rotulo}</a>
             </li>
           </ul>
         </nav>

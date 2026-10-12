@@ -11,7 +11,7 @@ import "@/components/fachada/fachada.css";
 // Página de planos. Preços e limites vêm de lib/planos.js.
 // Não há checkout: no site publicado os planos pagos aparecem como "Em breve";
 // no site de teste dá para SIMULAR a assinatura (nada é cobrado).
-export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, aviso = null }) {
+export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, whatsapp = null, aviso = null }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(null);
   const [msg, setMsg] = useState("");
@@ -273,6 +273,14 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
             {suporte ? (
               <>
                 Suporte: <a className="underline" href={`mailto:${suporte}`}>{suporte}</a>
+                {whatsapp && (
+                  <>
+                    {" "}· WhatsApp{" "}
+                    <a className="underline" href={whatsapp.link} target="_blank" rel="noopener noreferrer">
+                      {whatsapp.rotulo}
+                    </a>
+                  </>
+                )}
               </>
             ) : (
               suportePadrao

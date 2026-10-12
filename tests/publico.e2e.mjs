@@ -206,7 +206,7 @@ test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de 
   const r = await get("/planos");
   assert.equal(r.status, 200);
   const t = await textoDe(r);
-  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 39,90", "R$ 29,90", "R$ 358,80", "Em breve", "nenhuma cobrança", "Suporte em breve"])
+  for (const x of ["Grátis", "Pro mensal", "Pro anual", "Escola", "R$ 0", "R$ 39,90", "R$ 29,90", "R$ 358,80", "Em breve", "nenhuma cobrança", "contato.edugera@gmail.com", "(11) 99561-4459"])
     assert.ok(t.includes(x), `falta "${x}"`);
   assert.match(t, /2 gerações por mês \(1 por dia\)/);
   assert.match(t, /O que cada plano inclui/);
@@ -228,7 +228,7 @@ test("/uso: anônimo volta para o início; logado vê o painel", async (t) => {
   const r = await get("/uso", { headers: { cookie } });
   assert.equal(r.status, 200);
   const txt = await textoDe(r);
-  for (const x of ["Uso e limites", "Grátis", "Gerações neste mês", "Gerações hoje", "Materiais na biblioteca", "Nenhuma cobrança", "Suporte em breve"])
+  for (const x of ["Uso e limites", "Grátis", "Gerações neste mês", "Gerações hoje", "Materiais na biblioteca", "Nenhuma cobrança", "contato.edugera@gmail.com", "(11) 99561-4459"])
     assert.ok(txt.includes(x), `falta "${x}"`);
   const uso = await (await get("/api/uso", { headers: { cookie } })).json();
   assert.equal(uso.uso.plano.id, "gratis");

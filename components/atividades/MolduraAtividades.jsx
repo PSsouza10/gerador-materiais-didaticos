@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Marca from "@/components/fachada/Marca";
 import "@/components/fachada/fachada.css";
+import { suporteEmail, suporteWhatsapp } from "@/lib/planos";
 
 // Moldura das páginas /atividades: mesmo visual da fachada e da página de planos.
 // trilha = [{ rotulo, href? }] — o último item é a página atual (sem link).
@@ -56,6 +57,8 @@ export default function MolduraAtividades({ trilha = [], jsonLd = null, children
           <Link href="/planos" className="hover:text-roxo">Planos</Link>
           <Link href="/privacidade" className="hover:text-roxo">Privacidade</Link>
           <Link href="/termos" className="hover:text-roxo">Termos de Uso</Link>
+          <a href={`mailto:${suporteEmail()}`} className="hover:text-roxo">Contato</a>
+          <a href={suporteWhatsapp().link} target="_blank" rel="noopener noreferrer" className="hover:text-roxo">WhatsApp {suporteWhatsapp().rotulo}</a>
         </nav>
       </footer>
     </div>
