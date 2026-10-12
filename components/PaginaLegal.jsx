@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 // Moldura simples e legível para as páginas públicas (privacidade, termos).
-export const ATUALIZADO_EM = "27 de setembro de 2026";
-export const CONTATO = "pssouzasj@gmail.com";
+export const ATUALIZADO_EM = "12 de outubro de 2026";
+export const CONTATO = "contato.edugera@gmail.com"; // mesmo endereço de SUPORTE_EMAIL na Vercel
 
 export default function PaginaLegal({ titulo, children }) {
   return (
