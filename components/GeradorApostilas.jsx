@@ -664,7 +664,7 @@ export default function GeradorApostilas() {
         )}
         {active === "Plano de Aula" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <PlanoAula professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} aoGerar={atualizarUso} />
+            <PlanoAula professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} />
           </div>
         )}
         {active === "Configurações" && (

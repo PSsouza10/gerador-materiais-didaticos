@@ -1,7 +1,7 @@
 // Plano de aula (Currículo Paulista): pedido, normalização e texto
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto } from "../lib/planoAula.js";
+import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, planoParaTexto, resumoDaApostila } from "../lib/planoAula.js";
 import { PLANO_SIMULADO, respostaSimulada } from "../lib/iaSimulada.js";
 
 const base = { disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "7", tema: "Volume", aulas: 2, bncc: "EF07MA30" };
@@ -44,4 +44,16 @@ test("texto para copiar tem todas as seções", () => {
   const d = validarPedidoPlano({ ...base, professor: "Prof. Teste", turma: "7º B" }).dados;
   const t = planoParaTexto(normalizarPlano(PLANO_SIMULADO, d));
   for (const s of ["PLANO DE AULA", "Professor(a): Prof. Teste", "UNIDADE TEMÁTICA", "HABILIDADE", "OBJETIVOS", "Aula 1", "Aula 2", "RECURSOS", "AVALIAÇÃO", "RECUPERAÇÃO CONTÍNUA"]) assert.ok(t.includes(s), s);
+});
+
+test("plano a partir de apostila do EduGera ou de PDF", () => {
+  const registro = { form: { tema: "Volume", professor: "Prof. X", escola: "Escola Y" }, material: { tituloDidatico: "Volume no dia a dia", resumoPedagogico: "Calcular volume.", conceitos: [{ termo: "Volume", definicao: "espaço ocupado" }], formulas: [{ expressao: "V = c × l × h" }], exercicios: [{ enunciado: "Calcule o volume da caixa." }] } };
+  const t = resumoDaApostila(registro);
+  for (const s of ["Volume no dia a dia", "Conceito: Volume", "V = c × l × h", "Exercício 1: Calcule o volume da caixa."]) assert.ok(t.includes(s), s);
+  assert.ok(!t.includes("Prof. X") && !t.includes("Escola Y"), "sem dados do professor no texto enviado à IA");
+  const d = validarPedidoPlano({ ...base, tema: "" }, { temBase: true }).dados;
+  assert.equal(d.tema, "conforme o material base");
+  assert.match(montarPromptPlano(d, "", { tipo: "apostila", texto: t }), /MATERIAL BASE: uma apostila criada no EduGera[\s\S]*Volume no dia a dia/);
+  assert.match(montarPromptPlano(d, "", { tipo: "pdf" }), /MATERIAL BASE: o PDF anexo/);
+  assert.equal(validarPedidoPlano({ ...base, tema: "" }).ok, false, "sem base, o tema continua obrigatório");
 });

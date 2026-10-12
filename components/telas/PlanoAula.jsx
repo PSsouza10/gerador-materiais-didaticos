@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info } from "lucide-react";
+import { ClipboardList, Loader2, Printer, Copy, Check, AlertCircle, Info, BookMarked, FileUp, PenLine } from "lucide-react";
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
@@ -38,7 +38,17 @@ const Campo = ({ rotulo, opcional, children }) => (
   </label>
 );
 
-export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", aoGerar }) {
+const PDF_MAX = 3 * 1024 * 1024;
+const FONTES = [
+  { id: "tema", rotulo: "Tema livre", icone: PenLine },
+  { id: "apostila", rotulo: "Apostila do EduGera", icone: BookMarked },
+  { id: "pdf", rotulo: "Anexar PDF", icone: FileUp },
+];
+
+export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar }) {
+  const [fonte, setFonte] = useState("tema");
+  const [apostila, setApostila] = useState("");
+  const [pdf, setPdf] = useState(null); // { nome, base64, tamanho }
   const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", aulas: 2, periodo: "", observacoes: "" });
   const [plano, setPlano] = useState(null);
   const [avisos, setAvisos] = useState([]);
@@ -52,12 +62,31 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", aoG
       return n;
     });
 
+  const escolherApostila = (id) => {
+    setApostila(id);
+    const m = materiais.find((x) => x.id === id);
+    if (m) setF((x) => ({ ...x, disciplina: m.disciplina || x.disciplina, nivel: m.nivel || x.nivel, ano: m.ano || "", bncc: m.bncc || "", habilidade: "", tema: m.tema || m.titulo || x.tema }));
+  };
+  const escolherPdf = (arq) => {
+    setErro("");
+    if (!arq) return setPdf(null);
+    if (arq.type && arq.type !== "application/pdf") return setErro("Escolha um arquivo PDF.");
+    if (arq.size > PDF_MAX) return setErro("O PDF passa de 3 MB. Tente um arquivo menor ou só as páginas necessárias.");
+    const leitor = new FileReader();
+    leitor.onload = () => setPdf({ nome: arq.name, base64: String(leitor.result).split(",")[1] || "", tamanho: arq.size });
+    leitor.onerror = () => setErro("Não foi possível ler o PDF.");
+    leitor.readAsDataURL(arq);
+  };
+
   const gerar = async () => {
-    if (!f.tema.trim()) return setErro("Preencha o tema.");
+    if (fonte === "apostila" && !apostila) return setErro("Escolha uma apostila.");
+    if (fonte === "pdf" && !pdf) return setErro("Anexe o PDF.");
+    if (fonte === "tema" && !f.tema.trim()) return setErro("Preencha o tema.");
     setErro("");
     setGerando(true);
+    const corpo = { ...f, fonte: fonte === "apostila" ? { tipo: "apostila", id: apostila } : fonte === "pdf" ? { tipo: "pdf", nome: pdf.nome, base64: pdf.base64 } : null };
     try {
-      const r = await fetch("/api/gerar-plano", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
+      const r = await fetch("/api/gerar-plano", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Não foi possível gerar o plano.");
       setPlano(j.plano);
@@ -95,6 +124,37 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", aoG
           <ClipboardList className="h-5 w-5 text-violet-500" /> Plano de aula
         </h2>
         <p className="mb-5 text-sm text-slate-600">Na estrutura do Currículo Paulista: habilidade, objetivos, desenvolvimento aula a aula, recursos, avaliação e recuperação. Usa 1 geração do seu plano.</p>
+        <fieldset className="mb-5">
+          <legend className="mb-2 text-xs font-bold text-slate-600">O plano parte de:</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {FONTES.map(({ id, rotulo, icone: Icone }) => (
+              <label key={id} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-700 hover:border-indigo-200"}`}>
+                <input type="radio" name="fonte-plano" value={id} checked={fonte === id} onChange={() => setFonte(id)} className="sr-only" />
+                <Icone className="h-4 w-4" aria-hidden="true" /> {rotulo}
+              </label>
+            ))}
+          </div>
+          {fonte === "apostila" && (
+            <div className="mt-3">
+              {materiais.length ? (
+                <select className="ipt" value={apostila} onChange={(e) => escolherApostila(e.target.value)} aria-label="Apostila">
+                  <option value="">Escolha uma apostila…</option>
+                  {materiais.map((m) => <option key={m.id} value={m.id}>{m.titulo || m.tema}{m.ano ? ` — ${m.ano}º` : ""}</option>)}
+                </select>
+              ) : (
+                <p className="text-[13px] text-slate-600">Você ainda não tem apostilas em “Minhas Apostilas”. Gere uma primeiro ou use outra opção.</p>
+              )}
+              <p className="mt-1 text-[11.5px] text-slate-600">O plano usa os conceitos, a situação e os exercícios da apostila.</p>
+            </div>
+          )}
+          {fonte === "pdf" && (
+            <div className="mt-3">
+              <input type="file" accept="application/pdf,.pdf" onChange={(e) => escolherPdf(e.target.files?.[0])} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" aria-label="PDF do material" />
+              {pdf && <p className="mt-1 text-[12px] text-slate-700">{pdf.nome} · {(pdf.tamanho / 1024 / 1024).toFixed(1)} MB</p>}
+              <p className="mt-1 text-[11.5px] text-slate-600">Até 3 MB. O PDF é lido pela IA só para montar o plano e não fica guardado. Evite PDFs com nomes ou dados de alunos.</p>
+            </div>
+          )}
+        </fieldset>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo rotulo="Professor(a)" opcional>
             <input className="ipt" value={f.professor} onChange={set("professor")} maxLength={LIMITES_PLANO.professor} />
@@ -127,7 +187,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", aoG
             <SeletorBNCC codigo={f.bncc} habilidade={f.habilidade} disciplina={f.disciplina} nivel={f.nivel} ano={f.ano} onChange={(x) => setF((s) => ({ ...s, ...x }))} />
           </div>
           <div className="sm:col-span-2">
-            <Campo rotulo="Tema">
+            <Campo rotulo="Tema" opcional={fonte !== "tema"}>
               <input className="ipt" value={f.tema} onChange={set("tema")} maxLength={LIMITES_PLANO.tema} placeholder='Ex.: "Volume de blocos retangulares"' />
             </Campo>
           </div>
