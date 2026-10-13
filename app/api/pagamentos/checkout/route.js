@@ -29,7 +29,7 @@ async function postRota(request) {
     cfg.provedor === "asaas"
       ? await iniciarCheckoutAsaas({ email: u.email, plano: body?.plano, origem, cliente: clienteAsaas(cfg), sandbox: cfg.sandbox })
       : await iniciarCheckout({ email: u.email, plano: body?.plano, emailPagador: body?.emailPagador || u.email, origem, cliente: clienteMercadoPago(cfg.token) });
-  if (!r.ok) return NextResponse.json({ error: r.erro }, { status: r.status });
+  if (!r.ok) return NextResponse.json({ error: r.detalhe ? `${r.erro} (Asaas: ${r.detalhe})` : r.erro }, { status: r.status });
   return NextResponse.json({ url: r.url });
 }
 
