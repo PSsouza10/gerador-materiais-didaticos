@@ -25,7 +25,13 @@ test("toda migração tem o arquivo .down que desfaz o que o .up cria", () => {
 test("migrações não apagam nem alteram dados existentes (só criam)", () => {
   for (const m of listarMigracoes(PASTA)) {
     // "ON DELETE CASCADE" é regra da chave estrangeira (não apaga nada na migração)
-    const up = readFileSync(m.up, "utf8").replace(/^\s*--.*$/gm, "").replace(/\bON\s+(DELETE|UPDATE)\s+CASCADE\b/gi, "");
+    let up = readFileSync(m.up, "utf8").replace(/^\s*--.*$/gm, "").replace(/\bON\s+(DELETE|UPDATE)\s+CASCADE\b/gi, "");
+    // Única exceção: TROCAR uma regra CHECK (ex.: aceitar um provedor novo). Não mexe em dado nenhum,
+    // e a regra tem de ser recriada no mesmo arquivo.
+    for (const [linha, tabela, regra] of up.matchAll(/ALTER TABLE (\w+) DROP CONSTRAINT IF EXISTS (\w+_check);/g)) {
+      assert.match(up, new RegExp(`ALTER TABLE ${tabela} ADD CONSTRAINT ${regra} CHECK`), `${m.nome}: ${regra} removida sem ser recriada`);
+      up = up.replace(linha, "");
+    }
     assert.doesNotMatch(up, /\b(DROP|DELETE|TRUNCATE|UPDATE|ALTER\s+TABLE\s+\w+\s+DROP)\b/i, m.nome);
   }
 });

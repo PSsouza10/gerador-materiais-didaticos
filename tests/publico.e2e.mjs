@@ -215,7 +215,7 @@ test("/planos: quatro planos, preços provisórios, sem checkout e com aviso de 
   assert.match(t, /Em breve — fale conosco/);
   assert.match(t, /30 gerações por mês/);
   assert.match(t, /Biblioteca com os 5 materiais mais recentes/);
-  assert.doesNotMatch(t, /checkout|cartão de crédito|stripe|mercado ?pago/i);
+  assert.doesNotMatch(t, /checkout|cartão de crédito|stripe|mercado ?pago|asaas/i);
 });
 
 test("/uso: anônimo volta para o início; logado vê o painel", async (t) => {
