@@ -8,16 +8,22 @@ import "@/components/fachada/fachada.css";
 
 const data = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
 
+// Situação gravada a partir do Asaas (lib/pagamentos.js)
 const STATUS = {
-  authorized: "Ativa — renova todo mês no cartão",
-  cancelled: "Cancelada — não será cobrada de novo",
-  paused: "Pausada pelo Mercado Pago (pagamento não aprovado)",
-  pending: "Aguardando o pagamento",
-  approved: "Paga — plano anual",
-  in_process: "Pagamento em análise",
-  refunded: "Pagamento devolvido",
-  charged_back: "Pagamento contestado",
-  rejected: "Pagamento recusado",
+  ACTIVE: "Ativa — renova todo mês no cartão",
+  CANCELLED: "Cancelada — não será cobrada de novo",
+  PENDING: "Aguardando o pagamento",
+  CONFIRMED: "Paga — plano anual",
+  RECEIVED: "Paga — plano anual",
+  RECEIVED_IN_CASH: "Paga — plano anual",
+  OVERDUE: "Pagamento vencido",
+  AWAITING_RISK_ANALYSIS: "Pagamento em análise",
+  REFUNDED: "Pagamento devolvido",
+  REFUND_REQUESTED: "Devolução solicitada",
+  REFUND_IN_PROGRESS: "Devolução em andamento",
+  CHARGEBACK_REQUESTED: "Pagamento contestado",
+  CHARGEBACK_DISPUTE: "Pagamento contestado",
+  AWAITING_CHARGEBACK_REVERSAL: "Pagamento contestado",
 };
 
 export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar, suporte, whatsapp }) {
@@ -59,7 +65,7 @@ export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar
         {retorno && (
           <p role="status" className="mt-5 flex items-start gap-2 rounded-2xl bg-verde-claro px-4 py-3 text-[15px] font-medium text-verde-escuro">
             <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none" aria-hidden="true" />
-            Recebemos o retorno do Mercado Pago. Quando o pagamento for aprovado, o Pro é ativado sozinho — no cartão costuma levar menos de um minuto; recarregue a página se ainda não aparecer.
+            Recebemos o retorno do Asaas. Quando o pagamento for confirmado, o Pro é ativado sozinho — no cartão e no Pix costuma levar menos de um minuto; recarregue a página se ainda não aparecer.
           </p>
         )}
 

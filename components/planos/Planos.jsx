@@ -15,10 +15,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
   const router = useRouter();
   const [ocupado, setOcupado] = useState(null);
   const [msg, setMsg] = useState("");
-  const [pedirEmail, setPedirEmail] = useState(false);
-  const [emailMp, setEmailMp] = useState("");
 
-  // Assinar de verdade: abre o pagamento do Mercado Pago (só onde o servidor permite)
+  // Assinar de verdade: abre o Checkout do Asaas (só onde o servidor permite)
   const assinar = async (plano) => {
     setOcupado(plano);
     setMsg("");
@@ -26,7 +24,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
       const r = await fetch("/api/pagamentos/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plano, emailPagador: emailMp.trim() || undefined }),
+        body: JSON.stringify({ plano }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.url) throw new Error(j.error || "Não foi possível abrir o pagamento.");
@@ -96,27 +94,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
             Entrar para assinar
           </button>
         );
-      if (p.id === "pro_mensal" && pedirEmail)
-        return (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              assinar("pro_mensal");
-            }}
-            className="space-y-2"
-          >
-            <label htmlFor="email-mp" className="block text-[13.5px] font-semibold text-marinho">
-              E-mail da sua conta do Mercado Pago
-            </label>
-            <input id="email-mp" name="email-mp" type="email" required value={emailMp} onChange={(e) => setEmailMp(e.target.value)} placeholder="seu-email@exemplo.com" className="w-full rounded-xl border border-marinho/20 bg-white px-3 py-2 text-[15px]" />
-            <button type="submit" disabled={!!ocupado} className="btn-primario w-full justify-center">
-              {ocupado === "pro_mensal" ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Ir para o pagamento
-            </button>
-            <p className="text-[12.5px] text-tinta">Cartão de crédito, renova todo mês. Cancele quando quiser.</p>
-          </form>
-        );
       return (
-        <button type="button" onClick={() => (p.id === "pro_mensal" ? setPedirEmail(true) : assinar(p.id))} disabled={!!ocupado} className="btn-primario w-full justify-center">
+        <button type="button" onClick={() => assinar(p.id)} disabled={!!ocupado} className="btn-primario w-full justify-center">
           {ocupado === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Assinar
         </button>
       );
@@ -169,7 +148,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           </h1>
           <p className="mx-auto mt-4 max-w-[60ch] text-[17px] leading-relaxed text-tinta">
             {pagamento
-              ? "Comece de graça. No Pro, o pagamento é pelo Mercado Pago: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x."
+              ? "Comece de graça. No Pro, o pagamento é feito com segurança pelo Asaas: mensal no cartão (cancele quando quiser) ou anual, no Pix à vista ou no cartão em até 12x."
               : "Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita."}
           </p>
           {aviso && (
