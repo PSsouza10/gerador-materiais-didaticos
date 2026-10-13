@@ -148,6 +148,9 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
           <Link href="/planos" className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">
             Ver planos
           </Link>
+          <Link href="/assinatura" className="rounded-full border border-indigo-200 px-5 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50">
+            Minha assinatura
+          </Link>
           <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
             <Mail className="h-4 w-4" aria-hidden="true" /> {suporte ? `Suporte: ${suporte}` : suporteTexto}
           </span>

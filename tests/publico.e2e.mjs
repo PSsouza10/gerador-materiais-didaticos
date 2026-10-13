@@ -248,3 +248,14 @@ test("/uso: anônimo volta para o início; logado vê o painel", async (t) => {
 test("/api/assinatura: sem login 401; nunca cobra", async () => {
   assert.equal((await get("/api/assinatura", { method: "POST", body: "{}" })).status, 401);
 });
+
+test("/api/pagamentos: sem configuração não cobra; aviso sem config é ignorado; /assinatura exige login", async () => {
+  const c = await get("/api/pagamentos/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plano: "pro_mensal" }) });
+  assert.ok([401, 403, 503].includes(c.status), `checkout ${c.status}`);
+  const w = await get("/api/pagamentos/webhook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "payment", data: { id: "1" } }) });
+  assert.ok([200, 401].includes(w.status), `webhook ${w.status}`);
+  const a = await get("/assinatura");
+  assert.ok([307, 308].includes(a.status), `assinatura anônimo ${a.status}`);
+  const robots = await (await get("/robots.txt")).text();
+  assert.match(robots, /Disallow: \/assinatura/);
+});

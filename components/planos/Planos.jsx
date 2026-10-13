@@ -11,10 +11,31 @@ import "@/components/fachada/fachada.css";
 // Página de planos. Preços e limites vêm de lib/planos.js.
 // Não há checkout: no site publicado os planos pagos aparecem como "Em breve";
 // no site de teste dá para SIMULAR a assinatura (nada é cobrado).
-export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, whatsapp = null, aviso = null }) {
+export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, whatsapp = null, aviso = null, pagamento = false }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(null);
   const [msg, setMsg] = useState("");
+  const [pedirEmail, setPedirEmail] = useState(false);
+  const [emailMp, setEmailMp] = useState("");
+
+  // Assinar de verdade: abre o pagamento do Mercado Pago (só onde o servidor permite)
+  const assinar = async (plano) => {
+    setOcupado(plano);
+    setMsg("");
+    try {
+      const r = await fetch("/api/pagamentos/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plano, emailPagador: emailMp.trim() || undefined }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.url) throw new Error(j.error || "Não foi possível abrir o pagamento.");
+      window.location.href = j.url;
+    } catch (e) {
+      setMsg(e.message);
+      setOcupado(null);
+    }
+  };
 
   // plano = id para simular; null = encerrar a simulação
   const simular = async (plano) => {
@@ -68,6 +89,38 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
       );
     }
     if (ehAtual) return <span className="btn-primario w-full justify-center opacity-90">Seu plano atual{assinatura?.origem === "simulada" ? " (simulado)" : ""}</span>;
+    if (pagamento && p.contratavel) {
+      if (!logado)
+        return (
+          <button type="button" onClick={() => signIn("google", { callbackUrl: "/planos" })} className="btn-primario w-full justify-center">
+            Entrar para assinar
+          </button>
+        );
+      if (p.id === "pro_mensal" && pedirEmail)
+        return (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              assinar("pro_mensal");
+            }}
+            className="space-y-2"
+          >
+            <label htmlFor="email-mp" className="block text-[13.5px] font-semibold text-marinho">
+              E-mail da sua conta do Mercado Pago
+            </label>
+            <input id="email-mp" name="email-mp" type="email" required value={emailMp} onChange={(e) => setEmailMp(e.target.value)} placeholder="seu-email@exemplo.com" className="w-full rounded-xl border border-marinho/20 bg-white px-3 py-2 text-[15px]" />
+            <button type="submit" disabled={!!ocupado} className="btn-primario w-full justify-center">
+              {ocupado === "pro_mensal" ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Ir para o pagamento
+            </button>
+            <p className="text-[12.5px] text-tinta">Cartão de crédito, renova todo mês. Cancele quando quiser.</p>
+          </form>
+        );
+      return (
+        <button type="button" onClick={() => (p.id === "pro_mensal" ? setPedirEmail(true) : assinar(p.id))} disabled={!!ocupado} className="btn-primario w-full justify-center">
+          {ocupado === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Assinar
+        </button>
+      );
+    }
     if (simulacao)
       return (
         <button type="button" onClick={() => simular(p.id)} disabled={!!ocupado} className="btn-primario w-full justify-center">
@@ -115,7 +168,9 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
             Escolha como usar o EduGera
           </h1>
           <p className="mx-auto mt-4 max-w-[60ch] text-[17px] leading-relaxed text-tinta">
-            Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita.
+            {pagamento
+              ? "Comece de graça. No Pro, o pagamento é pelo Mercado Pago: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x."
+              : "Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita."}
           </p>
           {aviso && (
             <p role="status" className="mx-auto mt-5 max-w-[62ch] rounded-2xl bg-roxo-claro px-4 py-3 text-[15px] font-medium text-marinho">
@@ -266,7 +321,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
             O limite mensal renova no dia 1º; o diário, à meia-noite (horário de Brasília). Ao atingir o limite, novas gerações ficam
-            bloqueadas até a renovação. Nada é cobrado automaticamente.
+            bloqueadas até a renovação.{" "}
+            {pagamento ? "O Pro mensal renova sozinho no cartão até você cancelar; o anual não renova sozinho." : "Nada é cobrado automaticamente."}
           </p>
           <p className="flex items-start gap-2">
             <Mail className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />

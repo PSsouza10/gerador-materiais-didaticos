@@ -4,6 +4,7 @@ import { bancoLigado } from "@/lib/banco";
 import { simulacaoAssinatura } from "@/lib/ambiente";
 import { PLANOS, ORDEM_PLANOS, suporteEmail, suporteWhatsapp, SUPORTE_TEXTO_PADRAO, planoVigente, avisoTransicao } from "@/lib/planos";
 import Planos from "@/components/planos/Planos";
+import { configPagamentos } from "@/lib/pagamentos";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -32,6 +33,7 @@ export default async function PaginaPlanos() {
       simulacao={!!usuario && simulacaoAssinatura() && bancoLigado()}
       suporte={suporteEmail()}
       whatsapp={suporteWhatsapp()}
+      pagamento={configPagamentos().ok && bancoLigado()}
       suportePadrao={SUPORTE_TEXTO_PADRAO}
       aviso={avisoTransicao(planoVigente(PLANOS.gratis).transicao)}
     />
