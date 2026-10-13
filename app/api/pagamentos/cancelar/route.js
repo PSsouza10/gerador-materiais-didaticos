@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { bancoLigado } from "@/lib/banco";
-import { configPagamentos, clienteMercadoPago } from "@/lib/pagamentos";
+import { configPagamentos, clienteAsaas } from "@/lib/pagamentos";
 import { cancelarAssinaturaPaga } from "@/lib/cobranca";
 
-// POST → cancela a assinatura mensal no Mercado Pago (para de cobrar; vale até o fim do mês pago)
+// POST → cancela a assinatura mensal no Asaas (para de cobrar; vale até o fim do mês pago)
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ async function postRota() {
   const u = authConfigurado ? await usuarioAtual() : null;
   if (!u) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
   try {
-    const r = await cancelarAssinaturaPaga(u.email, clienteMercadoPago(cfg.token));
+    const r = await cancelarAssinaturaPaga(u.email, clienteAsaas(cfg));
     if (!r.ok) return NextResponse.json({ error: r.erro }, { status: r.status });
     return NextResponse.json(r);
   } catch (e) {
