@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
-import { bancoLigado } from "@/lib/banco";
+import { bancoLigado, registrarEvento } from "@/lib/banco";
+import { ehProducao } from "@/lib/ambiente";
 import { configAsaas, clienteAsaas, lerAvisoAsaas, tokenWebhookConfere } from "@/lib/asaas";
 import { processarAvisoAsaas } from "@/lib/cobranca";
 
@@ -27,6 +28,8 @@ async function postRota(request, _ctx, requestId) {
   const aviso = lerAvisoAsaas(corpo);
   try {
     const r = await processarAvisoAsaas(aviso, clienteAsaas(cfg));
+    // site de teste: guarda o resultado (sem dados pessoais) para conferir em /api/saude
+    if (!ehProducao()) await registrarEvento({ request_id: requestId, rota: `/api/pagamentos/asaas:${aviso?.evento || "?"}:${r.feito}${r.campos ? ":" + r.campos.join("+") : ""}`, metodo: "AVISO", status: 0, ms: 0 });
     console.log(JSON.stringify({ app: "edugera", evento: "asaas_aviso", request_id: requestId, tipo: aviso?.evento || corpo?.event || null, feito: r.feito, status: r.status || null, campos: r.campos || undefined }));
     return NextResponse.json({ received: true });
   } catch (e) {

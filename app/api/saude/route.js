@@ -15,6 +15,10 @@ async function getRota(_request, _contexto, request_id) {
   const marcador = ligado ? await marcadorDoBanco() : null;
   // quais migrações já rodaram neste banco (só nomes)
   const migracoes = marcador === "teste" ? await consultar("SELECT nome FROM schema_migrations ORDER BY nome").then((l) => l.map((x) => x.nome)).catch(() => null) : null;
+  // últimos avisos de pagamento recebidos (rota, status HTTP, quando) — sem conteúdo
+  const avisos = marcador === "teste"
+    ? await consultar("SELECT rota, status, criado_em FROM eventos_requisicao WHERE rota LIKE '/api/pagamentos/asaas%' ORDER BY criado_em DESC LIMIT 8").catch(() => null)
+    : null;
   return NextResponse.json({
     ambiente: ambiente(),
     request_id,
@@ -29,7 +33,7 @@ async function getRota(_request, _contexto, request_id) {
       variavel: !process.env.DATABASE_URL_TESTE ? "ausente" : /postgres(ql)?:\/\//.test(process.env.DATABASE_URL_TESTE) ? "ok" : "formato inesperado",
     },
     // pagamentos: só se as variáveis existem (nunca o valor)
-    pagamentos: { asaasChave: !!process.env.ASAAS_API_KEY, asaasTokenWebhook: !!process.env.ASAAS_WEBHOOK_TOKEN },
+    pagamentos: { asaasChave: !!process.env.ASAAS_API_KEY, asaasTokenWebhook: !!process.env.ASAAS_WEBHOOK_TOKEN, avisos },
     commit: (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 7) || null,
     branch: process.env.VERCEL_GIT_COMMIT_REF || null,
   });
