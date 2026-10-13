@@ -1,4 +1,4 @@
--- Pagamentos (Mercado Pago). Só CRIA tabelas novas; não mexe em "assinaturas".
+-- Pagamentos (criada para o Mercado Pago; desde a 0006, Asaas). Só CRIA tabelas novas; não mexe em "assinaturas".
 -- checkouts: cada clique em "Assinar" gera uma referência aleatória (vai ao Mercado Pago
 --   como external_reference) que liga o pagamento à conta, sem mandar o e-mail para o banco.
 -- cobrancas: o estado de cada assinatura/pagamento no provedor. O plano vale enquanto
