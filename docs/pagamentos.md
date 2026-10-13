@@ -13,7 +13,7 @@ Preços: `lib/planos.js`. Código: `lib/asaas.js`, `lib/cobranca.js`, `app/api/p
 página `/assinatura`. Tabelas: migrações 0005 e 0006.
 
 ## Travas
-- Site de teste: só chave de **sandbox** (`$aact_hmlg_...`), só a API de sandbox.
+- Site de teste: fala **só com a API de sandbox** (chave de produção não funciona lá); chave marcada `_prod_` é recusada.
 - Produção: só com `PAGAMENTOS_PRODUCAO=1` **e** chave de produção (`$aact_prod_...`).
 - Aviso (webhook) `/api/pagamentos/asaas`: exige o header `asaas-access-token` igual a
   `ASAAS_WEBHOOK_TOKEN` **e** relê a cobrança na API. O corpo do aviso não ativa nada sozinho.

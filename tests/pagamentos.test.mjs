@@ -150,6 +150,10 @@ test("Asaas: teste só com chave de sandbox; produção só com interruptor e ch
   assert.equal(configAsaas({}).ok, false);
   assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_abc" }).ok, true);
   assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_prod_abc" }).ok, false, "chave real no teste");
+  const antiga = configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_YTU5YTE0M2M2N2I4" });
+  assert.ok(antiga.ok && antiga.api === "https://api-sandbox.asaas.com/v3", "chave no formato antigo: teste usa só o sandbox");
+  const antigaProd = configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_YTU5YTE0M2M2N2I4", PAGAMENTOS_PRODUCAO: "1" });
+  assert.equal(antigaProd.api, "https://api.asaas.com/v3");
   assert.equal(configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc" }).ok, false, "sem PAGAMENTOS_PRODUCAO");
   assert.equal(configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_hmlg_abc", PAGAMENTOS_PRODUCAO: "1" }).ok, false);
   const prod = configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc", PAGAMENTOS_PRODUCAO: "1" });
