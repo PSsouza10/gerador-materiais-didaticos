@@ -12,8 +12,12 @@ export const dynamic = "force-dynamic";
 async function postRota(request, _ctx, requestId) {
   const cfg = configAsaas();
   if (!cfg.ok || !bancoLigado()) return NextResponse.json({ received: true, ignorado: true });
+  if (!cfg.tokenWebhook) {
+    console.error("Aviso Asaas recusado: ASAAS_WEBHOOK_TOKEN não configurado na Vercel.");
+    return NextResponse.json({ error: "Token do aviso não configurado no servidor (ASAAS_WEBHOOK_TOKEN)." }, { status: 401 });
+  }
   if (!tokenWebhookConfere(request.headers.get("asaas-access-token"), cfg.tokenWebhook))
-    return NextResponse.json({ error: "Token do aviso inválido." }, { status: 401 });
+    return NextResponse.json({ error: "Token do aviso diferente do configurado (ASAAS_WEBHOOK_TOKEN)." }, { status: 401 });
   let corpo = {};
   try {
     corpo = await request.json();
