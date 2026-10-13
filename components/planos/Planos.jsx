@@ -116,7 +116,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           </form>
         );
       return (
-        <button type="button" onClick={() => (p.id === "pro_mensal" ? setPedirEmail(true) : assinar(p.id))} disabled={!!ocupado} className="btn-primario w-full justify-center">
+        <button type="button" onClick={() => (p.id === "pro_mensal" && pagamento === "mercadopago" ? setPedirEmail(true) : assinar(p.id))} disabled={!!ocupado} className="btn-primario w-full justify-center">
           {ocupado === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Assinar
         </button>
       );
@@ -169,7 +169,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           </h1>
           <p className="mx-auto mt-4 max-w-[60ch] text-[17px] leading-relaxed text-tinta">
             {pagamento
-              ? "Comece de graça. No Pro, o pagamento é pelo Mercado Pago: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x."
+              ? `Comece de graça. No Pro, o pagamento é pelo ${pagamento === "asaas" ? "Asaas" : "Mercado Pago"}: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x.`
               : "Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita."}
           </p>
           {aviso && (

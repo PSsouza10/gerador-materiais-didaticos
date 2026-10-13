@@ -126,3 +126,124 @@ test("anual: Pix aprovado → 12 meses de Pro; devolução corta na hora; pagame
   const tudo = JSON.stringify((await db.query("SELECT * FROM checkouts")).rows) + JSON.stringify((await db.query("SELECT * FROM cobrancas")).rows);
   assert.ok(!/@x\.br/.test(tudo), "sem e-mail no banco");
 });
+
+// ===================== Asaas =====================
+import { configAsaas, corpoCheckoutAsaas, lerAvisoAsaas, tokenWebhookConfere, estadoDaCobrancaAsaas, valorConfereAsaas, linkDoCheckout } from "../lib/asaas.js";
+import { iniciarCheckoutAsaas, processarAvisoAsaas, cancelarAssinaturaAsaas } from "../lib/cobranca.js";
+import { provedorAtivo } from "../lib/provedorPagamento.js";
+
+function asaasFalso() {
+  const cobr = new Map();
+  const checkouts = [];
+  const canceladas = [];
+  let n = 0;
+  return {
+    cobr, checkouts, canceladas,
+    criarCheckout: async (c) => { const id = `chk_${Math.random().toString(36).slice(2)}_${++n}`; checkouts.push({ id, ...c }); return { id, link: `https://sandbox.asaas.com/checkoutSession/show?id=${id}` }; },
+    lerCobranca: async (id) => cobr.get(id),
+    lerAssinatura: async (id) => ({ id }),
+    cancelarAssinatura: async (id) => { canceladas.push(id); return { deleted: true, id }; },
+  };
+}
+
+test("Asaas: teste só com chave de sandbox; produção só com interruptor e chave de produção; Asaas tem prioridade", () => {
+  assert.equal(configAsaas({}).ok, false);
+  assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_abc" }).ok, true);
+  assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_prod_abc" }).ok, false, "chave real no teste");
+  assert.equal(configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc" }).ok, false, "sem PAGAMENTOS_PRODUCAO");
+  assert.equal(configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_hmlg_abc", PAGAMENTOS_PRODUCAO: "1" }).ok, false);
+  const prod = configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc", PAGAMENTOS_PRODUCAO: "1" });
+  assert.ok(prod.ok && prod.api === "https://api.asaas.com/v3");
+  assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_abc" }).api, "https://api-sandbox.asaas.com/v3");
+  assert.equal(provedorAtivo({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_x", MP_ACCESS_TOKEN: "TEST-1" }).provedor, "asaas");
+  assert.equal(linkDoCheckout({ id: "abc" }, true), "https://sandbox.asaas.com/checkoutSession/show?id=abc");
+});
+
+test("Asaas: corpo do checkout (mensal recorrente no cartão; anual Pix/cartão até 12x) com preços do plano", () => {
+  const m = corpoCheckoutAsaas({ plano: "pro_mensal", referencia: "ref1", voltarPara: "https://e.app/assinatura", agora: new Date("2026-11-01T15:00:00Z") });
+  assert.deepEqual(m.chargeTypes, ["RECURRENT"]);
+  assert.equal(m.items[0].value, 39.9);
+  assert.equal(m.subscription.cycle, "MONTHLY");
+  assert.equal(m.subscription.nextDueDate, "2026-11-01 15:00:00");
+  assert.equal(m.externalReference, "ref1");
+  assert.equal(m.callback.successUrl, "https://e.app/assinatura?retorno=1");
+  assert.equal(m.callback.cancelUrl, "https://e.app/planos");
+  const a = corpoCheckoutAsaas({ plano: "pro_anual", referencia: "ref2", voltarPara: "https://e.app/assinatura" });
+  assert.deepEqual(a.billingTypes, ["PIX", "CREDIT_CARD"]);
+  assert.equal(a.items[0].value, 358.8);
+  assert.equal(a.installment.maxInstallmentCount, 12);
+});
+
+test("Asaas: token do aviso e leitura dos eventos", () => {
+  assert.equal(tokenWebhookConfere("abc", null), false, "sem token configurado: recusa");
+  assert.equal(tokenWebhookConfere("x".repeat(40), "x".repeat(40)), true);
+  assert.equal(tokenWebhookConfere("y".repeat(40), "x".repeat(40)), false);
+  assert.deepEqual(lerAvisoAsaas({ event: "PAYMENT_CONFIRMED", payment: { id: "pay_1" } }), { evento: "PAYMENT_CONFIRMED", recurso: "cobranca", id: "pay_1" });
+  assert.equal(lerAvisoAsaas({ event: "SUBSCRIPTION_DELETED", subscription: { id: "sub_1" } }).recurso, "assinatura");
+  assert.equal(lerAvisoAsaas({ event: "CHECKOUT_PAID", checkout: { id: "chk_1" } }).recurso, "checkout");
+  assert.equal(lerAvisoAsaas({ event: "OUTRO" }), null);
+});
+
+test("Asaas: estados e valores (parcela do anual confere pelo total)", () => {
+  const agora = new Date("2026-11-10T12:00:00Z");
+  assert.equal(estadoDaCobrancaAsaas({ status: "CONFIRMED", dueDate: "2026-11-10" }, "pro_mensal", agora).validoAte, "2026-12-13T12:00:00.000Z");
+  assert.equal(estadoDaCobrancaAsaas({ status: "RECEIVED", confirmedDate: "2026-11-10" }, "pro_anual", agora).validoAte, "2027-11-10T12:00:00.000Z");
+  assert.equal(estadoDaCobrancaAsaas({ status: "REFUNDED" }, "pro_anual", agora).validoAte, agora.toISOString());
+  assert.equal(estadoDaCobrancaAsaas({ status: "PENDING" }, "pro_anual", agora).validoAte, null);
+  assert.ok(valorConfereAsaas("pro_anual", { value: 358.8 }));
+  assert.ok(valorConfereAsaas("pro_anual", { value: 29.9, installmentCount: 12 }));
+  assert.ok(!valorConfereAsaas("pro_anual", { value: 10, installmentCount: 12 }));
+  assert.ok(valorConfereAsaas("pro_mensal", { value: 39.9 }));
+});
+
+test("Asaas mensal: checkout → 1ª cobrança paga → Pro; 2ª mensalidade só com o id da assinatura estende; cancelar mantém até o fim", async () => {
+  const as = asaasFalso();
+  const r = await iniciarCheckoutAsaas({ email: "a1@x.br", plano: "pro_mensal", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r.ok && r.url.includes("checkoutSession/show?id=chk_"));
+  const chk = as.checkouts[0];
+  assert.equal(chk.externalReference, r.referencia);
+  const hoje = new Date().toISOString().slice(0, 10);
+  // 1ª cobrança: vem com o id do checkout (sem externalReference)
+  as.cobr.set("pay_1", { id: "pay_1", status: "CONFIRMED", value: 39.9, dueDate: hoje, subscription: "sub_9", checkoutSession: chk.id });
+  assert.equal((await processarAvisoAsaas({ recurso: "cobranca", id: "pay_1" }, as)).feito, "assinatura");
+  const c1 = await C.cobrancaAtiva("a1@x.br");
+  assert.equal(c1.plano, "pro_mensal");
+  assert.equal(c1.status, "ACTIVE");
+  // 2ª mensalidade: só o id da assinatura
+  const prox = new Date(Date.now() + 31 * 86400000).toISOString().slice(0, 10);
+  as.cobr.set("pay_2", { id: "pay_2", status: "RECEIVED", value: 39.9, dueDate: prox, subscription: "sub_9" });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_2" }, as);
+  const c2 = await C.cobrancaAtiva("a1@x.br");
+  assert.ok(Date.parse(c2.validoAte) > Date.parse(c1.validoAte), "estende");
+  // aviso antigo repetido não encurta
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_1" }, as);
+  assert.equal((await C.cobrancaAtiva("a1@x.br")).validoAte, c2.validoAte);
+  // cancelar
+  const k = await cancelarAssinaturaAsaas("a1@x.br", as);
+  assert.ok(k.ok);
+  assert.deepEqual(as.canceladas, ["sub_9"]);
+  const c3 = await C.cobrancaAtiva("a1@x.br");
+  assert.equal(c3.status, "CANCELLED");
+  assert.equal(c3.validoAte, c2.validoAte, "continua até o fim do mês pago");
+});
+
+test("Asaas anual: Pix pago → 12 meses; estorno corta; cobrança desconhecida e valor errado não ativam", async () => {
+  const as = asaasFalso();
+  const r = await iniciarCheckoutAsaas({ email: "a2@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r.ok, JSON.stringify(r));
+  as.cobr.set("pay_10", { id: "pay_10", status: "RECEIVED", value: 358.8, confirmedDate: new Date().toISOString().slice(0, 10), externalReference: r.referencia });
+  const pr = await processarAvisoAsaas({ recurso: "cobranca", id: "pay_10" }, as);
+  assert.equal(pr.feito, "pagamento", JSON.stringify(pr));
+  const a = await C.cobrancaAtiva("a2@x.br");
+  assert.equal(a.plano, "pro_anual");
+  assert.ok(Date.parse(a.validoAte) - Date.now() > 360 * 86400000);
+  as.cobr.get("pay_10").status = "REFUNDED";
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_10" }, as);
+  assert.equal(await C.cobrancaAtiva("a2@x.br"), null, "estorno: volta ao Grátis");
+  as.cobr.set("pay_x", { id: "pay_x", status: "RECEIVED", value: 358.8 });
+  assert.equal((await processarAvisoAsaas({ recurso: "cobranca", id: "pay_x" }, as)).feito, "sem-checkout");
+  const r2 = await iniciarCheckoutAsaas({ email: "a3@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  as.cobr.set("pay_y", { id: "pay_y", status: "RECEIVED", value: 1, externalReference: r2.referencia });
+  assert.equal((await processarAvisoAsaas({ recurso: "cobranca", id: "pay_y" }, as)).feito, "valor-diferente");
+  assert.equal(await C.cobrancaAtiva("a3@x.br"), null);
+});

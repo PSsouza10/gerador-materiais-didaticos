@@ -18,6 +18,14 @@ const STATUS = {
   refunded: "Pagamento devolvido",
   charged_back: "Pagamento contestado",
   rejected: "Pagamento recusado",
+  // Asaas
+  ACTIVE: "Ativa — renova todo mês no cartão",
+  CANCELLED: "Cancelada — não será cobrada de novo",
+  CONFIRMED: "Paga — plano anual",
+  RECEIVED: "Paga — plano anual",
+  PENDING: "Aguardando o pagamento",
+  OVERDUE: "Pagamento vencido",
+  REFUNDED: "Pagamento devolvido",
 };
 
 export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar, suporte, whatsapp }) {

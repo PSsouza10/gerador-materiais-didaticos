@@ -1,34 +1,41 @@
-# Pagamentos (Mercado Pago, conta de pessoa física)
+# Pagamentos — Asaas (principal) e Mercado Pago (reserva)
 
-| Plano | Como cobra | Duração |
+O provedor é escolhido sozinho (`lib/provedorPagamento.js`): com `ASAAS_API_KEY` válida, cobra pelo
+**Asaas**; senão, pelo Mercado Pago se `MP_ACCESS_TOKEN` estiver configurado; senão, "Em breve".
+
+| Plano | Asaas (Checkout hospedado) | Duração |
 |---|---|---|
-| Pro mensal (R$ 39,90) | Assinatura no cartão (preapproval) | renova todo mês até cancelar |
-| Pro anual (R$ 358,80) | Pagamento único (Checkout Pro): Pix ou cartão até 12x | 12 meses, não renova sozinho |
+| Pro mensal (R$ 39,90) | checkout RECURRENT no cartão | renova todo mês até cancelar |
+| Pro anual (R$ 358,80) | Pix à vista ou cartão até 12x | 12 meses, não renova sozinho |
 
-Preços: `lib/planos.js`. Código: `lib/pagamentos.js` (regras), `lib/cobranca.js` (fluxo),
-`app/api/pagamentos/{checkout,webhook,cancelar}`, página `/assinatura`. Tabelas: migração 0005.
+O professor preenche nome/CPF/cartão **na página do Asaas**; o EduGera não pede nem guarda CPF.
+Preços: `lib/planos.js`. Código: `lib/asaas.js`, `lib/cobranca.js`, `app/api/pagamentos/*`,
+página `/assinatura`. Tabelas: migrações 0005 e 0006.
 
-## Travas de segurança
-- Site de teste: só aceita token **TEST-...** (nunca cobra dinheiro real).
-- Produção: só cobra com `PAGAMENTOS_PRODUCAO=1` **e** token de produção. Sem isso, os botões
-  continuam "Em breve".
-- O aviso (webhook) é relido na API com o nosso token; o corpo recebido não ativa nada.
-- O e-mail do professor não vai para o banco (referência aleatória em `checkouts`).
+## Travas
+- Site de teste: só chave de **sandbox** (`$aact_hmlg_...`), só a API de sandbox.
+- Produção: só com `PAGAMENTOS_PRODUCAO=1` **e** chave de produção (`$aact_prod_...`).
+- Aviso (webhook) `/api/pagamentos/asaas`: exige o header `asaas-access-token` igual a
+  `ASAAS_WEBHOOK_TOKEN` **e** relê a cobrança na API. O corpo do aviso não ativa nada sozinho.
+- Valor pago conferido com o preço do plano; estorno/contestação corta o Pro na hora;
+  aviso antigo repetido não encurta a validade.
 
-## O que o Paulo configura (Vercel → Settings → Environment Variables)
+## Variáveis (Vercel → Settings → Environment Variables) — quem cola é o Paulo
 | Variável | Preview (teste) | Production |
 |---|---|---|
-| `MP_ACCESS_TOKEN` | Access Token **de teste** (TEST-...) | Access Token de produção (só no lançamento) |
-| `MP_WEBHOOK_SECRET` | chave secreta do webhook (teste) | chave secreta do webhook (produção) |
+| `ASAAS_API_KEY` | chave do **sandbox** | chave de produção (só no lançamento) |
+| `ASAAS_WEBHOOK_TOKEN` | token criado no webhook do sandbox | token do webhook de produção |
 | `PAGAMENTOS_PRODUCAO` | — | `1` só no dia do lançamento |
 
-No painel do Mercado Pago (Suas integrações → EduGera → Webhooks): URL
-`https://<endereço do site>/api/pagamentos/webhook`, eventos **Pagamentos** e **Planos e assinaturas**.
-Se o Preview da Vercel estiver protegido por senha (Deployment Protection), o aviso do Mercado
-Pago não chega: libere a rota ou teste no endereço sem proteção.
+## Webhook no Asaas (Integrações → Webhooks)
+- URL: `https://<site>/api/pagamentos/asaas`
+- Token de autenticação: o mesmo de `ASAAS_WEBHOOK_TOKEN`.
+- Eventos: Cobranças, Assinaturas, Checkout.
+- Preview protegido pela Vercel (Deployment Protection): o aviso chega bloqueado. Use
+  "Protection Bypass for Automation" e acrescente `?x-vercel-protection-bypass=<segredo>` na URL.
 
 ## Antes de abrir para professores
 1. Login do Google "Em produção".
 2. Termos: renovação, cancelamento, reembolso em 7 dias (CDC art. 49).
-3. Migração 0005 no banco de produção (com backup, autorizada).
-4. Teste completo no site de teste com cartões e Pix de teste.
+3. Migrações 0005 e 0006 no banco de produção (com backup, autorizadas).
+4. Compra de teste completa no sandbox (mensal e anual, Pix e cartão, cancelamento, estorno).

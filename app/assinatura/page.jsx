@@ -3,7 +3,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consultarUso } from "@/lib/uso";
 import { bancoLigado } from "@/lib/banco";
 import { ultimaCobranca } from "@/lib/contas";
-import { configPagamentos } from "@/lib/pagamentos";
+import { provedorAtivo } from "@/lib/provedorPagamento";
 import { suporteEmail, suporteWhatsapp } from "@/lib/planos";
 import MinhaAssinatura from "@/components/planos/MinhaAssinatura";
 
@@ -27,7 +27,7 @@ export default async function PaginaAssinatura({ searchParams }) {
       plano={uso?.plano || null}
       cobranca={cobranca}
       retorno={searchParams?.retorno === "1"}
-      podeCancelar={configPagamentos().ok && cobranca?.tipo === "assinatura" && cobranca?.status === "authorized"}
+      podeCancelar={provedorAtivo().ok && cobranca?.tipo === "assinatura" && ["authorized", "ACTIVE"].includes(cobranca?.status)}
       suporte={suporteEmail()}
       whatsapp={suporteWhatsapp()}
     />
