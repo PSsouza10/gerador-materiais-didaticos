@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { bancoLigado } from "@/lib/banco";
-import { configPagamentos, clienteMercadoPago } from "@/lib/pagamentos";
+import { configPagamentos, clienteAsaas } from "@/lib/pagamentos";
 import { iniciarCheckout } from "@/lib/cobranca";
 
-// POST { plano: "pro_mensal" | "pro_anual", emailPagador? } → { url } do Mercado Pago.
-// Só funciona onde configPagamentos permite (teste: token TEST; produção: PAGAMENTOS_PRODUCAO=1).
+// POST { plano: "pro_mensal" | "pro_anual" } → { url } do Checkout do Asaas.
+// Só funciona onde configPagamentos permite (teste: chave do Sandbox; produção: PAGAMENTOS_PRODUCAO=1).
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -25,9 +25,9 @@ async function postRota(request) {
   const r = await iniciarCheckout({
     email: u.email,
     plano: body?.plano,
-    emailPagador: body?.emailPagador || u.email,
     origem: new URL(request.url).origin,
-    cliente: clienteMercadoPago(cfg.token),
+    cliente: clienteAsaas(cfg),
+    api: cfg.api,
   });
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: r.status });
   return NextResponse.json({ url: r.url });
