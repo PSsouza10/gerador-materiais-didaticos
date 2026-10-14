@@ -48,6 +48,11 @@ export default function PoliticaPrivacidade() {
           aparelhos: título, tema, disciplina, código BNCC, data, link e chave de revogação de cada material. O arquivo não
           contém seu e-mail nem seu nome; é identificado por um código derivado da conta.
         </li>
+        <li>
+          <b>Assinatura paga (Pro):</b> guardamos o plano, a situação do pagamento, o valor e até quando o Pro vale, ligados à
+          sua conta por um código aleatório. Nome, CPF, endereço e cartão você informa direto na página do Asaas; o EduGera
+          não recebe nem guarda os dados do cartão.
+        </li>
       </Lista>
 
       <H2>3. Para que usamos e com qual base legal</H2>
@@ -70,10 +75,11 @@ export default function PoliticaPrivacidade() {
       <Lista>
         <li><b>Google</b>: autenticação (login).</li>
         <li><b>Vercel</b>: hospedagem do site e armazenamento das ilustrações, dos links compartilhados, da lista &ldquo;Minhas Apostilas&rdquo; e do contador de uso.</li>
+        <li><b>Asaas</b> (Brasil): processamento dos pagamentos dos planos Pro.</li>
         <li><b>OpenAI</b>: geração do texto e da ilustração a partir do que você preencheu. Pela política da API da OpenAI, os dados enviados não são usados para treinar modelos.</li>
       </Lista>
       <p>
-        Esses fornecedores ficam nos Estados Unidos, o que configura transferência internacional de dados. Ela é feita para
+        Google, Vercel e OpenAI ficam nos Estados Unidos, o que configura transferência internacional de dados. Ela é feita para
         executar o serviço que você pediu e com fornecedores que adotam cláusulas e medidas de proteção compatíveis com a LGPD
         (art. 33).
       </p>
@@ -96,6 +102,7 @@ export default function PoliticaPrivacidade() {
         <li>Sessão: até 30 dias ou até você clicar em <b>Sair</b>.</li>
         <li>Contador de uso: enquanto sua conta existir; você pode pedir a exclusão a qualquer momento.</li>
         <li>Links compartilhados: até você revogar.</li>
+        <li>Dados da assinatura paga: enquanto sua conta existir e pelo prazo que a lei exigir para registros de pagamento.</li>
         <li>O texto enviado à IA não é armazenado por nós depois que o material é gerado.</li>
       </Lista>
 
