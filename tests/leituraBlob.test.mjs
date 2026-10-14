@@ -36,3 +36,10 @@ test("existe e continua falhando: ERRO, nunca lista vazia", async () => {
 test("Blob fora do ar na consulta: ERRO (não confunde com 'não existe')", async () => {
   await assert.rejects(lerJsonEstrito("historicos/a.json", { ...rapido, head: async () => { throw new Error("503 Service Unavailable"); } }), /indisponível/);
 });
+
+test("arquivo inexistente com a mensagem nova do Vercel Blob conta como vazio", async () => {
+  const { naoExiste, lerJsonEstrito } = await import("../lib/leituraBlob.js");
+  const e = new Error("Vercel Blob: The requested blob does not exist");
+  assert.equal(naoExiste(e), true);
+  assert.equal(await lerJsonEstrito("usuarios/x.json", { head: async () => { throw e; } }), null);
+});
