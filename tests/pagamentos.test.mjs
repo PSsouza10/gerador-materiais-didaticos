@@ -229,6 +229,13 @@ test("Asaas mensal: checkout → 1ª cobrança paga → Pro; 2ª mensalidade só
   const c3 = await C.cobrancaAtiva("a1@x.br");
   assert.equal(c3.status, "CANCELLED");
   assert.equal(c3.validoAte, c2.validoAte, "continua até o fim do mês pago");
+  // com Pro valendo, não abre outro pagamento (nem mensal nem anual)
+  const n = as.checkouts.length;
+  const dup = await iniciarCheckoutAsaas({ email: "a1@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.equal(dup.ok, false);
+  assert.equal(dup.status, 409);
+  assert.match(dup.erro, /já tem o Pro ativo até/);
+  assert.equal(as.checkouts.length, n, "não chamou o Asaas");
 });
 
 test("Asaas anual: Pix pago → 12 meses; estorno corta; cobrança desconhecida e valor errado não ativam", async () => {

@@ -28,6 +28,8 @@ const STATUS = {
   REFUNDED: "Pagamento devolvido",
 };
 
+const NOME_PLANO = { pro_mensal: "Pro mensal", pro_anual: "Pro anual" };
+
 export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar, suporte, whatsapp }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
@@ -67,7 +69,7 @@ export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar
         {retorno && (
           <p role="status" className="mt-5 flex items-start gap-2 rounded-2xl bg-verde-claro px-4 py-3 text-[15px] font-medium text-verde-escuro">
             <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none" aria-hidden="true" />
-            Recebemos o retorno do Mercado Pago. Quando o pagamento for aprovado, o Pro é ativado sozinho — no cartão costuma levar menos de um minuto; recarregue a página se ainda não aparecer.
+            Recebemos o retorno do pagamento. Quando o pagamento for aprovado, o Pro é ativado sozinho — no cartão costuma levar menos de um minuto; recarregue a página se ainda não aparecer.
           </p>
         )}
 
@@ -78,7 +80,10 @@ export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar
             <dl className="mt-4 grid gap-2 text-[15px] text-tinta sm:grid-cols-2">
               <div>
                 <dt className="font-semibold text-marinho">Situação</dt>
-                <dd>{STATUS[cobranca.status] || cobranca.status}</dd>
+                <dd>
+                  {NOME_PLANO[cobranca.plano] ? `${NOME_PLANO[cobranca.plano]} · ` : ""}
+                  {STATUS[cobranca.status] || cobranca.status}
+                </dd>
               </div>
               {cobranca.validoAte && (
                 <div>

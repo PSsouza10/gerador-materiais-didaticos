@@ -18,7 +18,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
   const [pedirEmail, setPedirEmail] = useState(false);
   const [emailMp, setEmailMp] = useState("");
 
-  // Assinar de verdade: abre o pagamento do Mercado Pago (só onde o servidor permite)
+  // Assinar de verdade: abre o pagamento do provedor ativo (só onde o servidor permite)
   const assinar = async (plano) => {
     setOcupado(plano);
     setMsg("");
@@ -179,7 +179,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           )}
           {simulacao && (
             <p className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-[14px] font-semibold text-amber-900">
-              <FlaskConical className="h-4 w-4" aria-hidden="true" /> Site de teste: a assinatura é só simulada, sem pagamento.
+              <FlaskConical className="h-4 w-4" aria-hidden="true" />{" "}
+              {pagamento ? "Site de teste: pagamento no ambiente de testes do Asaas, sem dinheiro de verdade." : "Site de teste: a assinatura é só simulada, sem pagamento."}
             </p>
           )}
           {atual === "admin" && (
