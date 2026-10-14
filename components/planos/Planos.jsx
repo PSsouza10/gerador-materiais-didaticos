@@ -19,14 +19,14 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
   const [emailMp, setEmailMp] = useState("");
 
   // Assinar de verdade: abre o pagamento do provedor ativo (só onde o servidor permite)
-  const assinar = async (plano) => {
-    setOcupado(plano);
+  const assinar = async (plano, forma = "cartao") => {
+    setOcupado(forma === "pix" ? `${plano}-pix` : plano);
     setMsg("");
     try {
       const r = await fetch("/api/pagamentos/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plano, emailPagador: emailMp.trim() || undefined }),
+        body: JSON.stringify({ plano, forma, emailPagador: emailMp.trim() || undefined }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.url) throw new Error(j.error || "Não foi possível abrir o pagamento.");
@@ -115,10 +115,21 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
             <p className="text-[12.5px] text-tinta">Cartão de crédito, renova todo mês. Cancele quando quiser.</p>
           </form>
         );
-      return (
+      const principal = (
         <button type="button" onClick={() => (p.id === "pro_mensal" && pagamento === "mercadopago" ? setPedirEmail(true) : assinar(p.id))} disabled={!!ocupado} className="btn-primario w-full justify-center">
-          {ocupado === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Assinar
+          {ocupado === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {p.id === "pro_mensal" && pagamento === "asaas" ? "Assinar no cartão" : "Assinar"}
         </button>
+      );
+      if (p.id !== "pro_mensal" || pagamento !== "asaas") return principal;
+      // mensal no Pix: 1 mês, sem renovação automática
+      return (
+        <div className="space-y-2">
+          {principal}
+          <button type="button" onClick={() => assinar("pro_mensal", "pix")} disabled={!!ocupado} className="btn-secundario w-full justify-center">
+            {ocupado === "pro_mensal-pix" ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Pagar 1 mês no Pix
+          </button>
+          <p className="text-center text-[12.5px] text-tinta">No cartão renova sozinho todo mês. No Pix vale 1 mês e não renova: é só pagar de novo.</p>
+        </div>
       );
     }
     if (simulacao)
@@ -169,7 +180,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
           </h1>
           <p className="mx-auto mt-4 max-w-[60ch] text-[17px] leading-relaxed text-tinta">
             {pagamento
-              ? `Comece de graça. No Pro, o pagamento é pelo ${pagamento === "asaas" ? "Asaas" : "Mercado Pago"}: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x.`
+              ? `Comece de graça. No Pro, o pagamento é pelo ${pagamento === "asaas" ? "Asaas" : "Mercado Pago"}: mensal no cartão (cancele quando quiser) ou no Pix (1 mês, sem renovação), ou anual à vista, no Pix ou no cartão em até 12x.`
               : "Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita."}
           </p>
           {diagnostico && (

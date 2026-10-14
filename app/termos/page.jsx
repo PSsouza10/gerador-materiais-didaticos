@@ -43,6 +43,10 @@ export default function TermosDeUso() {
           automaticamente</b> todo mês, na mesma data da contratação, até você cancelar.
         </li>
         <li>
+          <b>Pro mensal no Pix:</b> também é possível pagar 1 mês de Pro no Pix ({formatarPreco(PLANOS.pro_mensal)}). Vale por 1 mês a
+          partir do pagamento (ou a partir do fim do Pro que você já tinha, se renovar antes) e <b>não renova sozinho</b>.
+        </li>
+        <li>
           <b>Pro anual ({formatarPreco(PLANOS.pro_anual)} por ano):</b> pago uma vez, no Pix ou no cartão (à vista ou em até 12
           parcelas). Vale por 12 meses e <b>não renova sozinho</b>.
         </li>

@@ -7,7 +7,7 @@ import { clienteAsaas } from "@/lib/asaas";
 import { provedorAtivo } from "@/lib/provedorPagamento";
 import { iniciarCheckout, iniciarCheckoutAsaas } from "@/lib/cobranca";
 
-// POST { plano: "pro_mensal" | "pro_anual", emailPagador? } → { url } do Mercado Pago.
+// POST { plano: "pro_mensal" | "pro_anual", forma?: "cartao" | "pix", emailPagador? } → { url } do pagamento.
 // Só funciona onde o provedor permite (teste: chave de sandbox/teste; produção: PAGAMENTOS_PRODUCAO=1).
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ async function postRota(request) {
   const origem = new URL(request.url).origin;
   const r =
     cfg.provedor === "asaas"
-      ? await iniciarCheckoutAsaas({ email: u.email, plano: body?.plano, origem, cliente: clienteAsaas(cfg), sandbox: cfg.sandbox })
+      ? await iniciarCheckoutAsaas({ email: u.email, plano: body?.plano, forma: body?.forma === "pix" ? "pix" : "cartao", origem, cliente: clienteAsaas(cfg), sandbox: cfg.sandbox })
       : await iniciarCheckout({ email: u.email, plano: body?.plano, emailPagador: body?.emailPagador || u.email, origem, cliente: clienteMercadoPago(cfg.token) });
   if (!r.ok) return NextResponse.json({ error: r.detalhe ? `${r.erro} (Asaas: ${r.detalhe})` : r.erro }, { status: r.status });
   return NextResponse.json({ url: r.url });

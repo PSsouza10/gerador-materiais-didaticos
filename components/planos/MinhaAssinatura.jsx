@@ -21,8 +21,8 @@ const STATUS = {
   // Asaas
   ACTIVE: "Ativa — renova todo mês no cartão",
   CANCELLED: "Cancelada — não será cobrada de novo",
-  CONFIRMED: "Paga — plano anual",
-  RECEIVED: "Paga — plano anual",
+  CONFIRMED: "Paga (não renova sozinha)",
+  RECEIVED: "Paga (não renova sozinha)",
   PENDING: "Aguardando o pagamento",
   OVERDUE: "Pagamento vencido",
   REFUNDED: "Pagamento devolvido",

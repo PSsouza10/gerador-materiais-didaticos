@@ -193,7 +193,7 @@ test("Asaas: token do aviso e leitura dos eventos", () => {
 
 test("Asaas: estados e valores (parcela do anual confere pelo total)", () => {
   const agora = new Date("2026-11-10T12:00:00Z");
-  assert.equal(estadoDaCobrancaAsaas({ status: "CONFIRMED", dueDate: "2026-11-10" }, "pro_mensal", agora).validoAte, "2026-12-13T12:00:00.000Z");
+  assert.equal(estadoDaCobrancaAsaas({ status: "CONFIRMED", dueDate: "2026-11-10", subscription: "sub_x" }, "pro_mensal", agora).validoAte, "2026-12-13T12:00:00.000Z");
   assert.equal(estadoDaCobrancaAsaas({ status: "RECEIVED", confirmedDate: "2026-11-10" }, "pro_anual", agora).validoAte, "2027-11-10T12:00:00.000Z");
   assert.equal(estadoDaCobrancaAsaas({ status: "REFUNDED" }, "pro_anual", agora).validoAte, agora.toISOString());
   assert.equal(estadoDaCobrancaAsaas({ status: "PENDING" }, "pro_anual", agora).validoAte, null);
@@ -276,4 +276,39 @@ test("Asaas anual: conta sem chave Pix → abre o checkout só com cartão", asy
   const r = await iniciarCheckoutAsaas({ email: "semPix@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
   assert.ok(r.ok);
   assert.deepEqual(as.checkouts.at(-1).billingTypes, ["CREDIT_CARD"]);
+});
+
+test("Asaas mensal no Pix: 1 mês sem renovação; renovar nos últimos dias soma ao fim; com Pro sobrando muito, bloqueia", async () => {
+  const as = asaasFalso();
+  const r = await iniciarCheckoutAsaas({ email: "pix1@x.br", plano: "pro_mensal", forma: "pix", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r.ok, JSON.stringify(r));
+  const chk = as.checkouts.at(-1);
+  assert.deepEqual(chk.billingTypes, ["PIX"]);
+  assert.deepEqual(chk.chargeTypes, ["DETACHED"]);
+  assert.equal(chk.subscription, undefined);
+  const hoje = new Date().toISOString().slice(0, 10);
+  as.cobr.set("pix_1", { id: "pix_1", status: "RECEIVED", value: 39.9, confirmedDate: hoje, externalReference: r.referencia });
+  assert.equal((await processarAvisoAsaas({ recurso: "cobranca", id: "pix_1" }, as)).feito, "pagamento");
+  const c1 = await C.cobrancaAtiva("pix1@x.br");
+  assert.equal(c1.plano, "pro_mensal");
+  const dias = (Date.parse(c1.validoAte) - Date.now()) / 86400000;
+  assert.ok(dias > 27 && dias < 32, `1 mês (${dias})`);
+  // aviso repetido não soma de novo
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pix_1" }, as);
+  assert.equal((await C.cobrancaAtiva("pix1@x.br")).validoAte, c1.validoAte);
+  // com ~30 dias sobrando: não abre outro Pix
+  const dup = await iniciarCheckoutAsaas({ email: "pix1@x.br", plano: "pro_mensal", forma: "pix", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.equal(dup.status, 409);
+});
+
+test("estado do mensal no Pix: renovação antes do fim começa do fim atual", () => {
+  const agora = new Date("2026-10-14T12:00:00Z");
+  const base = "2026-10-18T12:00:00.000Z";
+  const e = estadoDaCobrancaAsaas({ status: "RECEIVED", value: 39.9, confirmedDate: "2026-10-14" }, "pro_mensal", agora, { base });
+  assert.equal(e.validoAte, "2026-11-18T12:00:00.000Z");
+  const sem = estadoDaCobrancaAsaas({ status: "RECEIVED", value: 39.9, confirmedDate: "2026-10-14" }, "pro_mensal", agora);
+  assert.equal(sem.validoAte, "2026-11-14T12:00:00.000Z");
+  // cartão (com assinatura) continua a regra antiga: vencimento + 1 mês + 3 dias
+  const cartao = estadoDaCobrancaAsaas({ status: "CONFIRMED", value: 39.9, dueDate: "2026-10-14", subscription: "sub_1" }, "pro_mensal", agora);
+  assert.equal(cartao.validoAte, "2026-11-17T12:00:00.000Z");
 });
