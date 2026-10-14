@@ -261,3 +261,19 @@ test("Asaas anual: Pix pago → 12 meses; estorno corta; cobrança desconhecida 
   assert.equal((await processarAvisoAsaas({ recurso: "cobranca", id: "pay_y" }, as)).feito, "valor-diferente");
   assert.equal(await C.cobrancaAtiva("a3@x.br"), null);
 });
+
+test("Asaas anual: conta sem chave Pix → abre o checkout só com cartão", async () => {
+  const as = asaasFalso();
+  const original = as.criarCheckout;
+  as.criarCheckout = async (c) => {
+    if (c.billingTypes.includes("PIX")) {
+      const e = new Error("Asaas 400: Não há nenhuma chave Pix cadastrada.");
+      e.status = 400;
+      throw e;
+    }
+    return original(c);
+  };
+  const r = await iniciarCheckoutAsaas({ email: "semPix@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r.ok);
+  assert.deepEqual(as.checkouts.at(-1).billingTypes, ["CREDIT_CARD"]);
+});
