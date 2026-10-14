@@ -158,6 +158,9 @@ test("Asaas: teste só com chave de sandbox; produção só com interruptor e ch
   assert.equal(configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_hmlg_abc", PAGAMENTOS_PRODUCAO: "1" }).ok, false);
   const prod = configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc", PAGAMENTOS_PRODUCAO: "1" });
   assert.ok(prod.ok && prod.api === "https://api.asaas.com/v3");
+  // colado com espaço, quebra de linha ou aspas: ainda vale
+  const colado = configAsaas({ VERCEL_ENV: "production", ASAAS_API_KEY: ' "$aact_prod_abc"\n', PAGAMENTOS_PRODUCAO: " 1\n" });
+  assert.ok(colado.ok && colado.chave === "$aact_prod_abc");
   assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_abc" }).api, "https://api-sandbox.asaas.com/v3");
   assert.equal(provedorAtivo({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_x", MP_ACCESS_TOKEN: "TEST-1" }).provedor, "asaas");
   assert.equal(linkDoCheckout({ id: "abc" }, true), "https://sandbox.asaas.com/checkoutSession/show?id=abc");

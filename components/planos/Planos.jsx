@@ -11,7 +11,7 @@ import "@/components/fachada/fachada.css";
 // Página de planos. Preços e limites vêm de lib/planos.js.
 // Não há checkout: no site publicado os planos pagos aparecem como "Em breve";
 // no site de teste dá para SIMULAR a assinatura (nada é cobrado).
-export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, whatsapp = null, aviso = null, pagamento = false }) {
+export default function Planos({ planos, logado, atual, assinatura, simulacao, suporte, suportePadrao, whatsapp = null, aviso = null, pagamento = false, diagnostico = null }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(null);
   const [msg, setMsg] = useState("");
@@ -172,6 +172,11 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
               ? `Comece de graça. No Pro, o pagamento é pelo ${pagamento === "asaas" ? "Asaas" : "Mercado Pago"}: mensal no cartão (cancele quando quiser) ou anual à vista, no Pix ou no cartão em até 12x.`
               : "Comece de graça. Os planos pagos ainda não estão à venda: os valores abaixo são provisórios e nenhuma cobrança é feita."}
           </p>
+          {diagnostico && (
+            <p role="status" className="mx-auto mt-5 max-w-[62ch] rounded-2xl bg-amber-100 px-4 py-3 text-[14.5px] font-semibold text-amber-900">
+              Só administradores veem: {diagnostico}
+            </p>
+          )}
           {aviso && (
             <p role="status" className="mx-auto mt-5 max-w-[62ch] rounded-2xl bg-roxo-claro px-4 py-3 text-[15px] font-medium text-marinho">
               {aviso}
