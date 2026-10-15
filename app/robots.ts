@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE = "https://edugera.vercel.app";
+import { SITE } from "@/lib/site";
 
 // Só as páginas públicas são indexáveis. Materiais compartilhados (/m/),
 // API e callbacks do login ficam de fora.

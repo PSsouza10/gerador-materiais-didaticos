@@ -2,12 +2,13 @@ import "@fontsource/fredoka/600.css";
 import "@fontsource/fredoka/700.css";
 import "./globals.css";
 import Provedores from "@/components/Provedores";
+import { SITE } from "@/lib/site";
 
 const DESCRICAO =
   "Gere apostilas, fichas de estudo e exercícios com gabarito alinhados à BNCC, com prévia A4, PDF e ilustração. Grátis para professores.";
 
 export const metadata = {
-  metadataBase: new URL("https://edugera.vercel.app"),
+  metadataBase: new URL(SITE),
   title: "EduGera · Apostilas BNCC",
   description: DESCRICAO,
   applicationName: "EduGera",

@@ -1,4 +1,5 @@
 import PaginaLegal, { H2, Lista, CONTATO } from "@/components/PaginaLegal";
+import { DOMINIO } from "@/lib/site";
 
 export const metadata = {
   alternates: { canonical: "/privacidade" },
@@ -11,7 +12,7 @@ export default function PoliticaPrivacidade() {
   return (
     <PaginaLegal titulo="Política de Privacidade">
       <p>
-        O <b>EduGera</b> (edugera.vercel.app) é um gerador de apostilas e materiais didáticos alinhados à BNCC, feito para
+        O <b>EduGera</b> ({DOMINIO}) é um gerador de apostilas e materiais didáticos alinhados à BNCC, feito para
         professores e professoras. Esta política explica, em linguagem direta, quais dados usamos, para quê e quais são os seus
         direitos, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).
       </p>

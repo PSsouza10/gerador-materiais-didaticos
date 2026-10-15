@@ -3,7 +3,7 @@
 > **Aviso:** este é um rascunho informativo, preparado em 10/10/2026. Ele deve ser revisado por advogado ou profissional especializado antes de ser publicado. Os trechos entre [colchetes] precisam ser definidos.
 
 ## 1. O EduGera
-O EduGera (https://edugera.vercel.app) é um serviço on-line que ajuda professores a criar apostilas, fichas de estudo e exercícios alinhados à Base Nacional Comum Curricular (BNCC), com apoio de inteligência artificial. O serviço é mantido por Paulo Sergio Souza de Jesus ("responsável").
+O EduGera (https://edugera.app) é um serviço on-line que ajuda professores a criar apostilas, fichas de estudo e exercícios alinhados à Base Nacional Comum Curricular (BNCC), com apoio de inteligência artificial. O serviço é mantido por Paulo Sergio Souza de Jesus ("responsável").
 
 ## 2. Aceitação
 Ao entrar com sua conta e usar o EduGera, você declara que leu e concorda com estes Termos e com a Política de Privacidade. Se não concordar, não use o serviço.
@@ -56,7 +56,7 @@ O EduGera gera uma versão do aluno, sem gabarito, e uma versão do professor, c
 A marca EduGera, o site, os personagens, as ilustrações da interface e o código são do responsável e não podem ser copiados sem autorização. Os textos oficiais da BNCC pertencem ao Ministério da Educação.
 
 ## 11. Privacidade
-O tratamento de dados pessoais segue a Política de Privacidade (https://edugera.vercel.app/privacidade).
+O tratamento de dados pessoais segue a Política de Privacidade (https://edugera.app/privacidade).
 
 ## 12. Suspensão e encerramento
 12.1. O EduGera pode suspender ou encerrar contas que violem estes Termos.

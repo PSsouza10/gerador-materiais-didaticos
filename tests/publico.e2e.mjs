@@ -1,12 +1,12 @@
 // Testes de regressão das páginas públicas (reauditoria): headers, CORS, SEO,
 // rótulos, um único h1. Rodar contra um servidor:
 //   BASE_URL=http://localhost:3000 npm run test:publico
-//   BASE_URL=https://edugera.vercel.app npm run test:publico
+//   BASE_URL=https://edugera.app npm run test:publico
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
 const BASE = (process.env.BASE_URL || "http://localhost:3000").replace(/\/$/, "");
-const CANON = "https://edugera.vercel.app";
+const CANON = "https://edugera.app";
 const get = (p, init) => fetch(BASE + p, { redirect: "manual", ...init });
 
 test("cabeçalhos de segurança em todas as páginas públicas", async () => {
@@ -38,7 +38,7 @@ test("robots.txt e sitemap.xml", async () => {
   const robots = await (await get("/robots.txt")).text();
   assert.match(robots, /Disallow: \/api\//);
   assert.match(robots, /Disallow: \/m\//);
-  assert.match(robots, /Sitemap: https:\/\/edugera\.vercel\.app\/sitemap\.xml/);
+  assert.ok(robots.includes(`Sitemap: ${CANON}/sitemap.xml`), "robots aponta o sitemap do domínio oficial");
   assert.doesNotMatch(robots, /^Host:/m);
   const sitemap = await (await get("/sitemap.xml")).text();
   for (const p of ["/", "/criar", "/planos", "/atividades", "/atividades/matematica", "/atividades/matematica/7-ano", "/privacidade", "/termos"])
@@ -49,7 +49,7 @@ test("robots.txt e sitemap.xml", async () => {
 
 test("/atividades: páginas por disciplina e ano, links internos sem 404", async () => {
   const sitemap = await (await get("/sitemap.xml")).text();
-  const caminhos = [...sitemap.matchAll(/<loc>https:\/\/edugera\.vercel\.app(\/atividades[^<]*)<\/loc>/g)].map((m) => m[1]);
+  const caminhos = [...sitemap.matchAll(new RegExp(`<loc>${CANON.replace(/\./g, "\\.")}(/atividades[^<]*)</loc>`, "g"))].map((m) => m[1]);
   assert.ok(caminhos.length >= 50, `páginas de atividades: ${caminhos.length}`);
   const conferidos = new Set();
   for (const p of ["/atividades", "/atividades/matematica", "/atividades/matematica/7-ano", "/atividades/portugues/1-ano"]) {
@@ -260,4 +260,22 @@ test("/api/pagamentos: sem configuração não cobra; aviso sem config é ignora
   assert.ok([307, 308].includes(a.status), `assinatura anônimo ${a.status}`);
   const robots = await (await get("/robots.txt")).text();
   assert.match(robots, /Disallow: \/assinatura/);
+});
+
+test("domínio antigo (edugera.vercel.app): páginas redirecionam para o oficial; APIs não", async () => {
+  if (!/localhost|127\.0\.0\.1/.test(BASE)) return; // o cabeçalho Host só pode ser trocado no servidor local
+  const { request } = await import("node:http");
+  const u = new URL(BASE);
+  const pedir = (path) =>
+    new Promise((ok, erro) => {
+      const req = request({ host: u.hostname, port: u.port, path, headers: { Host: "edugera.vercel.app" } }, (r) => { r.resume(); ok(r); });
+      req.on("error", erro);
+      req.end();
+    });
+  for (const p of ["/", "/m/abc123", "/planos?x=1"]) {
+    const r = await pedir(p);
+    assert.equal(r.statusCode, 308, p);
+    assert.equal(r.headers.location, `${CANON}${p}`, p);
+  }
+  assert.equal((await pedir("/api/auth/providers")).statusCode, 200, "API sem redirecionar");
 });

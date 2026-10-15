@@ -3,7 +3,7 @@
 > **Aviso:** este é um rascunho informativo, preparado em 10/10/2026. Ele deve ser revisado por profissional especializado em LGPD (Lei nº 13.709/2018) antes de ser publicado. Os trechos entre [colchetes] precisam ser definidos ou confirmados.
 
 ## 1. Quem é o responsável
-O controlador dos dados é Paulo Sergio Souza de Jesus, responsável pelo EduGera (https://edugera.vercel.app).
+O controlador dos dados é Paulo Sergio Souza de Jesus, responsável pelo EduGera (https://edugera.app).
 Canal de privacidade: suporte em breve. [Criar um e-mail profissional antes de publicar; avaliar com advogado a indicação do encarregado.]
 
 ## 2. Quais dados tratamos

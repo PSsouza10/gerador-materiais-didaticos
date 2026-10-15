@@ -14,7 +14,7 @@ Sou Paulo Sergio Souza de Jesus, professor de Matemática, e criei o EduGera, um
 
 Dá para usar de graça no plano Grátis; quem precisar de mais usa o Pro. Também gera plano de aula na estrutura do Currículo Paulista. Se fizer sentido para a sua equipe, posso mostrar em uma demonstração de 15 minutos.
 
-Site: https://edugera.vercel.app
+Site: https://edugera.app
 
 Atenciosamente,
 Paulo Sergio Souza de Jesus
@@ -50,7 +50,7 @@ Coloco-me à disposição.
 Atenciosamente,
 Paulo Sergio Souza de Jesus
 Professor de Matemática
-https://edugera.vercel.app
+https://edugera.app
 
 ---
 
@@ -73,7 +73,7 @@ Paulo Sergio Souza de Jesus
 > Olá! Sou o Paulo, professor de Matemática. Criei uma ferramenta para montar apostilas e planos de aula alinhados à BNCC, com plano grátis. Posso te mandar uma explicação rápida? Se não for o caso, sem problema.
 
 **2. Depois que a pessoa autorizar**
-> Obrigado! O EduGera monta a apostila a partir do tema e da habilidade da BNCC: situação do cotidiano, exercícios, gabarito e PDF do aluno e do professor. Também faz o plano de aula, com download em Word. Você revisa tudo antes de imprimir. Dá para testar de graça com a conta Google: https://edugera.vercel.app
+> Obrigado! O EduGera monta a apostila a partir do tema e da habilidade da BNCC: situação do cotidiano, exercícios, gabarito e PDF do aluno e do professor. Também faz o plano de aula, com download em Word. Você revisa tudo antes de imprimir. Dá para testar de graça com a conta Google: https://edugera.app
 
 **3. Acompanhamento (uma vez só, alguns dias depois)**
 > Oi! Conseguiu dar uma olhada no EduGera? Se quiser, mostro em 15 minutos como funciona. Qualquer sugestão também me ajuda muito.

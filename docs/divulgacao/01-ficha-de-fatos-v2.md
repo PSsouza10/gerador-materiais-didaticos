@@ -7,7 +7,7 @@ Use SOMENTE estas informações para descrever o EduGera. O que não estiver aqu
 ## Identificação
 - Nome: EduGera, gerador de apostilas e fichas de estudo alinhadas à BNCC, com apoio de inteligência artificial.
 - Responsável: Paulo Sergio Souza de Jesus (PS Souza), professor de Matemática.
-- Endereço: https://edugera.vercel.app (ainda sem domínio próprio).
+- Endereço: https://edugera.app (domínio próprio; o endereço antigo edugera.vercel.app redireciona para ele).
 - Páginas: início (/), gerador (/criar), Plano de Aula, planos (/planos), painel de uso (/uso), Minhas Apostilas, Configurações, Termos de Uso (/termos), Política de Privacidade (/privacidade).
 - Instagram: @edugera.app.
 - Usuários e escolas clientes: não divulgar números (há poucas contas; nenhuma escola cliente).
@@ -103,10 +103,10 @@ Use SOMENTE estas informações para descrever o EduGera. O que não estiver aqu
 
 ## Não existe ainda (não divulgar como disponível)
 - Plano Escola: aparece só como "Em breve", sem preço, sem número de professores e sem recursos definidos.
-- E-mail com domínio próprio, domínio próprio, exclusão de conta pelo próprio professor, colaboração entre professores, painel para a coordenação, aplicativo de celular, integração com plataformas escolares e Pro mensal no Pix (em teste).
+- E-mail com domínio próprio, exclusão de conta pelo próprio professor, colaboração entre professores, painel para a coordenação, aplicativo de celular, integração com plataformas escolares e Pro mensal no Pix (em teste).
 - Planos de aula sincronizados entre aparelhos (hoje ficam só no navegador).
 
 ## Regras para os textos
 - Termos e Privacidade são rascunhos, e precisam de revisão de advogado especializado em LGPD antes de publicar.
 - Não prometer economia de tempo nem melhoria de resultados sem estudo.
-- Imagens: usar só telas reais do site (https://edugera.vercel.app e a vitrine da página inicial).
+- Imagens: usar só telas reais do site (https://edugera.app e a vitrine da página inicial).

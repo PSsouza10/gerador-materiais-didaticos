@@ -1,3 +1,5 @@
+import { SITE, DOMINIO_ANTIGO } from "./lib/site.js";
+
 /** @type {import('next').NextConfig} */
 
 // Cabeçalhos de segurança (auditoria pública, P1).
@@ -51,7 +53,20 @@ const nextConfig = {
       // A CDN da Vercel envia "Access-Control-Allow-Origin: *" nas páginas estáticas.
       // O site não precisa de CORS: fixa a própria origem nas páginas e nada nas APIs
       // (APIs autenticadas nunca respondem a outras origens com cookies).
-      { source: "/((?!api/).*)", headers: [{ key: "Access-Control-Allow-Origin", value: "https://edugera.vercel.app" }] },
+      { source: "/((?!api/).*)", headers: [{ key: "Access-Control-Allow-Origin", value: SITE }] },
+    ];
+  },
+  // Domínio antigo: as PÁGINAS vão para o novo endereço (permanente, mantém o caminho:
+  // /m/<código>, /planos...). As APIs (/api/...) NÃO redirecionam: o aviso do Asaas e o
+  // login continuam funcionando no endereço antigo durante a troca.
+  async redirects() {
+    return [
+      {
+        source: "/:path((?!api/).*)",
+        has: [{ type: "host", value: DOMINIO_ANTIGO }],
+        destination: `${SITE}/:path`,
+        permanent: true,
+      },
     ];
   },
 };
