@@ -53,7 +53,7 @@ Use SOMENTE estas informações para descrever o EduGera. O que não estiver aqu
 - Desde 14/10/2026 o Pro pode ser contratado de verdade no site, com pagamento pelo **Asaas**:
   - Pro mensal: no cartão de crédito, renova sozinho todo mês; cancela quando quiser na própria página de planos.
   - Pro anual: no Pix ou no cartão (em até 12x), cobrado uma vez por ano; não renova sozinho.
-  - Pro mensal no Pix (1 mês, sem renovação automática): pronto no site de teste, **ainda não publicado**. Não divulgar até o Paulo publicar.
+  - Pro mensal no Pix: paga 1 mês, sem renovação automática (publicado em 15/10/2026).
 - Valores e limites (lib/planos.js):
 
 | | Grátis | Pro mensal | Pro anual | Escola |
@@ -103,7 +103,7 @@ Use SOMENTE estas informações para descrever o EduGera. O que não estiver aqu
 
 ## Não existe ainda (não divulgar como disponível)
 - Plano Escola: aparece só como "Em breve", sem preço, sem número de professores e sem recursos definidos.
-- E-mail com domínio próprio, exclusão de conta pelo próprio professor, colaboração entre professores, painel para a coordenação, aplicativo de celular, integração com plataformas escolares e Pro mensal no Pix (em teste).
+- E-mail com domínio próprio, exclusão de conta pelo próprio professor, colaboração entre professores, painel para a coordenação, aplicativo de celular, integração com plataformas escolares.
 - Planos de aula sincronizados entre aparelhos (hoje ficam só no navegador).
 
 ## Regras para os textos

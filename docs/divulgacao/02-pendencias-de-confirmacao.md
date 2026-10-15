@@ -24,6 +24,6 @@ Situação em 10/10/2026, revista em 15/10/2026. Antes de publicar qualquer docu
 
 ## Comerciais (decisões suas)
 1. E-mail de suporte com domínio próprio (hoje: contato.edugera@gmail.com).
-2. Domínio próprio: edugera.app (em configuração, 15/10/2026).
+2. Domínio próprio: edugera.app (no ar desde 15/10/2026).
 3. Preço e conteúdo do plano Escola.
-4. Publicar ou não o Pro mensal no Pix (pronto no site de teste).
+4. Pro mensal no Pix: publicado em 15/10/2026.
