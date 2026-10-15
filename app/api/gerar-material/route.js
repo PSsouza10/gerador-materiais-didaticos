@@ -16,7 +16,7 @@ import { figurasObrigatorias } from "@/lib/figuras";
 import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from "@/lib/provedoresIA";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
-// No plano Hobby o teto é 60 s; o streaming entrega o primeiro byte na hora,
+// Vercel no plano Pro (desde 15/10/2026); o streaming entrega o primeiro byte na hora,
 // então a requisição não "morre" esperando a resposta completa do modelo.
 export const runtime = "nodejs";
 export const maxDuration = 120;

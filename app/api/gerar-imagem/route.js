@@ -8,11 +8,12 @@ import { normalizarEstilo } from "@/lib/opcoes";
 import { limparTexto, LIMITES } from "@/lib/validacao";
 
 export const runtime = "nodejs";
-// Task 1.1 — geração de imagem costuma levar 20–40 s: usa o teto do plano Hobby.
-export const maxDuration = 60;
+// Task 1.1 — geração de imagem costuma levar 20–40 s, às vezes mais. Desde 15/10/2026 a
+// Vercel está no plano Pro (teto bem maior que os 60 s do Hobby): 120 s de folga.
+export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
-const LIMITE_IMAGEM_MS = 50_000;
+const LIMITE_IMAGEM_MS = 105_000; // abaixo do maxDuration, para responder 504 legível
 
 // Qualidade da ilustração (custo aproximado por imagem 1024×1024 no gpt-image-2):
 // low ~US$0,006 · medium ~US$0,05 · high ~US$0,21. Na folha a ilustração ocupa
