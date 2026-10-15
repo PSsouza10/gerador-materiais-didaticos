@@ -1,6 +1,6 @@
 # Perguntas frequentes sobre LGPD — EduGera
 
-> **Aviso:** texto informativo preparado em 10/10/2026, com base no que está implementado. Antes de publicar ou entregar a uma escola, ele deve ser revisado por advogado ou profissional especializado em LGPD.
+> **Aviso:** texto informativo preparado em 10/10/2026 e atualizado em 15/10/2026, com base no que está implementado. Antes de publicar ou entregar a uma escola, ele deve ser revisado por advogado ou profissional especializado em LGPD.
 
 Legenda: ✅ implementado · 🕒 planejado · ⚖️ precisa de validação jurídica
 
@@ -25,10 +25,16 @@ O link pode exibir o nome do professor e o da escola, quando esses dados estiver
 Só com conta Google. O EduGera recebe nome, e-mail e foto do perfil para identificar a sessão. Não pede acesso a Gmail, Drive ou contatos e não guarda a senha. No banco, a conta é identificada por um código técnico, e não pelo e-mail.
 
 **7. Como solicitar a exclusão da conta?** 🕒
-A exclusão pelo próprio professor ainda não está disponível no site e está planejada. Até lá, a solicitação deve ser feita pelo canal de contato (suporte em breve).
+A exclusão pelo próprio professor ainda não está disponível no site e está planejada. Até lá, a solicitação deve ser feita pelo canal de contato: contato.edugera@gmail.com.
 
 **8. Quais dados vão para os provedores de IA?** ✅ / ⚖️
 Os campos do pedido: tema, orientações, disciplina, nível, ano, BNCC, dificuldade e quantidade de exercícios. O nome do professor e o da escola não fazem parte do pedido. Os provedores são a OpenAI e, como reserva, o Google Gemini. Se os dados são guardados ou usados para treinamento, depende das políticas desses provedores ⚖️ (a confirmar).
+
+**8b. E os planos de aula?** ✅
+Vão para a IA os campos do pedido do plano (disciplina, nível, ano, tema, BNCC, número de aulas e orientações do professor) e, quando o professor escolhe, o texto da apostila ou o próprio arquivo PDF enviado como base (vai inteiro para a OpenAI). Nome do professor, escola, turma e período não vão para a IA; o pedido também manda a IA ignorar nomes de alunos que apareçam no material. Os planos gerados ficam salvos no navegador do professor.
+
+**8c. Quem processa os pagamentos do Pro?** ✅
+O Asaas (empresa brasileira). Nome, CPF, endereço e cartão o professor informa direto na página do Asaas; o EduGera não vê nem guarda o número do cartão.
 
 **9. O EduGera vende dados?** ✅
 Não. Também não usa ferramentas de publicidade nem de análise de terceiros.
@@ -46,4 +52,4 @@ Ainda não. Ele será necessário se houver um plano para escolas, que hoje est�
 Não há exclusão automática por prazo: os dados ficam enquanto a conta existir ou até o professor remover o material. Os prazos dos registros técnicos nos provedores ⚖️ estão a confirmar.
 
 **14. Existe canal para os direitos do titular?** 🕒
-Um canal de contato profissional está em criação (suporte em breve). Os direitos previstos no art. 18 da LGPD serão atendidos por esse canal.
+Hoje o canal é contato.edugera@gmail.com (WhatsApp (11) 99561-4459); um e-mail com domínio próprio ainda está pendente. Os direitos previstos no art. 18 da LGPD serão atendidos por esse canal.

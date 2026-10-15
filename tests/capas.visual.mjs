@@ -8,7 +8,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -214,6 +214,7 @@ for (const caso of ["matematica", "completo", "ciencias-ia"]) {
   test(`PDF do aluno e do professor (${caso}): A4, capa igual à prévia, gabarito só no do professor`, async () => {
     const { ctx, pg } = await abrir({ width: 1280, height: 900 });
     const fig = pg.locator(`figure.caso-capa[data-caso="${caso}"][data-variante="historia"]`);
+    const respostas = JSON.parse((await fig.first().getAttribute("data-respostas")) || "[]");
     const arqs = {};
     for (const tipo of ["aluno", "professor"]) {
       const [dl] = await Promise.all([pg.waitForEvent("download", { timeout: 60000 }), fig.locator(`[data-pdf="${tipo}"]`).click()]);
@@ -244,6 +245,15 @@ for (const caso of ["matematica", "completo", "ciencias-ia"]) {
     const todosProf = execFileSync("pdftotext", [arqs.professor, "-"]).toString();
     assert.doesNotMatch(todosAluno, /GABARITO/i, "PDF do aluno sem gabarito");
     assert.match(todosProf, /GABARITO/i, "PDF do professor com gabarito");
+    // o gabarito sai SEMPRE completo: a resposta de cada exercício está no PDF do professor (e não no do aluno)
+    const junto = (t) => t.replace(/\s+/g, " ");
+    assert.ok(respostas.length >= 2, "caso de teste com exercícios");
+    for (const r of respostas) {
+      const trecho = junto(r).slice(0, 24).trim();
+      assert.ok(junto(todosProf).includes(trecho), `gabarito do professor sem a resposta "${trecho}"`);
+      assert.ok(!junto(todosAluno).includes(trecho), `PDF do aluno mostra a resposta "${trecho}"`);
+    }
+    for (const [tipo, arq] of Object.entries(arqs)) console.log(`# ${caso} · PDF ${tipo}: ${(statSync(arq).size / 1024).toFixed(0)} KB`);
 
     // página 1 do PDF × prévia: diferença média pequena (mesmo desenho)
     const pre = join(PASTA, `${caso}-pdf1`);

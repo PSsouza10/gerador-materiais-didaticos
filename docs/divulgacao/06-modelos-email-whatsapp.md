@@ -12,7 +12,7 @@ Olá, [nome ou "equipe pedagógica"],
 
 Sou Paulo Sergio Souza de Jesus, professor de Matemática, e criei o EduGera, uma ferramenta on-line em que o professor monta apostilas e fichas de estudo alinhadas à BNCC, com exercícios, gabarito e PDF do aluno e do professor.
 
-O uso é gratuito no momento. Se fizer sentido para a sua equipe, posso mostrar em uma demonstração de 15 minutos.
+Dá para usar de graça no plano Grátis; quem precisar de mais usa o Pro. Também gera plano de aula na estrutura do Currículo Paulista. Se fizer sentido para a sua equipe, posso mostrar em uma demonstração de 15 minutos.
 
 Site: https://edugera.vercel.app
 
@@ -35,13 +35,15 @@ Com o EduGera, o professor escolhe a disciplina, o ano, a habilidade da BNCC e o
 - exercícios;
 - gabarito com a resolução.
 
+A partir do tema, da apostila ou de um PDF, o EduGera também monta o plano de aula na estrutura do Currículo Paulista, com revisão automática e download em Word.
+
 Antes de imprimir, o professor revisa, edita ou exclui cada exercício e baixa o PDF do aluno e o PDF do professor. O conteúdo é gerado com inteligência artificial, por isso a revisão do professor continua essencial.
 
 Sobre privacidade:
 - o sistema não possui cadastro de alunos;
 - o sistema orienta que não sejam incluídos dados pessoais de estudantes.
 
-Hoje o uso é gratuito. Gostaria de oferecer uma demonstração à equipe pedagógica, presencial ou on-line, no horário que for mais conveniente.
+O professor pode começar pelo plano Grátis; o plano Pro custa R$ 39,90 por mês (ou R$ 29,90 por mês no anual). Gostaria de oferecer uma demonstração à equipe pedagógica, presencial ou on-line, no horário que for mais conveniente.
 
 Coloco-me à disposição.
 
@@ -68,10 +70,10 @@ Paulo Sergio Souza de Jesus
 ## WhatsApp
 
 **1. Primeira mensagem (curta, pedindo permissão)**
-> Olá! Sou o Paulo, professor de Matemática. Criei uma ferramenta gratuita para montar apostilas alinhadas à BNCC. Posso te mandar uma explicação rápida? Se não for o caso, sem problema.
+> Olá! Sou o Paulo, professor de Matemática. Criei uma ferramenta para montar apostilas e planos de aula alinhados à BNCC, com plano grátis. Posso te mandar uma explicação rápida? Se não for o caso, sem problema.
 
 **2. Depois que a pessoa autorizar**
-> Obrigado! O EduGera monta a apostila a partir do tema e da habilidade da BNCC: situação do cotidiano, exercícios, gabarito e PDF do aluno e do professor. Você revisa tudo antes de imprimir. Dá para testar de graça com a conta Google: https://edugera.vercel.app
+> Obrigado! O EduGera monta a apostila a partir do tema e da habilidade da BNCC: situação do cotidiano, exercícios, gabarito e PDF do aluno e do professor. Também faz o plano de aula, com download em Word. Você revisa tudo antes de imprimir. Dá para testar de graça com a conta Google: https://edugera.vercel.app
 
 **3. Acompanhamento (uma vez só, alguns dias depois)**
 > Oi! Conseguiu dar uma olhada no EduGera? Se quiser, mostro em 15 minutos como funciona. Qualquer sugestão também me ajuda muito.
@@ -80,7 +82,7 @@ Paulo Sergio Souza de Jesus
 > Olá, [nome]! Sou o Paulo, professor de Matemática. Desenvolvi o EduGera, que ajuda o professor a preparar apostilas e fichas alinhadas à BNCC, com gabarito e versão do aluno e do professor. Posso apresentar para a coordenação em uma demonstração curta?
 
 **5. Para a direção**
-> Bom dia, [nome]! Sou o Paulo, professor de Matemática. Criei o EduGera, uma ferramenta on-line de apoio à preparação de materiais alinhados à BNCC. Hoje o uso é gratuito. A direção teria interesse em uma apresentação rápida para a equipe?
+> Bom dia, [nome]! Sou o Paulo, professor de Matemática. Criei o EduGera, uma ferramenta on-line de apoio à preparação de materiais alinhados à BNCC. O professor pode usar de graça no plano Grátis. A direção teria interesse em uma apresentação rápida para a equipe?
 
 ---
 

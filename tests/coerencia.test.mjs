@@ -31,3 +31,15 @@ test("pedido: ano e disciplina do código BNCC (antes de gerar)", async () => {
   assert.equal(conferirPedido({ nivel: "Ensino Médio", ano: "EM1", disciplina: "História", bncc: "EM13CHS101" }).length, 0);
   assert.equal(conferirPedido({ ...F, ano: "", disciplina: "Matemática", bncc: "EF06MA03" }).length, 0); // ano não escolhido
 });
+
+test("etapa errada BLOQUEIA (bloqueia: true); ano e disciplina só avisam", async () => {
+  const { conferirPedido, etapaIncompativel, MINIMO_EXERCICIOS } = await import("../lib/coerencia.js");
+  assert.equal(MINIMO_EXERCICIOS, 3);
+  const [a] = conferirPedido({ nivel: "Ensino Médio", bncc: "EF06MA03" });
+  assert.equal(a.bloqueia, true);
+  assert.match(etapaIncompativel({ nivel: "Ensino Fundamental", bncc: "EM13MAT101" }), /Ensino Médio, mas o nível escolhido é Ensino Fundamental/);
+  assert.equal(etapaIncompativel({ nivel: "Ensino Fundamental", bncc: "EF06MA03" }), null);
+  assert.equal(etapaIncompativel({ nivel: "EJA", bncc: "EM13MAT101" }), null); // EJA aceita qualquer etapa
+  assert.equal(etapaIncompativel({ nivel: "Ensino Médio", bncc: "" }), null); // sem código
+  assert.ok(!conferirPedido({ nivel: "Ensino Fundamental", ano: "8", disciplina: "Matemática", bncc: "EF06MA03" })[0].bloqueia);
+});

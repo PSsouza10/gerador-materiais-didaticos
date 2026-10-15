@@ -12,6 +12,8 @@ import { aplicarRevisao } from "@/lib/revisorConteudo";
 // o resultado das conferências automáticas e os botões Aprovar, Corrigir com IA
 // (refaz só aquele exercício), Editar e Remover. A prévia A4 atualiza na hora.
 
+import { MINIMO_EXERCICIOS } from "@/lib/coerencia";
+
 const numeroDe = (onde = "") => Number((/exerc[ií]cio\s+(\d+)/i.exec(onde) || [])[1]) || null;
 
 // autoRevisar: número que muda a cada apostila recém-gerada; dispara o revisor de conteúdo
@@ -95,8 +97,15 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
     if (!ex.aprovado && i < exercicios.length - 1) setAtual(i + 1);
   };
 
+  // a apostila nunca fica com menos de MINIMO_EXERCICIOS (mesma regra da conferência)
+  const podeRemover = exercicios.length > MINIMO_EXERCICIOS;
   const remover = () => {
-    if (!window.confirm(`Remover o exercício ${i + 1}?`)) return;
+    if (!podeRemover) {
+      setErro(`A apostila precisa de pelo menos ${MINIMO_EXERCICIOS} exercícios. Em vez de remover, edite este ou peça para a IA corrigir.`);
+      return;
+    }
+    if (!window.confirm(`Remover o exercício ${i + 1}? Os outros serão renumerados.`)) return;
+    setErro("");
     onMudar({ ...material, avisosGabarito: [], exercicios: exercicios.filter((_, k) => k !== i) });
     setAtual(Math.max(0, i - 1));
   };
@@ -324,7 +333,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
               <button type="button" onClick={abrirEdicao} className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
                 <Pencil className="h-4 w-4" /> Editar
               </button>
-              <button type="button" onClick={remover} className="flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-sm font-bold text-rose-700">
+              <button type="button" onClick={remover} aria-disabled={!podeRemover} title={podeRemover ? undefined : `Mínimo de ${MINIMO_EXERCICIOS} exercícios`} className={`flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-sm font-bold text-rose-700 ${podeRemover ? "" : "opacity-50"}`}>
                 <Trash2 className="h-4 w-4" /> Remover
               </button>
             </div>

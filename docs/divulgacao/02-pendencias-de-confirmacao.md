@@ -1,6 +1,6 @@
 # Afirmações que ainda precisam de confirmação
 
-Situação em 10/10/2026. Antes de publicar qualquer documento, resolva os itens marcados.
+Situação em 10/10/2026, revista em 15/10/2026. Antes de publicar qualquer documento, resolva os itens marcados.
 
 ## Técnicas (confirmar com o Claude Code no projeto)
 1. **Região dos dados:** em que país ficam o banco (Neon), os arquivos (Vercel Blob) e as funções (Vercel). Pela documentação, o banco de produção está no projeto Neon "East 2"; confirmar a região exata no painel.
@@ -19,11 +19,11 @@ Situação em 10/10/2026. Antes de publicar qualquer documento, resolva os itens
 5. **Escolas como controladoras:** se uma escola contratar o EduGera, quem é controlador e quem é operador, e se é preciso um contrato de tratamento de dados.
 6. **Dados de crianças e adolescentes:** como tratar o risco de o professor digitar dados de alunos em campos livres (art. 14 da LGPD).
 7. **Foro e legislação:** a comarca e a aplicação do Código de Defesa do Consumidor.
-8. **Termos de assinatura futura:** cancelamento, reembolso e direito de arrependimento, só quando houver cobrança.
+8. **Termos da assinatura:** a cobrança do Pro está ligada desde 14/10/2026; os Termos já descrevem cancelamento, 7 dias de arrependimento e renovação, mas precisam de revisão de advogado.
 9. **Propriedade intelectual** de material gerado por IA: de quem é o conteúdo gerado.
 
 ## Comerciais (decisões suas)
-1. E-mail de suporte profissional.
+1. E-mail de suporte com domínio próprio (hoje: contato.edugera@gmail.com).
 2. Domínio próprio.
 3. Preço e conteúdo do plano Escola.
-4. Data de lançamento da cobrança (os documentos dizem que ainda não há cobrança).
+4. Publicar ou não o Pro mensal no Pix (pronto no site de teste).

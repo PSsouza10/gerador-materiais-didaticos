@@ -45,3 +45,11 @@ test("a maior habilidade oficial da BNCC cabe no limite", async () => {
   const maior = Math.max(...d.habilidades.map((h) => h.t.length));
   assert.ok(maior <= LIMITES.habilidade, `maior=${maior}`);
 });
+
+test("servidor recusa habilidade BNCC de outra etapa (antes de gastar IA)", () => {
+  const r = validarPedido({ ...base, nivel: "Ensino Médio", bncc: "EF06MA03" });
+  assert.equal(r.ok, false);
+  assert.match(r.erro, /^O código EF06MA03 é do Ensino Fundamental, mas o nível escolhido é Ensino Médio/);
+  assert.equal(validarPedido({ ...base, bncc: "EF06MA03" }).ok, true);
+  assert.equal(validarPedido({ ...base, nivel: "EJA", bncc: "EM13MAT101" }).ok, true);
+});

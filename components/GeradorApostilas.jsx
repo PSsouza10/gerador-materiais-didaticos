@@ -358,6 +358,11 @@ export default function GeradorApostilas() {
       document.getElementById("campo-tema")?.focus();
       return;
     }
+    const bloqueio = avisosPedido.find((a) => a.bloqueia);
+    if (bloqueio) {
+      setErro(bloqueio.motivo.charAt(0).toUpperCase() + bloqueio.motivo.slice(1));
+      return;
+    }
     if (avisosPedido.length && !window.confirm(`Confira o pedido antes de gerar:\n\n• ${avisosPedido.map((a) => a.motivo).join("\n• ")}\n\nGerar mesmo assim?`)) return;
     gerandoRef.current = true;
     try {
@@ -868,7 +873,8 @@ export default function GeradorApostilas() {
             {avisosPedido.length > 0 && (
               <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p className="flex items-center gap-1.5 font-bold">
-                  <AlertTriangle className="h-4 w-4 shrink-0" /> Confira o pedido antes de gerar
+                  <AlertTriangle className="h-4 w-4 shrink-0" />{" "}
+                  {avisosPedido.some((a) => a.bloqueia) ? "Corrija o pedido para gerar" : "Confira o pedido antes de gerar"}
                 </p>
                 <ul className="mt-1 list-disc pl-5">
                   {avisosPedido.map((a, i) => (

@@ -191,7 +191,7 @@ function Caso({ caso, variante = "historia", pdf = true }) {
     }
   };
   return (
-    <figure className="caso-capa" data-caso={caso.id} data-variante={variante}>
+    <figure className="caso-capa" data-caso={caso.id} data-variante={variante} data-respostas={JSON.stringify((dados.material.exercicios || []).map((e) => e.resposta))}>
       <figcaption className="mb-2 text-sm font-bold text-slate-700">{variante === "historia" ? caso.rotulo : `Comparação · capa ${variante}`}</figcaption>
       <PreviewEscalado larguraMax={420}>
         <CapaA4 ref={capa} variante={variante} form={dados.form} material={dados.material} urlImagem={caso.imagem || null} />
