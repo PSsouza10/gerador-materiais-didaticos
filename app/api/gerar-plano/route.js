@@ -6,31 +6,9 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao, podePlanoAulaPdf } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { validarPedidoPlano, montarPromptPlano, normalizarPlano, problemasDoPlano, resumoDaApostila, montarPromptRevisaoPlano, aplicarRevisaoPlano, urlIlustracaoValida, mensagemFalhaPlano, habilidadesCandidatas } from "@/lib/planoAula";
-import { bancoLigado } from "@/lib/banco";
-import { materiaisDaConta } from "@/lib/contas";
-import { lerHistorico } from "@/lib/historico";
-import { caminhoBlob } from "@/lib/ambiente";
-import { head } from "@vercel/blob";
+import { apostilaDaConta } from "@/lib/apostilaDaConta";
 
 const PDF_MAX = 3 * 1024 * 1024; // 3 MB (o pedido inteiro precisa caber no limite da Vercel)
-
-// Apostila do próprio professor (só da conta logada; nunca de outra conta)
-async function apostilaDaConta(email, id) {
-  if (!/^[\w-]{6,40}$/.test(id || "")) return null;
-  if (bancoLigado()) {
-    const l = (await materiaisDaConta(email)).find((x) => x.id === id && !x.removido);
-    if (l?.conteudo) return l.conteudo;
-  }
-  const lista = await lerHistorico(email).catch(() => []);
-  if (!lista.some((m) => m.id === id)) return null;
-  try {
-    const meta = await head(caminhoBlob(`materiais/${id}.json`));
-    const r = await fetch(meta.url, { cache: "no-store" });
-    return r.ok ? await r.json() : null;
-  } catch {
-    return null;
-  }
-}
 
 // Plano de aula (estrutura do Currículo Paulista). Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
