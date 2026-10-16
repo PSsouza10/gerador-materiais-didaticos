@@ -441,7 +441,7 @@ test("questões montadas pelo sistema (área, perímetro, volume) passam na conf
   assert.equal(grandezaDoTema("Área de retângulos, quadrados e triângulos"), "area");
   assert.equal(grandezaDoTema("Volume de blocos retangulares"), "volume");
   assert.equal(grandezaDoTema("Frações"), null);
-  for (const tema of ["Área de retângulos, quadrados e triângulos", "Volume de blocos retangulares", "Perímetro de polígonos"])
+  for (const tema of ["Área de retângulos, quadrados e triângulos", "Volume de blocos retangulares", "Perímetro de polígonos", "Leitura de gráficos de barras e de linhas", "Medida e classificação de ângulos"])
     for (let k = 0; k < 6; k++)
       for (const dificuldade of ["facil", "media", "dificil"]) {
         const q = questaoDoSistema({ tema }, k, { habilidades: [{ codigo: "EF07MA32", verificada: true }], dificuldade });
@@ -451,4 +451,27 @@ test("questões montadas pelo sistema (área, perímetro, volume) passam na conf
         assert.ok(c.item.correta);
         assert.equal(new Set(c.item.alternativas).size, 4);
       }
+});
+
+test("resolução às cegas: discordância vira problema; concordância e falta de resposta não mudam nada", async () => {
+  const { aplicarResolucaoCega, montarPromptResolucaoCega, blocoEspecialista } = await import("../lib/avaliacao.js");
+  const av = { itens: [
+    { comando: "a?", alternativas: ["1", "2", "3", "4"], correta: "B" },
+    { comando: "b?", alternativas: ["1", "2", "3", "4"], correta: "C" },
+    { comando: "c?", alternativas: ["1", "2", "3", "4"], correta: "A" },
+    { comando: "d?", alternativas: ["1", "2", "3", "4"], correta: "D", doSistema: true },
+  ] };
+  const p = montarPromptResolucaoCega(av, [0, 1, 2]);
+  assert.ok(!/"correta"/.test(p), "o pedido não pode mostrar o gabarito");
+  const r = aplicarResolucaoCega(av, { respostas: [{ n: 1, letra: "B" }, { n: 2, letra: "A", motivo: "x" }, { n: 4, letra: "A" }] }, [0, 1, 2, 3]);
+  assert.deepEqual(r.discordantes, [2]);
+  assert.equal(r.avaliacao.itens[0].problemas, undefined);
+  assert.match(r.avaliacao.itens[1].problemas[0], /marcou A, não C/);
+  assert.equal(r.avaliacao.itens[2].problemas, undefined);
+  assert.equal(r.avaliacao.itens[3].problemas, undefined);
+  const nula = aplicarResolucaoCega(av, { respostas: [{ n: 3, letra: null }] }, [2]);
+  assert.match(nula.avaliacao.itens[2].problemas[0], /não achou UMA alternativa/);
+  assert.match(blocoEspecialista("Língua Portuguesa"), /EXTRAPOLAÇÃO/);
+  assert.match(blocoEspecialista("Inglês"), /falso cognato/);
+  assert.equal(blocoEspecialista("Matemática"), "");
 });

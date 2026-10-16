@@ -9,7 +9,7 @@ import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
 import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao, repararAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 import { questaoDoSistema } from "@/lib/questoesSistema";
-import { conferirItem } from "@/lib/avaliacao";
+import { conferirItem, montarPromptResolucaoCega, aplicarResolucaoCega } from "@/lib/avaliacao";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
@@ -17,6 +17,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300; // geração + até 3 rodadas de correção das questões com erro
 
 const BNCC = indexar(bnccDados.habilidades);
+// Modelos que o administrador pode escolher na bateria (comparação antes de deixar fixo)
+const MODELOS_PERMITIDOS = ["gpt-4o", "gpt-4.1", "gpt-4.1-mini", "o4-mini", "o3", "gpt-5", "gpt-5-mini"];
+const SISTEMA_CEGO = "Você é professor experiente e resolve questões de múltipla escolha com rigor, sem gabarito. Responda em português do Brasil, só com JSON válido.";
 const SISTEMA =
   "Você é elaborador de itens de avaliações externas (Prova Paulista, SARESP, SAEB), especialista na BNCC e no Currículo Paulista. Escreve itens de múltipla escolha corretos, claros e com distratores baseados em erros reais dos alunos. Responda em português do Brasil, só com JSON válido.";
 
@@ -60,10 +63,20 @@ async function postRota(request, _contexto, requestId) {
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;
   const candidatas = oficial || d.bncc ? [] : habilidadesCandidatas(bnccDados.habilidades, d, DISCIPLINA_PARA_COMPONENTE[d.disciplina] || [], cobreAno);
   const prompt = montarPromptAvaliacao(d, oficial ? `${oficial.c} — ${oficial.t} (texto oficial)` : "", base, candidatas);
-  const modelo = process.env.MODELO_TEXTO || "gpt-4o";
+  // Modelo por disciplina: Matemática pode usar um modelo de raciocínio (MODELO_MATEMATICA na Vercel);
+  // o administrador escolhe outro na bateria para comparar.
+  const padrao = process.env.MODELO_TEXTO || "gpt-4o";
+  const ehMatematica = /matem/i.test(d.disciplina || "");
+  let modelo = uso.admin && MODELOS_PERMITIDOS.includes(body.modelo) ? body.modelo : (ehMatematica && process.env.MODELO_MATEMATICA) || padrao;
 
   const falhas = [];
   let r = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt, modelo, temperatura: 0.4 }) : { ok: false, erro: "OpenAI ausente" };
+  if (!r.ok && temOpenAI() && modelo !== padrao) {
+    falhas.push(r);
+    console.error("Avaliação: modelo escolhido falhou, voltando ao padrão", { request_id: requestId, modelo, status: r.status, erro: r.erro });
+    modelo = padrao;
+    r = await openaiJson({ sistema: SISTEMA, prompt, modelo, temperatura: 0.4 });
+  }
   if (!r.ok) {
     falhas.push(r);
     console.error("Avaliação: OpenAI falhou", { request_id: requestId, status: r.status, erro: r.erro });
@@ -97,7 +110,22 @@ async function postRota(request, _contexto, requestId) {
     rp.reparadas.forEach((n) => refeitas.add(n));
     if (rp.reparadas.length) diagRodadas.push({ reparoDoSistema: rp.reparadas });
   };
+  // Resolução às cegas: o Gemini resolve as questões SEM ver o gabarito; discordou → a questão é refeita (ou sai)
+  const resolverAsCegas = async (indices, etapa) => {
+    if (!temGemini() || !indices.length || Date.now() - t0 > 220_000) return;
+    const rc = await geminiJson({ sistema: SISTEMA_CEGO, prompt: montarPromptResolucaoCega(atual, indices), temperatura: 0 });
+    if (!rc.ok) {
+      console.error("Avaliação: resolução às cegas falhou", { request_id: requestId, etapa, status: rc.status, erro: rc.erro });
+      diagRodadas.push({ cega: etapa, erro: `${rc.status} ${rc.erro}`.slice(0, 200) });
+      return;
+    }
+    const ap = aplicarResolucaoCega(atual, rc.json, indices);
+    atual = ap.avaliacao;
+    diagRodadas.push({ cega: etapa, conferidas: indices.map((i) => i + 1), discordantes: ap.discordantes });
+  };
+  const semProblema = () => atual.itens.map((it, i) => (!it.problemas?.length && it.correta && !it.semGabarito && !it.doSistema ? i : -1)).filter((i) => i >= 0);
   reparar(); // primeiro o sistema conserta o que consegue sozinho (alternativas erradas típicas)
+  await resolverAsCegas(semProblema(), "primeira");
   for (const [k, montar] of rodadas.entries()) {
     const indices = itensParaRefazer(atual);
     if (!indices.length) break;
@@ -118,6 +146,8 @@ async function postRota(request, _contexto, requestId) {
     ap.trocados.forEach((n) => refeitas.add(n));
   }
   reparar(); // e de novo depois da IA, antes de retirar alguma questão
+  // as questões refeitas também passam pela resolução às cegas (as outras já passaram)
+  await resolverAsCegas(semProblema().filter((i) => refeitas.has(i + 1)), "refeitas");
   // última garantia (área, perímetro, volume): o sistema monta a questão inteira no lugar da que não passou
   const montadas = [];
   atual = {
@@ -152,12 +182,12 @@ async function postRota(request, _contexto, requestId) {
     await devolverGeracao(usuario.email, requestId);
     console.error("Avaliação: questões retiradas demais", { request_id: requestId, retiradas: ret.retiradas });
     return NextResponse.json(
-      { error: "Não foi possível montar uma avaliação com questões conferidas. Tente gerar de novo.", ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, primeira: primeira.avisos, rodadas: diagRodadas } } : {}) },
+      { error: "Não foi possível montar uma avaliação com questões conferidas. Tente gerar de novo.", ...(uso.admin ? { diagnostico: { modelo, retiradas: ret.retiradas, primeira: primeira.avisos, rodadas: diagRodadas } } : {}) },
       { status: 502 }
     );
   }
   avaliacao.geradaEm = new Date().toISOString();
-  return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
+  return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { modelo, retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
 }
 
 export const POST = comRequestId("/api/gerar-avaliacao", postRota);

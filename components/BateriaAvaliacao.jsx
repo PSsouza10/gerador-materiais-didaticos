@@ -9,6 +9,8 @@ export default function BateriaAvaliacao({ admin }) {
   const [res, setRes] = useState({});
   const [rodando, setRodando] = useState(false);
   const [aberto, setAberto] = useState(null);
+  const [modelo, setModelo] = useState(""); // "" = padrão do site (por disciplina)
+  const [historico, setHistorico] = useState([]); // comparação entre modelos, nesta tela
   const parar = useRef(false);
 
   async function rodarCaso(i) {
@@ -16,18 +18,26 @@ export default function BateriaAvaliacao({ admin }) {
     const inicio = Date.now();
     setRes((r) => ({ ...r, [i]: { estado: "gerando" } }));
     try {
-      const r = await fetch("/api/gerar-avaliacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
+      const r = await fetch("/api/gerar-avaliacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(modelo ? { ...c, modelo } : c) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-      setRes((x) => ({ ...x, [i]: { estado: "pronto", avaliacao: j.avaliacao, avisosServidor: j.avisos || [], auditoria: auditarAvaliacao(j.avaliacao, c.itens), segundos: Math.round((Date.now() - inicio) / 1000) } }));
+      const pronto = { estado: "pronto", avaliacao: j.avaliacao, avisosServidor: j.avisos || [], diagnostico: j.diagnostico || null, auditoria: auditarAvaliacao(j.avaliacao, c.itens), segundos: Math.round((Date.now() - inicio) / 1000) };
+      setRes((x) => ({ ...x, [i]: pronto }));
+      return pronto;
     } catch (e) {
-      setRes((x) => ({ ...x, [i]: { estado: "erro", erro: String(e.message || e) } }));
+      const erro = { estado: "erro", erro: String(e.message || e) };
+      setRes((x) => ({ ...x, [i]: erro }));
+      return erro;
     }
   }
   async function rodar() {
     parar.current = false;
     setRodando(true);
-    for (let i = 0; i < CASOS_AVALIACAO.length && !parar.current; i++) await rodarCaso(i);
+    setRes({});
+    const feitos = [];
+    for (let i = 0; i < CASOS_AVALIACAO.length && !parar.current; i++) feitos.push({ caso: CASOS_AVALIACAO[i], ...(await rodarCaso(i)) });
+    const usado = feitos.find((f) => f.diagnostico?.modelo)?.diagnostico.modelo;
+    setHistorico((h) => [...h, { modelo: modelo || `padrão${usado ? ` (${usado})` : ""}`, resumo: resumirBateriaAvaliacao(feitos), casos: feitos.map((f) => (f.estado === "pronto" ? `${f.auditoria.questoes}${f.auditoria.aprovado ? "✓" : "✗"}` : "erro")), segundos: feitos.reduce((s, f) => s + (f.segundos || 0), 0) }]);
     setRodando(false);
   }
   const lista = CASOS_AVALIACAO.map((c, i) => ({ caso: c, ...(res[i] || {}) }));
@@ -47,7 +57,17 @@ export default function BateriaAvaliacao({ admin }) {
       <p className="mt-1 text-sm text-slate-600">
         {CASOS_AVALIACAO.length} provas de 5 questões (5 de Matemática com figura e 2 de outras disciplinas). Cada uma usa 1 geração. Critério para publicar: nenhuma questão sem gabarito e nenhuma explicação com conta errada.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <label className="text-sm text-slate-700">
+          Modelo da IA:{" "}
+          <select value={modelo} onChange={(e) => setModelo(e.target.value)} disabled={rodando} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
+            <option value="">Padrão do site</option>
+            <option value="gpt-4o">gpt-4o (atual)</option>
+            <option value="o4-mini">o4-mini (raciocínio)</option>
+            <option value="gpt-5-mini">gpt-5-mini (raciocínio)</option>
+            <option value="gpt-5">gpt-5 (raciocínio)</option>
+          </select>
+        </label>
         <button type="button" onClick={rodar} disabled={rodando || !admin} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60">
           {rodando ? "Rodando…" : "Rodar a bateria da Avaliação"}
         </button>
@@ -68,6 +88,44 @@ export default function BateriaAvaliacao({ admin }) {
           {resumo.aprovados} de {resumo.casos} provas aprovadas · {resumo.semGabarito} questão(ões) sem gabarito · {resumo.contasErradas} explicação(ões) com conta errada ·{" "}
           {resumo.liberado && resumo.casos === CASOS_AVALIACAO.length ? "LIBERADO para publicar" : "NÃO publicar ainda"}
         </p>
+      )}
+      {historico.length > 0 && (
+        <div className="mt-4 overflow-x-auto">
+          <p className="text-sm font-bold text-slate-700">Comparação entre modelos (rodadas desta tela)</p>
+          <table className="mt-1 w-full text-left text-[12.5px]">
+            <thead className="text-slate-500">
+              <tr>
+                <th className="py-1">Modelo</th>
+                <th>Aprovadas</th>
+                <th>Sem gabarito</th>
+                <th>Conta errada</th>
+                {CASOS_AVALIACAO.map((c, k) => (
+                  <th key={k} title={c.tema}>
+                    {k + 1}
+                  </th>
+                ))}
+                <th>Tempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historico.map((h, k) => (
+                <tr key={k} className="border-t border-slate-100">
+                  <td className="py-1 font-bold">{h.modelo}</td>
+                  <td>
+                    {h.resumo.aprovados}/{CASOS_AVALIACAO.length}
+                  </td>
+                  <td>{h.resumo.semGabarito}</td>
+                  <td>{h.resumo.contasErradas}</td>
+                  {CASOS_AVALIACAO.map((_, n) => (
+                    <td key={n}>{h.casos[n] || "—"}</td>
+                  ))}
+                  <td>{Math.round(h.segundos / 60)} min</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-1 text-[12px] text-slate-500">Nas colunas 1 a {CASOS_AVALIACAO.length}: número de questões que chegaram e ✓ aprovada / ✗ reprovada.</p>
+        </div>
       )}
       <table className="mt-4 w-full text-left text-[13px]">
         <thead className="text-slate-500">
