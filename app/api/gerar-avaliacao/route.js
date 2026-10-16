@@ -8,6 +8,8 @@ import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA
 import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
 import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao, repararAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
+import { questaoDoSistema } from "@/lib/questoesSistema";
+import { conferirItem } from "@/lib/avaliacao";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
@@ -116,6 +118,21 @@ async function postRota(request, _contexto, requestId) {
     ap.trocados.forEach((n) => refeitas.add(n));
   }
   reparar(); // e de novo depois da IA, antes de retirar alguma questão
+  // última garantia (área, perímetro, volume): o sistema monta a questão inteira no lugar da que não passou
+  const montadas = [];
+  atual = {
+    ...atual,
+    itens: atual.itens.map((it, i) => {
+      if (!(it.problemas?.length || it.semGabarito || !it.correta)) return it;
+      const sys = questaoDoSistema(d, i, { habilidades: it.habilidades?.length ? it.habilidades : oficial ? [{ codigo: oficial.c, verificada: true }] : [], dificuldade: it.dificuldade });
+      if (!sys) return it;
+      const conf = conferirItem(sys, i + 1).item;
+      if (conf.problemas?.length || !conf.correta) return it;
+      montadas.push(i + 1);
+      return conf;
+    }),
+  };
+  if (montadas.length) diagRodadas.push({ montadasPeloSistema: montadas });
   const ret = retirarComProblema(atual);
   atual = ret.avaliacao;
   // final: espalha o gabarito e confere de novo (avisos do que ainda precisa do professor)
@@ -127,6 +144,7 @@ async function postRota(request, _contexto, requestId) {
     // números dos itens mudam quando alguma questão sai: os avisos de correção ficam só quando nada saiu
     ...(ret.retiradas.length ? [] : corrigidos.filter((a) => !vistos.has(chave(a)) && !refeitas.has(Number(String(a.onde).replace(/\D/g, ""))))),
     ...(refeitas.size ? [{ onde: "Correção automática", motivo: `${refeitas.size} questão(ões) tinham erro de conta, gabarito ou figura e foram refeitas antes de chegar a você.`, tipo: "corrigido", trecho: "" }] : []),
+    ...(montadas.length ? [{ onde: "Questões do sistema", motivo: `${montadas.length} questão(ões) foram montadas pelo próprio EduGera (figura, conta e alternativas calculadas), no lugar de questões da IA que não passaram na conferência.`, tipo: "corrigido", trecho: "" }] : []),
     ...(ret.retiradas.length ? [{ onde: "Questões retiradas", motivo: `${ret.retiradas.length} questão(ões) não passaram na conferência mesmo depois de refeitas e foram retiradas; a prova ficou com ${atual.itens.length} questões. Gere de novo se precisar de mais.`, tipo: "conferir", trecho: "" }] : []),
     ...fim.avisos,
   ];

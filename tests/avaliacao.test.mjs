@@ -435,3 +435,20 @@ test("casos reais (16/10, 18h): contorno reparado pelo sistema; 90° + 90° + 90
   const ang = conferirItem({ textoBase: "Julia quer saber a soma dos ângulos internos de um retângulo.", comando: "Qual é a soma dos ângulos internos do retângulo de Julia?", alternativas: ["180°", "270°", "360°", "540°"], correta: "C", resolucao: "A soma dos ângulos internos de um quadrilátero é 360°.", distratores: { A: "Confundiu com a soma do triângulo, 180°.", B: "Somou só três ângulos: 90° + 90° + 90° = 270°.", D: "Confundiu com o pentágono, 540°." }, habilidades: [] }, 5).item;
   assert.deepEqual(ang.problemas, [], JSON.stringify(ang));
 });
+
+test("questões montadas pelo sistema (área, perímetro, volume) passam na conferência", async () => {
+  const { questaoDoSistema, grandezaDoTema } = await import("../lib/questoesSistema.js");
+  assert.equal(grandezaDoTema("Área de retângulos, quadrados e triângulos"), "area");
+  assert.equal(grandezaDoTema("Volume de blocos retangulares"), "volume");
+  assert.equal(grandezaDoTema("Frações"), null);
+  for (const tema of ["Área de retângulos, quadrados e triângulos", "Volume de blocos retangulares", "Perímetro de polígonos"])
+    for (let k = 0; k < 6; k++)
+      for (const dificuldade of ["facil", "media", "dificil"]) {
+        const q = questaoDoSistema({ tema }, k, { habilidades: [{ codigo: "EF07MA32", verificada: true }], dificuldade });
+        assert.ok(q, `${tema} ${k}`);
+        const c = conferirItem(q, 1);
+        assert.deepEqual(c.item.problemas, [], `${tema} ${k} ${dificuldade}: ${JSON.stringify(c.avisos)}`);
+        assert.ok(c.item.correta);
+        assert.equal(new Set(c.item.alternativas).size, 4);
+      }
+});
