@@ -121,7 +121,11 @@ async function postRota(request, _contexto, requestId) {
   ];
   if (avaliacao.itens.length < Math.min(3, d.itens)) {
     await devolverGeracao(usuario.email, requestId);
-    return NextResponse.json({ error: "A IA devolveu uma avaliação incompleta. Tente gerar de novo." }, { status: 502 });
+    console.error("Avaliação: questões retiradas demais", { request_id: requestId, retiradas: ret.retiradas });
+    return NextResponse.json(
+      { error: "Não foi possível montar uma avaliação com questões conferidas. Tente gerar de novo.", ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, primeira: primeira.avisos } } : {}) },
+      { status: 502 }
+    );
   }
   avaliacao.geradaEm = new Date().toISOString();
   return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
