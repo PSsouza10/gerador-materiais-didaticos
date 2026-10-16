@@ -5,6 +5,7 @@ import { aplicarRevisao } from "@/lib/revisorConteudo";
 import { auditarMaterial, resumirBateria } from "@/lib/auditoria";
 import { lerStreamMaterial } from "@/lib/sse";
 import { rotuloAno } from "@/lib/bncc";
+import BateriaAvaliacao from "@/components/BateriaAvaliacao";
 
 // Bateria de qualidade: gera de uma vez apostilas de disciplinas e anos
 // variados (só texto, sem ilustração) e confere cada uma com todas as regras
@@ -342,6 +343,7 @@ export default function BateriaQualidade() {
           })}
         </tbody>
       </table>
+      <BateriaAvaliacao admin={admin} />
     </main>
   );
 }

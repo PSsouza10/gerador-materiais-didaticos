@@ -141,7 +141,8 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
   };
 
   const corrigidos = avisos.filter((a) => a.tipo === "corrigido");
-  const conferir = avisos.filter((a) => a.tipo !== "corrigido");
+  const graves = avisos.filter((a) => a.tipo === "erro");
+  const conferir = avisos.filter((a) => a.tipo !== "corrigido" && a.tipo !== "erro");
   const letras = avaliacao ? contarLetras(avaliacao.itens) : null;
 
   return (
@@ -323,6 +324,21 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
               <p className="mb-3 text-[12px] text-slate-600">
                 {avaliacao.itens.length} questões · {avaliacao.itens.filter((it) => it.figura).length} com figura · respostas: {Object.entries(letras).map(([l, n]) => `${l} ${n}`).join(" · ")}
               </p>
+            )}
+            {graves.length > 0 && (
+              <div role="alert" className="mb-3 rounded-xl border-2 border-rose-400 bg-rose-50 px-3 py-2.5 text-[13px] text-rose-900">
+                <p className="flex items-center gap-1.5 font-extrabold">
+                  <AlertCircle className="h-4 w-4" /> Não aplique antes de corrigir
+                </p>
+                <ul className="ml-5 mt-1 list-disc">
+                  {graves.map((a, k) => (
+                    <li key={k}>
+                      <b>{a.onde}:</b> {String(a.motivo).replace(/\.$/, "")}.
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-[12px]">Essas questões saem sem letra no gabarito do professor. Gere a avaliação de novo ou corrija a questão antes de imprimir.</p>
+              </div>
             )}
             {corrigidos.length > 0 && (
               <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[12.5px] text-emerald-900">

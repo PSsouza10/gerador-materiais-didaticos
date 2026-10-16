@@ -1,5 +1,5 @@
 import React from "react";
-import { rotuloReta } from "@/lib/figuras";
+import { rotuloReta, ladosDoContorno, ladoRotulado, distancia } from "@/lib/figuras";
 
 // Desenha as figuras didáticas descritas pela IA (ver lib/figuras.js).
 // SVG/HTML simples, em tons que funcionam em impressão P&B (contorno escuro,
@@ -455,9 +455,63 @@ function Dinheiro({ f }) {
   );
 }
 
+// Figura composta pelos vértices: lados com a medida calculada pelo sistema e cotas tracejadas
+function Contorno({ f }) {
+  const xs = f.pontos.map((p) => p[0]);
+  const ys = f.pontos.map((p) => p[1]);
+  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const k = Math.min(360 / (maxX - minX || 1), 220 / (maxY - minY || 1));
+  const M = 46;
+  const P = ([x, y]) => [M + (x - minX) * k, M + (maxY - y) * k];
+  const W = (maxX - minX) * k + 2 * M;
+  const H = (maxY - minY) * k + 2 * M;
+  const pts = f.pontos.map(P);
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+  const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  const lados = ladosDoContorno(f);
+  const rot = (v) => `${fmtN(v)}${f.unidade ? ` ${f.unidade}` : ""}`;
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={f.legenda || "Figura com as medidas dos lados"}>
+      <polygon points={pts.map((p) => p.join(",")).join(" ")} fill="#f1f5f9" stroke={TRACO} strokeWidth="2.2" />
+      {f.cotas.map((c, i) => {
+        const [a, b] = [P(c.de), P(c.ate)];
+        return (
+          <g key={`c${i}`}>
+            <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={TRACO} strokeWidth="1.4" strokeDasharray="5 4" />
+            <text x={(a[0] + b[0]) / 2 + 8} y={(a[1] + b[1]) / 2 + 4} fontSize="12.5" fontWeight="700" fill={TRACO}>{rot(distancia(c.de, c.ate))}</text>
+          </g>
+        );
+      })}
+      {pts.map((a, i) => {
+        if (!ladoRotulado(lados[i])) return null;
+        const b = pts[(i + 1) % pts.length];
+        const mx = (a[0] + b[0]) / 2;
+        const my = (a[1] + b[1]) / 2;
+        // normal do lado, apontando para fora (longe do centro)
+        let nx = -(b[1] - a[1]);
+        let ny = b[0] - a[0];
+        const n = Math.hypot(nx, ny) || 1;
+        nx /= n;
+        ny /= n;
+        if ((mx - cx) * nx + (my - cy) * ny < 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+        const x = mx + nx * 16;
+        const y = my + ny * 16 + 4;
+        return (
+          <text key={i} x={x} y={y} textAnchor={nx > 0.5 ? "start" : nx < -0.5 ? "end" : "middle"} fontSize="12.5" fontWeight="700" fill={TRACO}>
+            {rot(lados[i])}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function FiguraDidatica({ figura, className = "", semLegenda = false }) {
   if (!figura) return null;
-  const Comp = { reta: Reta, fracao: Fracao, grade: Grade, tabela: Tabela, barras: Barras, linha_do_tempo: LinhaDoTempo, fluxo: Fluxo, mapa: Mapa, bloco: Bloco, poligono: Poligono, angulo: Angulo, linhas: Linhas, setores: Setores, relogio: Relogio, dinheiro: Dinheiro }[figura.tipo];
+  const Comp = { reta: Reta, fracao: Fracao, grade: Grade, tabela: Tabela, barras: Barras, linha_do_tempo: LinhaDoTempo, fluxo: Fluxo, mapa: Mapa, bloco: Bloco, poligono: Poligono, angulo: Angulo, linhas: Linhas, setores: Setores, relogio: Relogio, dinheiro: Dinheiro, contorno: Contorno }[figura.tipo];
   if (!Comp) return null;
   return (
     <figure className={`figura-didatica flex flex-col items-center ${className}`}>

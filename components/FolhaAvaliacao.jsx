@@ -109,10 +109,12 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
         </ul>
       </header>
 
-      {/* Cada questão tem 2 blocos indivisíveis: (enunciado + texto-base) e (figura + comando + alternativas).
-          Assim a questão começa onde houver espaço, mas figura e alternativas nunca se separam. */}
+      {/* Questão curta é um bloco só. Com texto-base longo, vira 2 blocos: (enunciado + texto-base) e
+          (figura + comando + alternativas): começa onde houver espaço, e figura e alternativas nunca se separam. */}
       {itens.map((it, i) => {
         const ehTabela = it.figura?.tipo === "tabela";
+        // texto-base longo pode ficar na página anterior; questão curta vai inteira (não separa o título da figura)
+        const dividir = String(it.textoBase || "").length > 220;
         const legenda = it.figura && (
           <p className="text-center text-[10.5px] text-slate-700">
             <b>{numFigura[i]}</b>
@@ -120,8 +122,8 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
           </p>
         );
         return (
-          <div key={i} className="questao mt-4 border-t border-slate-300 pt-3">
-            <div className="bloco-exercicio">
+          <div key={i} className={`questao mt-4 border-t border-slate-300 pt-3 ${dividir ? "" : "bloco-exercicio"}`}>
+            <div className={dividir ? "bloco-exercicio" : ""}>
               <p className="text-[11.5px] font-extrabold uppercase tracking-wider text-slate-900">Questão {dois(i + 1)}</p>
               {it.textoBase && (
                 <p className="mt-1.5 text-[12.5px]">
@@ -129,7 +131,7 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
                 </p>
               )}
             </div>
-            <div className="bloco-exercicio">
+            <div className={dividir ? "bloco-exercicio" : ""}>
               {it.figura && (
                 <div className="mt-2.5 flex flex-col items-center">
                   {/* tabela: título ACIMA (ABNT); figura: legenda abaixo */}
@@ -177,7 +179,7 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
                 {itens.map((it, i) => (
                   <tr key={i}>
                     <td className="border border-slate-300 px-2 py-1 font-bold">{dois(i + 1)}</td>
-                    <td className="border border-slate-300 px-2 py-1 text-center font-extrabold">{it.correta || "—"}</td>
+                    <td className={`border border-slate-300 px-2 py-1 text-center font-extrabold ${it.semGabarito ? "text-rose-700" : ""}`}>{it.correta || (it.semGabarito ? "REVISAR" : "—")}</td>
                     <td className="border border-slate-300 px-2 py-1 font-mono text-[10.5px]">{(it.habilidades?.length ? it.habilidades : [it.habilidade]).filter(Boolean).map((h) => h.codigo).join(" · ") || "—"}</td>
                     <td className="border border-slate-300 px-2 py-1"><Tx>{it.descritor || "—"}</Tx></td>
                     <td className="border border-slate-300 px-2 py-1">{ROTULO_DIFICULDADE[it.dificuldade] || "—"}</td>
@@ -202,6 +204,7 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
             <section key={`r${i}`} className="bloco-exercicio mt-3 rounded-xl border border-slate-200 px-4 py-3 text-[12px]">
               <p className="font-extrabold text-slate-900">
                 Questão {dois(i + 1)} · resposta {it.correta || "—"}
+                {it.semGabarito && <span className="ml-2 rounded bg-rose-100 px-1.5 py-0.5 text-[11px] font-extrabold text-rose-800">SEM GABARITO: nenhuma alternativa tem o resultado correto. Revise antes de aplicar.</span>}
               </p>
               {it.figura && it.leituraFigura && (
                 <p className="mt-1">

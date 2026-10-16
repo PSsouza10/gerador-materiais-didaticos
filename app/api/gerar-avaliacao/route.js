@@ -6,19 +6,20 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
-import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao } from "@/lib/avaliacao";
+import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, aplicarRefeitos, finalizarAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 180; // geração + 2ª tentativa das questões com erro
 
 const BNCC = indexar(bnccDados.habilidades);
 const SISTEMA =
   "Você é elaborador de itens de avaliações externas (Prova Paulista, SARESP, SAEB), especialista na BNCC e no Currículo Paulista. Escreve itens de múltipla escolha corretos, claros e com distratores baseados em erros reais dos alunos. Responda em português do Brasil, só com JSON válido.";
 
 async function postRota(request, _contexto, requestId) {
+  const t0 = Date.now();
   if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
@@ -77,8 +78,34 @@ async function postRota(request, _contexto, requestId) {
     return NextResponse.json({ error: mensagemFalhaPlano(falhas).replace("gerar o plano", "gerar a avaliação") }, { status: 502 });
   }
 
-  const normal = normalizarAvaliacao(r.json, d, oficial, (c) => resolverCodigo(BNCC, c));
-  const { avaliacao, avisos } = conferirAvaliacao(normal);
+  const resolver = (c) => resolverCodigo(BNCC, c);
+  // 1ª conferência: contas refeitas pelo sistema, gabarito, explicações, figuras
+  const primeira = conferirAvaliacao(normalizarAvaliacao(r.json, d, oficial, resolver));
+  let atual = primeira.avaliacao;
+  const corrigidos = primeira.avisos.filter((a) => a.tipo === "corrigido");
+  // 2ª tentativa (uma só): a IA refaz SÓ as questões com problema, com a lista do que corrigir
+  let refeitas = [];
+  const indices = itensParaRefazer(atual);
+  if (indices.length && Date.now() - t0 < 110_000) { // sobra tempo para a 2ª chamada dentro dos 180 s
+    const sistemaRef = "Você é revisor de itens de avaliações externas (Prova Paulista, SARESP). Corrige questões de múltipla escolha com rigor matemático. Responda em português do Brasil, só com JSON válido.";
+    const promptRef = montarPromptRefazer(atual, indices, d);
+    const rr = temOpenAI() ? await openaiJson({ sistema: sistemaRef, prompt: promptRef, modelo, temperatura: 0.2 }) : await geminiJson({ sistema: sistemaRef, prompt: promptRef, temperatura: 0.2 });
+    if (rr.ok) {
+      const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
+      atual = ap.avaliacao;
+      refeitas = ap.trocados;
+    } else console.error("Avaliação: 2ª tentativa falhou", { request_id: requestId, status: rr.status, erro: rr.erro });
+  }
+  // final: espalha o gabarito e confere de novo (avisos do que ainda precisa do professor)
+  const fim = finalizarAvaliacao(atual);
+  const avaliacao = { ...fim.avaliacao, itens: fim.avaliacao.itens.map(({ problemas, ...it }) => it) };
+  const chave = (a) => `${a.onde}|${a.motivo}`;
+  const vistos = new Set(fim.avisos.map(chave));
+  const avisos = [
+    ...corrigidos.filter((a) => !vistos.has(chave(a)) && !refeitas.includes(Number(String(a.onde).replace(/\D/g, "")))),
+    ...refeitas.map((n) => ({ onde: `Item ${n}`, motivo: "a questão tinha erro de conta ou de gabarito e foi refeita automaticamente.", tipo: "corrigido", trecho: "" })),
+    ...fim.avisos,
+  ];
   if (avaliacao.itens.length < Math.min(3, d.itens)) {
     await devolverGeracao(usuario.email, requestId);
     return NextResponse.json({ error: "A IA devolveu uma avaliação incompleta. Tente gerar de novo." }, { status: 502 });

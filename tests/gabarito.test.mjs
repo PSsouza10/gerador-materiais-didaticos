@@ -100,3 +100,11 @@ test("conversão de unidade depois do cálculo não é erro (10^3 g = 1000 g = 1
   const errada = conferirExercicio({ enunciado: "Calcule 3^4.", alternativas: [], resolucao: "3^4 = 12", resposta: "12" }, 1);
   assert.equal(errada.avisos.length, 1); // erro de verdade continua apontado
 });
+
+test("unidade com expoente (m², cm³) não impede ler o resultado da resolução", async () => {
+  const { valorNumerico, resultadoFinal } = await import("../lib/gabarito.js");
+  assert.equal(valorNumerico("57,5 m²"), 57.5);
+  assert.equal(valorNumerico("6 000 cm³"), 6000);
+  assert.equal(valorNumerico("5²"), 25, "potência de número continua potência");
+  assert.equal(resultadoFinal("50 + 7,5 = 57,5 m². Portanto, 57,5 m²."), 57.5);
+});

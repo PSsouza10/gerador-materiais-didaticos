@@ -102,7 +102,7 @@ test("conferência: letra errada é corrigida pela resolução e o distrator que
   const aq = avaliacao.itens[2];
   assert.equal(aq.correta, "C", "60 litros é a C (a IA marcou B)");
   assert.ok(avisos.some((a) => a.onde === "Item 3" && a.tipo === "corrigido"));
-  assert.ok(!avisos.some((a) => a.onde === "Item 3" && /falta a análise/.test(a.motivo)), "B, A e D têm análise");
+  assert.ok(!avisos.some((a) => a.onde === "Item 3" && /falta explicar/.test(a.motivo)), "B, A e D têm análise");
   assert.equal(aq.figura.tipo, "tabela");
   assert.equal(aq.distratores.C, undefined, "a correta não tem análise de distrator");
   assert.ok(aq.distratores.B, "a antiga marcada mantém a explicação do erro");
@@ -117,7 +117,7 @@ test("conferência: avisos de formato fora do padrão", () => {
   assert.match(m, /negativa/);
   assert.match(m, /gráfico|figura/);
   assert.match(m, /não foi localizada/);
-  assert.match(m, /falta a análise do distrator B, C/);
+  assert.match(m, /falta explicar o erro que leva à alternativa "1"/);
   const geral = conferirAvaliacao({ itens: Array.from({ length: 6 }, () => ({ alternativas: ["a1", "b1", "c1", "d1"], correta: "D", comando: "?", textoBase: "", distratores: { A: "1", B: "2", C: "3" }, resolucao: "" })) });
   assert.ok(geral.avisos.some((a) => a.onde === "Gabarito"));
 });
@@ -210,4 +210,90 @@ test("até 2 habilidades por questão (a 2ª entra na matriz); código inválido
   const d = validarPedidoAvaliacao({ ...base, itens: 5 }).dados;
   const prova = normalizarAvaliacao(AVALIACAO_SIMULADA, d, OFICIAL, (c) => ({ c }));
   assert.deepEqual(prova.itens[4].habilidades.map((h) => h.codigo), ["EF07MA30", "EF07MA36"], "gráfico de linhas também cobra estatística");
+});
+
+// ---------- Contas refeitas pelo sistema (caso real de 16/10: "Área de retângulos…") ----------
+import { contasDoTexto } from "../lib/contaTexto.js";
+import { itensParaRefazer, aplicarRefeitos, finalizarAvaliacao, esperadoDaFigura, montarPromptRefazer } from "../lib/avaliacao.js";
+import { AVALIACAO_AREA_SIMULADA, AREA_REFEITOS_SIMULADOS } from "../lib/iaSimulada.js";
+import { geometriaDaFigura } from "../lib/figuras.js";
+
+test("o sistema refaz as contas: m² não atrapalha, conta errada é apontada", () => {
+  const r = contasDoTexto("Retângulo: 10 × 5 = 50 m²; triângulo: (5 × 3) ÷ 2 = 7,5 m²; 50 + 7,5 = 57,5 m². Portanto, 57,5 m².");
+  assert.equal(r.final, 57.5);
+  assert.equal(r.erradas.length, 0);
+  const e = contasDoTexto("Calculou o perímetro: 6 × 4 + 4 × 2 = 40.");
+  assert.equal(e.final, 32);
+  assert.equal(e.erradas[0].escrito, 40);
+  assert.equal(contasDoTexto("3 m³ = 3 000 litros").contas.length, 0, "conversão não é conta");
+  assert.equal(contasDoTexto("Usou 2 x 3 = 6").final, 6);
+});
+
+test("figura composta: área calculada pelo sistema (fachada 65 m², jardim em L 33 m²)", () => {
+  const casa = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [10, 0], [10, 5], [5, 8], [0, 5]], cotas: [{ de: [5, 5], ate: [5, 8] }] });
+  assert.equal(geometriaDaFigura(casa).area, 65);
+  const L = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [8, 0], [8, 3], [3, 3], [3, 6], [0, 6]] });
+  assert.deepEqual(geometriaDaFigura(L), { area: 33, perimetro: 28 });
+  assert.equal(normalizarFigura({ tipo: "contorno", pontos: [[0, 0], [1, 1], [2, 2]] }), null, "pontos alinhados não formam figura");
+  const it = { figura: casa, comando: "Qual é a área total da fachada?", alternativas: ["30 m²", "50 m²", "65 m²", "80 m²"] };
+  assert.deepEqual(esperadoDaFigura(it), { grandeza: "área", valor: 65 });
+});
+
+test("caso real: gabarito impossível vira SEM GABARITO, explicações erradas e figura composta pedem refazer", () => {
+  const d = validarPedidoAvaliacao({ ...base, tema: "Área de retângulos, quadrados e triângulos", bncc: "", itens: 5 }).dados;
+  const r = (c) => ({ c });
+  const p1 = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_AREA_SIMULADA, d, null, r));
+  const q4 = p1.avaliacao.itens[3];
+  assert.equal(q4.correta, null, "57,5 não está entre 65, 75, 80 e 85");
+  assert.equal(q4.semGabarito, true);
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 4" && a.tipo === "erro" && /SEM GABARITO/.test(a.motivo)));
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 4" && /composta/.test(a.motivo)));
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 2" && /4 × 6 dá 24, não 20/.test(a.motivo)));
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 2" && /usa 12/.test(a.motivo)), "multiplicar por 12 é erro inventado");
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 5" && /6 × 4 \+ 4 × 2 dá 32, não 40/.test(a.motivo)));
+  assert.ok(p1.avisos.some((a) => a.onde === "Item 3" && /também estão no texto/.test(a.motivo)));
+  assert.deepEqual(itensParaRefazer(p1.avaliacao), [1, 2, 3, 4]);
+  assert.match(montarPromptRefazer(p1.avaliacao, [3], d), /nenhuma alternativa tem esse valor/);
+  const ap = aplicarRefeitos(p1.avaliacao, AREA_REFEITOS_SIMULADOS, r);
+  assert.deepEqual(ap.trocados, [2, 3, 4, 5]);
+  const f = finalizarAvaliacao(ap.avaliacao);
+  assert.deepEqual(f.avisos, [], JSON.stringify(f.avisos));
+  const q4b = f.avaliacao.itens[3];
+  assert.equal(q4b.alternativas["ABCD".indexOf(q4b.correta)], "65 m²");
+  assert.equal(q4b.figura.tipo, "contorno");
+  assert.ok(Math.max(...Object.values(contarLetras(f.avaliacao.itens))) <= 2, "gabarito espalhado");
+  for (const it of f.avaliacao.itens) assert.ok(!it.semGabarito);
+});
+
+test("2ª tentativa que não melhora mantém a questão marcada sem gabarito", () => {
+  const d = validarPedidoAvaliacao({ ...base, tema: "Área", bncc: "", itens: 5 }).dados;
+  const p1 = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_AREA_SIMULADA, d, null, (c) => ({ c })));
+  const ruim = { itensRefeitos: [{ numero: 4, ...AVALIACAO_AREA_SIMULADA.itens[3] }] };
+  const ap = aplicarRefeitos(p1.avaliacao, ruim, (c) => ({ c }));
+  assert.deepEqual(ap.trocados, []);
+  const f = finalizarAvaliacao(ap.avaliacao);
+  assert.equal(f.avaliacao.itens[3].semGabarito, true);
+  assert.ok(f.avisos.some((a) => a.tipo === "erro" && a.onde === "Item 4"));
+});
+
+test("figura sem nome ganha nome padrão; 'Figura 1 –' escrito pela IA é tirado", () => {
+  const a = normalizarItem({ comando: "?", figura: { tipo: "poligono", forma: "retangulo", base: 8, altura: 5, legenda: "" } });
+  assert.equal(a.figura.legenda, "Retângulo com as medidas");
+  const b = normalizarItem({ comando: "?", figura: { tipo: "barras", itens: [{ rotulo: "a", valor: 1 }], legenda: "Figura 2 – Chuva em março" } });
+  assert.equal(b.figura.legenda, "Chuva em março");
+});
+
+test("bateria da Avaliação: 7 casos e critério de publicação", async () => {
+  const { CASOS_AVALIACAO, auditarAvaliacao, resumirBateriaAvaliacao } = await import("../lib/bateriaAvaliacao.js");
+  assert.equal(CASOS_AVALIACAO.length, 7);
+  assert.equal(CASOS_AVALIACAO.filter((c) => c.disciplina === "Matemática").length, 5);
+  const d = validarPedidoAvaliacao({ ...base, tema: "Área", bncc: "", itens: 5 }).dados;
+  const ruim = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_AREA_SIMULADA, d, null, (c) => ({ c }))).avaliacao;
+  const a = auditarAvaliacao(ruim);
+  assert.deepEqual(a.semGabarito, [4]);
+  assert.ok(a.contasErradas.length >= 2);
+  assert.equal(a.aprovado, false);
+  const bom = finalizarAvaliacao(aplicarRefeitos(ruim, AREA_REFEITOS_SIMULADOS, (c) => ({ c })).avaliacao).avaliacao;
+  assert.equal(auditarAvaliacao(bom).aprovado, true);
+  assert.equal(resumirBateriaAvaliacao([{ auditoria: auditarAvaliacao(bom) }]).liberado, true);
 });
