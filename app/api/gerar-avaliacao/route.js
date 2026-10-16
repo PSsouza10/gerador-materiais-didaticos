@@ -86,6 +86,7 @@ async function postRota(request, _contexto, requestId) {
   // Questão com problema NÃO é entregue com aviso: é refeita (até 2 vezes); se ainda falhar,
   // a IA escreve uma questão nova no lugar; se nem assim passar, a questão sai da prova.
   const refeitas = new Set();
+  const diagRodadas = []; // só para o administrador: o que cada rodada pediu e conseguiu
   const sistemaRef = "Você é revisor de itens de avaliações externas (Prova Paulista, SARESP). Corrige questões de múltipla escolha com rigor matemático. Responda em português do Brasil, só com JSON válido.";
   const rodadas = [montarPromptRefazer, montarPromptRefazer, montarPromptTrocar];
   for (const [k, montar] of rodadas.entries()) {
@@ -99,9 +100,11 @@ async function postRota(request, _contexto, requestId) {
     const rr = temOpenAI() ? await openaiJson({ sistema: sistemaRef, prompt, modelo, temperatura: k === 2 ? 0.5 : 0.2 }) : await geminiJson({ sistema: sistemaRef, prompt, temperatura: k === 2 ? 0.5 : 0.2 });
     if (!rr.ok) {
       console.error("Avaliação: rodada de correção falhou", { request_id: requestId, rodada: k + 1, status: rr.status, erro: rr.erro });
+      diagRodadas.push({ rodada: k + 1, erro: `${rr.status} ${rr.erro}`.slice(0, 200) });
       continue;
     }
     const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
+    diagRodadas.push({ rodada: k + 1, pedidas: indices.map((i) => i + 1), devolvidas: (rr.json?.itensRefeitos || []).length, aceitas: ap.trocados, ms: Date.now() - t0 });
     atual = ap.avaliacao;
     ap.trocados.forEach((n) => refeitas.add(n));
   }
@@ -123,12 +126,12 @@ async function postRota(request, _contexto, requestId) {
     await devolverGeracao(usuario.email, requestId);
     console.error("Avaliação: questões retiradas demais", { request_id: requestId, retiradas: ret.retiradas });
     return NextResponse.json(
-      { error: "Não foi possível montar uma avaliação com questões conferidas. Tente gerar de novo.", ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, primeira: primeira.avisos } } : {}) },
+      { error: "Não foi possível montar uma avaliação com questões conferidas. Tente gerar de novo.", ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, primeira: primeira.avisos, rodadas: diagRodadas } } : {}) },
       { status: 502 }
     );
   }
   avaliacao.geradaEm = new Date().toISOString();
-  return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
+  return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
 }
 
 export const POST = comRequestId("/api/gerar-avaliacao", postRota);
