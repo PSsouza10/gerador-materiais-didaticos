@@ -475,3 +475,48 @@ test("resolução às cegas: discordância vira problema; concordância e falta 
   assert.match(blocoEspecialista("Inglês"), /falso cognato/);
   assert.equal(blocoEspecialista("Matemática"), "");
 });
+
+test("conferência: fora do tema, enunciado que entrega a resposta, explicação de outra letra", async () => {
+  const { conferirTema, conferirItem, categoriaDoTema, enunciadoEntregaResposta, explicacoesDeOutraLetra } = await import("../lib/avaliacao.js");
+  assert.equal(categoriaDoTema("Equações do 1º grau"), "equacao");
+  const volume = { textoBase: "Uma caixa tem 30 cm, 20 cm e 10 cm.", comando: "Qual é o volume da caixa?", alternativas: ["60 cm³", "600 cm³", "6 000 cm³", "60 000 cm³"], correta: "C", resolucao: "30 × 20 × 10 = 6000. Portanto, 6 000 cm³.", habilidades: [{ codigo: "EF07MA30" }] };
+  assert.ok(conferirTema(volume, { tema: "Equações do 1º grau" }).some((p) => /fora do tema/.test(p)), "volume numa prova de equações");
+  assert.deepEqual(conferirTema(volume, { tema: "Volume de blocos retangulares" }), []);
+  assert.ok(conferirTema(volume, { tema: "Volume de blocos retangulares" }, "EF07MA32").some((p) => /habilidade EF07MA32/.test(p)));
+  const eq = { textoBase: "Pensei em um número x.", comando: "Se x + 5 = 12, qual é o valor de x?", alternativas: ["5", "7", "12", "17"], correta: "B", resolucao: "x = 12 − 5 = 7." };
+  assert.deepEqual(conferirTema(eq, { tema: "Equações do 1º grau" }), []);
+  assert.ok(conferirTema({ ...volume, correta: "C" }, { tema: "Área de retângulos" }).length, "volume numa prova de área");
+
+  // enunciado com a resposta
+  const entrega = { ...volume, textoBase: "Uma caixa de 30 cm, 20 cm e 10 cm tem 6 000 cm³ de volume." };
+  assert.ok(enunciadoEntregaResposta(entrega));
+  assert.equal(enunciadoEntregaResposta(volume), null);
+  assert.ok(conferirItem({ ...entrega, distratores: { A: "Somou: 30 + 20 + 10 = 60.", B: "Errou um zero: 30 × 20 = 600.", D: "Multiplicou por 10 a mais: 6000 × 10 = 60000." } }, 1).item.problemas.some((p) => /já traz a resposta/.test(p)));
+  // complemento de 45°: 45 é dado da conta, não é entregar a resposta
+  assert.equal(enunciadoEntregaResposta({ textoBase: "Um ângulo mede 45°.", comando: "Qual é o complemento?", alternativas: ["45°", "55°", "135°", "315°"], correta: "A", resolucao: "90 − 45 = 45." }), null);
+
+  // explicação que fala de outra letra
+  const txt = { comando: "Qual mudança de estado acontece quando a roupa seca no varal?", alternativas: ["condensação", "evaporação", "fusão", "solidificação"], correta: "B", distratores: { A: "Confundiu com a fusão, que é a passagem do sólido para o líquido.", C: "Fusão é a passagem do sólido para o líquido, não o que ocorre no varal.", D: "Solidificação é do líquido para o sólido." } };
+  const m = explicacoesDeOutraLetra(txt);
+  assert.equal(m.length, 1);
+  assert.match(m[0], /alternativa A descreve a alternativa C/);
+  assert.match(explicacoesDeOutraLetra({ ...txt, distratores: { ...txt.distratores, A: "Quem marca a letra D pensa no gelo." } })[0], /fala da alternativa D/);
+});
+
+test("reposição: completa o número pedido e cumpre a cota de figuras", async () => {
+  const { aceitarReposicao, figurasQueFaltam, montarPromptRepor } = await import("../lib/avaliacao.js");
+  const ok = (comando, figura = null) => ({ comando, textoBase: "", alternativas: ["a1", "b2", "c3", "d4"], correta: "A", figura, problemas: [] });
+  const av = { itens: [ok("q1"), ok("q2"), ok("q3")] };
+  const d = { itens: 5, figuras: 40, tema: "Gráficos" };
+  assert.equal(figurasQueFaltam(av, d), 2);
+  assert.match(montarPromptRepor(av, 2, d), /pelo menos 3 das questões novas TÊM "figura"/);
+  // sem figura não entra enquanto a cota não fecha
+  const r1 = aceitarReposicao(av, [ok("n1"), ok("n2")], d);
+  assert.equal(r1.avaliacao.itens.length, 3);
+  const g = { tipo: "barras", itens: [] };
+  const r2 = aceitarReposicao(av, [ok("n1"), { ...ok("ruim", g), problemas: ["x"] }, ok("n2", g), ok("n3", g)], d);
+  assert.equal(r2.avaliacao.itens.length, 5);
+  assert.equal(figurasQueFaltam(r2.avaliacao, d), 0);
+  // repetida não entra
+  assert.equal(aceitarReposicao(av, [ok("q1", g)], d).avaliacao.itens.length, 3);
+});

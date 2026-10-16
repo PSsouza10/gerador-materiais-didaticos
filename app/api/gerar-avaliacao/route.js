@@ -9,7 +9,7 @@ import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
 import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao, repararAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 import { questaoDoSistema } from "@/lib/questoesSistema";
-import { conferirItem, montarPromptResolucaoCega, aplicarResolucaoCega } from "@/lib/avaliacao";
+import { conferirItem, montarPromptResolucaoCega, aplicarResolucaoCega, conferirTemaDaProva, montarPromptRevisaoItens, aplicarRevisaoItens, montarPromptRepor, candidatosDeReposicao, aceitarReposicao, figurasQueFaltam } from "@/lib/avaliacao";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
@@ -19,6 +19,7 @@ export const maxDuration = 300; // geração + até 3 rodadas de correção das 
 const BNCC = indexar(bnccDados.habilidades);
 // Modelos que o administrador pode escolher na bateria (comparação antes de deixar fixo)
 const MODELOS_PERMITIDOS = ["gpt-4o", "gpt-4.1", "gpt-4.1-mini", "o4-mini", "o3", "gpt-5", "gpt-5-mini"];
+const SISTEMA_REVISOR = "Você é revisor de avaliações externas (Prova Paulista, SARESP, SAEB): confere se cada questão avalia o tema e a habilidade pedidos, se o enunciado não entrega a resposta e se as explicações dos erros batem com cada alternativa. Responda em português do Brasil, só com JSON válido.";
 const SISTEMA_CEGO = "Você é professor experiente e resolve questões de múltipla escolha com rigor, sem gabarito. Responda em português do Brasil, só com JSON válido.";
 const SISTEMA =
   "Você é elaborador de itens de avaliações externas (Prova Paulista, SARESP, SAEB), especialista na BNCC e no Currículo Paulista. Escreve itens de múltipla escolha corretos, claros e com distratores baseados em erros reais dos alunos. Responda em português do Brasil, só com JSON válido.";
@@ -110,19 +111,36 @@ async function postRota(request, _contexto, requestId) {
     rp.reparadas.forEach((n) => refeitas.add(n));
     if (rp.reparadas.length) diagRodadas.push({ reparoDoSistema: rp.reparadas });
   };
-  // Resolução às cegas: o Gemini resolve as questões SEM ver o gabarito; discordou → a questão é refeita (ou sai)
-  const resolverAsCegas = async (indices, etapa) => {
-    if (!temGemini() || !indices.length || Date.now() - t0 > 220_000) return;
-    const rc = await geminiJson({ sistema: SISTEMA_CEGO, prompt: montarPromptResolucaoCega(atual, indices), temperatura: 0 });
-    if (!rc.ok) {
-      console.error("Avaliação: resolução às cegas falhou", { request_id: requestId, etapa, status: rc.status, erro: rc.erro });
-      diagRodadas.push({ cega: etapa, erro: `${rc.status} ${rc.erro}`.slice(0, 200) });
-      return;
-    }
-    const ap = aplicarResolucaoCega(atual, rc.json, indices);
-    atual = ap.avaliacao;
-    diagRodadas.push({ cega: etapa, conferidas: indices.map((i) => i + 1), discordantes: ap.discordantes });
+  // 2ª IA (Gemini), em paralelo: (1) resolve SEM ver o gabarito; (2) revisa com o gabarito se a questão
+  // está no tema/habilidade, se o enunciado entrega a resposta e se cada explicação descreve a sua letra.
+  // Qualquer problema → a questão é refeita (ou sai e é reposta).
+  const habilidadeTexto = oficial ? `${oficial.c} — ${oficial.t}` : d.bncc || "";
+  const revisarComGemini = async (av, indices, etapa) => {
+    if (!temGemini() || !indices.length || Date.now() - t0 > 255_000) return av;
+    const [rc, rv] = await Promise.all([
+      geminiJson({ sistema: SISTEMA_CEGO, prompt: montarPromptResolucaoCega(av, indices), temperatura: 0 }),
+      geminiJson({ sistema: SISTEMA_REVISOR, prompt: montarPromptRevisaoItens(av, indices, d, habilidadeTexto), temperatura: 0 }),
+    ]);
+    const diag = { gemini: etapa, conferidas: indices.map((i) => i + 1) };
+    if (rc.ok) {
+      const ap = aplicarResolucaoCega(av, rc.json, indices);
+      av = ap.avaliacao;
+      diag.discordantes = ap.discordantes;
+    } else diag.erroCega = `${rc.status} ${rc.erro}`.slice(0, 160);
+    if (rv.ok) {
+      const ap = aplicarRevisaoItens(av, rv.json, indices);
+      av = ap.avaliacao;
+      diag.revisaoApontou = ap.marcadas;
+    } else diag.erroRevisao = `${rv.status} ${rv.erro}`.slice(0, 160);
+    if (!rc.ok || !rv.ok) console.error("Avaliação: revisão do Gemini falhou", { request_id: requestId, etapa, cega: rc.status, revisao: rv.status });
+    diagRodadas.push(diag);
+    return av;
   };
+  const resolverAsCegas = async (indices, etapa) => {
+    atual = await revisarComGemini(atual, indices, etapa);
+  };
+  const temaCodigo = oficial?.c || null;
+  atual = conferirTemaDaProva(atual, d, temaCodigo); // fora do tema/habilidade → refazer
   const semProblema = () => atual.itens.map((it, i) => (!it.problemas?.length && it.correta && !it.semGabarito && !it.doSistema ? i : -1)).filter((i) => i >= 0);
   reparar(); // primeiro o sistema conserta o que consegue sozinho (alternativas erradas típicas)
   await resolverAsCegas(semProblema(), "primeira");
@@ -142,7 +160,7 @@ async function postRota(request, _contexto, requestId) {
     }
     const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
     diagRodadas.push({ rodada: k + 1, pedidas: indices.map((i) => i + 1), devolvidas: (rr.json?.itensRefeitos || []).length, aceitas: ap.trocados, ms: Date.now() - t0 });
-    atual = ap.avaliacao;
+    atual = conferirTemaDaProva(ap.avaliacao, d, temaCodigo);
     ap.trocados.forEach((n) => refeitas.add(n));
   }
   reparar(); // e de novo depois da IA, antes de retirar alguma questão
@@ -165,6 +183,40 @@ async function postRota(request, _contexto, requestId) {
   if (montadas.length) diagRodadas.push({ montadasPeloSistema: montadas });
   const ret = retirarComProblema(atual);
   atual = ret.avaliacao;
+  // REPOSIÇÃO: a prova chega sempre com o número de questões pedido. A IA escreve questões novas,
+  // que passam pela mesma conferência (sistema + Gemini) e respeitam a cota de figuras.
+  const repostas = [];
+  for (let tentativa = 1; atual.itens.length < d.itens && tentativa <= 2 && Date.now() - t0 < 235_000; tentativa++) {
+    const faltam = d.itens - atual.itens.length;
+    const pr = montarPromptRepor(atual, faltam, d);
+    const rn = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt: pr, modelo, temperatura: 0.5 }) : await geminiJson({ sistema: SISTEMA, prompt: pr, temperatura: 0.5 });
+    if (!rn.ok) {
+      diagRodadas.push({ reposicao: tentativa, erro: `${rn.status} ${rn.erro}`.slice(0, 160) });
+      continue;
+    }
+    const cands = candidatosDeReposicao(atual, rn.json, d, resolver, oficial);
+    let tmp = repararAvaliacao({ ...atual, itens: [...atual.itens, ...cands] }).avaliacao;
+    const base = atual.itens.length;
+    const limpos = tmp.itens.map((it, i) => (i >= base && !it.problemas?.length && it.correta && !it.semGabarito ? i : -1)).filter((i) => i >= 0);
+    tmp = await revisarComGemini(tmp, limpos, `reposição ${tentativa}`);
+    const ac = aceitarReposicao(atual, tmp.itens.slice(base), d);
+    atual = ac.avaliacao;
+    repostas.push(...ac.aceitas);
+    diagRodadas.push({ reposicao: tentativa, faltavam: faltam, recebidas: cands.length, aceitas: ac.aceitas, problemas: tmp.itens.slice(base).map((it) => (it.problemas || [])[0] || null), ms: Date.now() - t0 });
+  }
+  // última reposição (Matemática: área, perímetro, volume, gráficos, ângulos): questão montada pelo sistema
+  for (let k = 0; atual.itens.length < d.itens && k < d.itens * 2; k++) {
+    const sys = questaoDoSistema(d, atual.itens.length + k, { habilidades: oficial ? [{ codigo: oficial.c, verificada: true }] : atual.itens[0]?.habilidades || [], dificuldade: ["facil", "media", "dificil"][(atual.itens.length + k) % 3] });
+    if (!sys) break;
+    const conf = conferirItem(sys, atual.itens.length + 1).item;
+    if (conf.problemas?.length || !conf.correta) continue;
+    if (atual.itens.some((x) => x.comando === conf.comando && JSON.stringify(x.figura) === JSON.stringify(conf.figura))) continue;
+    atual = { ...atual, itens: [...atual.itens, conf] };
+    repostas.push(atual.itens.length);
+    montadas.push(atual.itens.length);
+  }
+  if (repostas.length) diagRodadas.push({ repostas });
+  const figurasFaltando = figurasQueFaltam(atual, d);
   // final: espalha o gabarito e confere de novo (avisos do que ainda precisa do professor)
   const fim = finalizarAvaliacao(atual);
   const avaliacao = { ...fim.avaliacao, itens: fim.avaliacao.itens.map(({ problemas, ...it }) => it) };
@@ -175,7 +227,9 @@ async function postRota(request, _contexto, requestId) {
     ...(ret.retiradas.length ? [] : corrigidos.filter((a) => !vistos.has(chave(a)) && !refeitas.has(Number(String(a.onde).replace(/\D/g, ""))))),
     ...(refeitas.size ? [{ onde: "Correção automática", motivo: `${refeitas.size} questão(ões) tinham erro de conta, gabarito ou figura e foram refeitas antes de chegar a você.`, tipo: "corrigido", trecho: "" }] : []),
     ...(montadas.length ? [{ onde: "Questões do sistema", motivo: `${montadas.length} questão(ões) foram montadas pelo próprio EduGera (figura, conta e alternativas calculadas), no lugar de questões da IA que não passaram na conferência.`, tipo: "corrigido", trecho: "" }] : []),
-    ...(ret.retiradas.length ? [{ onde: "Questões retiradas", motivo: `${ret.retiradas.length} questão(ões) não passaram na conferência mesmo depois de refeitas e foram retiradas; a prova ficou com ${atual.itens.length} questões. Gere de novo se precisar de mais.`, tipo: "conferir", trecho: "" }] : []),
+    ...(ret.retiradas.length && atual.itens.length >= d.itens ? [{ onde: "Questões substituídas", motivo: `${ret.retiradas.length} questão(ões) não passaram na conferência e foram trocadas por questões novas, conferidas do mesmo jeito.`, tipo: "corrigido", trecho: "" }] : []),
+    ...(atual.itens.length < d.itens ? [{ onde: "Questões retiradas", motivo: `Não foi possível completar ${d.itens} questões conferidas a tempo; a prova ficou com ${atual.itens.length}. Gere de novo se precisar de mais.`, tipo: "conferir", trecho: "" }] : []),
+    ...(figurasFaltando ? [{ onde: "Figuras", motivo: `faltaram ${figurasFaltando} questão(ões) com figura para cumprir a cota pedida.`, tipo: "conferir", trecho: "" }] : []),
     ...fim.avisos,
   ];
   if (avaliacao.itens.length < Math.min(3, d.itens)) {

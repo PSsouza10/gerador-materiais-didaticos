@@ -154,10 +154,6 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
         <p className="mb-5 text-sm text-slate-600">
           Questões de múltipla escolha como as da Prova Paulista e do SARESP: texto-base, 4 alternativas, habilidade da BNCC e o que cada questão avalia. A versão do professor traz o gabarito, a resolução e o erro por trás de cada alternativa errada. Usa 1 geração do seu plano.
         </p>
-        <p role="note" className="mb-5 flex items-start gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 px-3 py-2.5 text-[13px] font-semibold text-amber-950">
-          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-          Versão em teste: confira o gabarito de cada questão antes de aplicar.
-        </p>
         <fieldset className="mb-5">
           <legend className="mb-2 text-xs font-bold text-slate-600">A avaliação parte de:</legend>
           <div className="grid grid-cols-2 gap-2">
