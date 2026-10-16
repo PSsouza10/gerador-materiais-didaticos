@@ -319,3 +319,35 @@ test("regras de 16/10 (tarde): figura × texto não muda gabarito; contorno sem 
   const c = conferirItem({ ...base1, figura: casaSemCota, comando: "Qual é a área?", alternativas: ["50 m²", "65 m²", "80 m²", "30 m²"], correta: "B", resolucao: "10 × 5 = 50; (10 × 3) ÷ 2 = 15; 50 + 15 = 65." }, 1);
   assert.match(c.item.problemas.join(" "), /lado sem medida/);
 });
+
+test("regras de 16/10 (fim da tarde): valor com unidade/fração não apaga gabarito; contorno cruzado; explicação sem '='; unidade", async () => {
+  const { numeroDaAlternativa, unidadeDaAlternativa } = await import("../lib/avaliacao.js");
+  const { valorAlcancado } = await import("../lib/contaTexto.js");
+  assert.equal(numeroDaAlternativa("26°C"), 26);
+  assert.equal(numeroDaAlternativa("26 °C"), 26);
+  assert.equal(numeroDaAlternativa("9/10 do bolo"), 0.9);
+  assert.equal(numeroDaAlternativa("1 1/2"), 1.5);
+  assert.equal(numeroDaAlternativa("2 h 30 min"), null);
+  // temperatura: resolução 31 − 5 = 26, alternativa "26°C" (sem espaço) — gabarito mantido
+  const temp = conferirItem({ comando: "Qual foi a temperatura mínima?", textoBase: "A máxima foi 31 °C e caiu 5 °C.", alternativas: ["24 °C", "26°C", "31 °C", "36 °C"], correta: "B", resolucao: "31 − 5 = 26. Portanto, 26 °C.", distratores: { A: "Tirou 7: 31 − 7 = 24.", C: "Leu só a máxima.", D: "Somou: 31 + 5 = 36." }, habilidades: [] }, 1);
+  assert.equal(temp.item.correta, "B");
+  assert.equal(temp.item.semGabarito, false);
+  // fração: 3/10 + 6/10 = 9/10
+  const fr = conferirItem({ comando: "Que fração do bolo foi comida?", textoBase: "Ana comeu 3/10 e Bia 6/10.", alternativas: ["3/10", "6/10", "9/10", "9/20"], correta: "C", resolucao: "3/10 + 6/10 = 9/10.", distratores: { A: "Contou só a parte de Ana.", B: "Contou só a parte de Bia.", D: "Somou numeradores e denominadores: 3 + 6 = 9 e 10 + 10 = 20." }, habilidades: [] }, 1);
+  assert.equal(fr.item.correta, "C");
+  // contorno que se cruza: não decide gabarito e pede refazer
+  const cruz = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [8, 0], [8, 6], [4, -2], [0, 6]] });
+  assert.equal(cruz.simples, false);
+  assert.equal(geometriaDaFigura(cruz), null);
+  const c = conferirItem({ comando: "Qual é a área do jardim?", textoBase: "Observe.", leituraFigura: "x", figura: cruz, alternativas: ["24 m²", "28 m²", "33 m²", "48 m²"], correta: "C", resolucao: "8 × 3 = 24; 3 × 3 = 9; 24 + 9 = 33.", distratores: { A: "8 × 3 = 24.", B: "8 + 3 + 5 + 3 + 3 + 6 = 28.", D: "8 × 6 = 48." }, habilidades: [] }, 1);
+  assert.equal(c.item.correta, "C", "gabarito não muda por causa da figura");
+  assert.match(c.item.problemas.join(" "), /se cruza/);
+  // explicação sem "=" que chega a outro valor: refazer
+  assert.equal(valorAlcancado("Somou 8 + 5, obtendo 13."), 13);
+  const ex = conferirItem({ comando: "Qual é a área do tapete?", textoBase: "Observe.", leituraFigura: "x", figura: normalizarFigura({ tipo: "poligono", forma: "retangulo", base: 8, altura: 5, unidade: "m" }), alternativas: ["13 m²", "26 m²", "40 m²", "64 m²"], correta: "C", resolucao: "8 × 5 = 40.", distratores: { A: "Somou 8 + 5, obtendo 13.", B: "Calculou o perímetro 2 × (8 + 5) e chegou a 13.", D: "Fez 8 × 8 = 64." }, habilidades: [] }, 1);
+  assert.match(ex.item.problemas.join(" "), /"26 m²" chega a 13/);
+  // alternativas sem unidade recebem a da resolução
+  assert.equal(unidadeDaAlternativa("33 m²"), "m²");
+  const un = conferirItem({ comando: "Qual é a área do jardim?", textoBase: "O jardim tem 8 m por 3 m.", alternativas: ["11", "22", "24", "48"], correta: "C", resolucao: "8 × 3 = 24. Portanto, 24 m².", distratores: { A: "8 + 3 = 11.", B: "2 × (8 + 3) = 22.", D: "8 × 3 × 2 = 48." }, habilidades: [] }, 1);
+  assert.deepEqual(un.item.alternativas, ["11 m²", "22 m²", "24 m²", "48 m²"]);
+});
