@@ -423,3 +423,15 @@ test("caso real: 'correta' escrita como valor (180°) vira a letra; sem letra ne
   assert.match(sem.problemas.join(" "), /falta a letra correta/);
   assert.equal(retirarComProblema({ itens: [{ ...sem, problemas: [] }] }).avaliacao.itens.length, 0, "sem letra nunca sai na prova");
 });
+
+test("casos reais (16/10, 18h): contorno reparado pelo sistema; 90° + 90° + 90° é erro típico em ângulos", async () => {
+  const { repararAvaliacao } = await import("../lib/avaliacao.js");
+  const casa = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [6, 0], [6, 4], [3, 7], [0, 4]], cotas: [{ de: [3, 4], ate: [3, 7] }], legenda: "Figura composta" });
+  const q = conferirItem({ textoBase: "João desenhou uma figura composta por um retângulo e um triângulo.", comando: "Qual é a área total da figura em metros quadrados?", figura: casa, leituraFigura: "x", alternativas: ["24 m²", "27 m²", "30 m²", "33 m²"], correta: "D", resolucao: "6 × 4 = 24; (6 × 3) / 2 = 9; 24 + 9 = 33. Portanto, 33 m².", distratores: { A: "Calculou apenas a área do retângulo: 6 × 4 = 24.", B: "Esqueceu de dividir a área do triângulo por 2: 24 + 6 × 3 = 42.", C: "Esqueceu de somar a área do triângulo: 6 × 4 + 6 = 30." }, habilidades: [] }, 5).item;
+  assert.ok(q.problemas.length);
+  const r = repararAvaliacao({ itens: [q] });
+  assert.deepEqual(r.avaliacao.itens[0].problemas, [], JSON.stringify(r.avaliacao.itens[0]));
+  assert.ok(r.avaliacao.itens[0].alternativas.includes("42 m²"), "retângulo inteiro 6 × 7");
+  const ang = conferirItem({ textoBase: "Julia quer saber a soma dos ângulos internos de um retângulo.", comando: "Qual é a soma dos ângulos internos do retângulo de Julia?", alternativas: ["180°", "270°", "360°", "540°"], correta: "C", resolucao: "A soma dos ângulos internos de um quadrilátero é 360°.", distratores: { A: "Confundiu com a soma do triângulo, 180°.", B: "Somou só três ângulos: 90° + 90° + 90° = 270°.", D: "Confundiu com o pentágono, 540°." }, habilidades: [] }, 5).item;
+  assert.deepEqual(ang.problemas, [], JSON.stringify(ang));
+});
