@@ -414,3 +414,12 @@ test("reparo pelo sistema: alternativas erradas com número inventado viram erro
   // "40 − 30 = 10%": pontos percentuais não são erro de conta
   assert.equal(contasDoTexto("40 - 30 = 10%. Portanto, 10%.").erradas.length, 0);
 });
+
+test("caso real: 'correta' escrita como valor (180°) vira a letra; sem letra nenhuma, a questão não é entregue", async () => {
+  const { retirarComProblema } = await import("../lib/avaliacao.js");
+  const it = normalizarItem({ comando: "Qual é a soma dos ângulos internos de um triângulo?", alternativas: ["A) 90°", "B) 120°", "C) 180°", "D) 360°"], correta: "180°" });
+  assert.equal(it.correta, "C");
+  const sem = conferirItem(normalizarItem({ comando: "?", alternativas: ["casa", "rua", "mar", "sol"], correta: "" }), 1).item;
+  assert.match(sem.problemas.join(" "), /falta a letra correta/);
+  assert.equal(retirarComProblema({ itens: [{ ...sem, problemas: [] }] }).avaliacao.itens.length, 0, "sem letra nunca sai na prova");
+});
