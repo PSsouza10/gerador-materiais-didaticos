@@ -297,3 +297,25 @@ test("bateria da Avaliação: 7 casos e critério de publicação", async () => 
   assert.equal(auditarAvaliacao(bom).aprovado, true);
   assert.equal(resumirBateriaAvaliacao([{ auditoria: auditarAvaliacao(bom) }]).liberado, true);
 });
+
+test("regras de 16/10 (tarde): figura × texto não muda gabarito; contorno sem medida; verificador tolerante", () => {
+  const base1 = { comando: "Qual é a área do tapete?", textoBase: "A figura mostra o tapete.", leituraFigura: "as medidas", alternativas: ["13 m²", "26 m²", "40 m²", "48 m²"], correta: "C", distratores: { A: "Somou: 8 + 5 = 13.", B: "Calculou o perímetro: 2 × (8 + 5) = 26.", D: "Leu errado a figura e usou a medida de outro tapete." }, habilidades: [] };
+  // figura 8 × 6 (48) mas a resolução usa 8 × 5 (40): gabarito continua 40 e a questão é refeita
+  const r = conferirItem({ ...base1, figura: normalizarFigura({ tipo: "poligono", forma: "retangulo", base: 8, altura: 6, unidade: "m" }), resolucao: "8 × 5 = 40. Portanto, 40 m²." }, 1);
+  assert.equal(r.item.correta, "C");
+  assert.match(r.item.problemas.join(" "), /figura e a resolução não combinam/);
+  // explicação sem conta (erro de leitura) é aceita
+  const ok = conferirItem({ ...base1, figura: normalizarFigura({ tipo: "poligono", forma: "retangulo", base: 8, altura: 5, unidade: "m" }), resolucao: "8 × 5 = 40. Portanto, 40 m²." }, 1);
+  assert.deepEqual(ok.item.problemas, [], JSON.stringify(ok.avisos));
+  // explicação que chega ao valor de outra letra: refazer a alternativa
+  const outra = conferirItem({ ...base1, distratores: { ...base1.distratores, D: "Calculou 2 × (8 + 5) = 26." }, figura: normalizarFigura({ tipo: "poligono", forma: "retangulo", base: 8, altura: 5, unidade: "m" }), resolucao: "8 × 5 = 40." }, 1);
+  assert.match(outra.avisos.map((a) => a.motivo).join(" "), /valor da alternativa "26 m²"/);
+  // intermediário (3 + 3 = 6) aceito
+  const L = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [8, 0], [8, 3], [3, 3], [3, 6], [0, 6]] });
+  const li = conferirItem({ comando: "Qual é a área do jardim?", textoBase: "Observe a planta.", leituraFigura: "medidas", figura: L, alternativas: ["24 m²", "28 m²", "33 m²", "48 m²"], correta: "C", resolucao: "8 × 3 = 24; 3 × 3 = 9; 24 + 9 = 33.", distratores: { A: "Só a parte de baixo: 8 × 3 = 24.", B: "Perímetro: 8 + 3 + 5 + 3 + 3 + 6 = 28.", D: "Tratou como retângulo: 8 × 6 = 48." }, habilidades: [] }, 1);
+  assert.deepEqual(li.item.problemas, [], JSON.stringify(li.avisos));
+  // contorno com lado inclinado sem cota: refazer
+  const casaSemCota = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [10, 0], [10, 5], [5, 8], [0, 5]] });
+  const c = conferirItem({ ...base1, figura: casaSemCota, comando: "Qual é a área?", alternativas: ["50 m²", "65 m²", "80 m²", "30 m²"], correta: "B", resolucao: "10 × 5 = 50; (10 × 3) ÷ 2 = 15; 50 + 15 = 65." }, 1);
+  assert.match(c.item.problemas.join(" "), /lado sem medida/);
+});
