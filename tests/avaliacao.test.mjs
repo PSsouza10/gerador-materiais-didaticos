@@ -99,12 +99,14 @@ test("conferência: letra errada é corrigida pela resolução e o distrator que
   const av = normalizarAvaliacao(AVALIACAO_SIMULADA, d, OFICIAL, resolver);
   const { avaliacao, avisos } = conferirAvaliacao(av);
   assert.equal(avaliacao.itens.length, 5);
-  assert.equal(avaliacao.itens[1].correta, "C", "60 litros é a C (a IA marcou B)");
-  assert.ok(avisos.some((a) => a.onde === "Item 2" && a.tipo === "corrigido"));
-  assert.ok(!avisos.some((a) => a.onde === "Item 2" && /falta a análise/.test(a.motivo)), "B, A e D têm análise");
-  assert.equal(avaliacao.itens[1].figura.tipo, "tabela");
-  assert.equal(avaliacao.itens[1].distratores.C, undefined, "a correta não tem análise de distrator");
-  assert.ok(avaliacao.itens[1].distratores.B, "a antiga marcada mantém a explicação do erro");
+  const aq = avaliacao.itens[2];
+  assert.equal(aq.correta, "C", "60 litros é a C (a IA marcou B)");
+  assert.ok(avisos.some((a) => a.onde === "Item 3" && a.tipo === "corrigido"));
+  assert.ok(!avisos.some((a) => a.onde === "Item 3" && /falta a análise/.test(a.motivo)), "B, A e D têm análise");
+  assert.equal(aq.figura.tipo, "tabela");
+  assert.equal(aq.distratores.C, undefined, "a correta não tem análise de distrator");
+  assert.ok(aq.distratores.B, "a antiga marcada mantém a explicação do erro");
+  assert.deepEqual(avaliacao.itens.map((i) => i.dificuldade), ["facil", "facil", "media", "media", "dificil"]);
 });
 
 test("conferência: avisos de formato fora do padrão", () => {
@@ -129,4 +131,10 @@ test("mapa de habilidades, resumo da apostila e lista salva", () => {
   let l = [];
   for (let i = 0; i < LIMITE_AVALIACOES_SALVAS + 3; i++) l = adicionarAvaliacaoNaLista(l, { titulo: String(i) });
   assert.equal(l.length, LIMITE_AVALIACOES_SALVAS);
+});
+
+test("itens saem em dificuldade crescente, sem trocar a ordem dentro do mesmo nível", () => {
+  const it = (c, d) => ({ comando: c, dificuldade: d, alternativas: ["w", "x", "y", "z"], correta: "A", distratores: {} });
+  const av = normalizarAvaliacao({ itens: [it("1", "dificil"), it("2", "facil"), it("3", "media"), it("4", "facil")] }, { itens: 8, tema: "x" });
+  assert.deepEqual(av.itens.map((i) => i.comando), ["2", "4", "3", "1"]);
 });
