@@ -138,3 +138,61 @@ test("itens saem em dificuldade crescente, sem trocar a ordem dentro do mesmo n�
   const av = normalizarAvaliacao({ itens: [it("1", "dificil"), it("2", "facil"), it("3", "media"), it("4", "facil")] }, { itens: 8, tema: "x" });
   assert.deepEqual(av.itens.map((i) => i.comando), ["2", "4", "3", "1"]);
 });
+
+// ---------- Suporte visual ----------
+import { conferirFigura, operandosDaResolucao, minimoComFigura, suportesDaDisciplina } from "../lib/avaliacao.js";
+import { normalizarFigura, numerosDaFigura } from "../lib/figuras.js";
+
+test("figuras novas: bloco, polígono, linhas, setores, relógio e dinheiro são limpas e dão seus números", () => {
+  const b = normalizarFigura({ tipo: "bloco", comprimento: "30", largura: 20, altura: 10, unidade: "cm" });
+  assert.deepEqual(numerosDaFigura(b), [30, 20, 10]);
+  assert.equal(normalizarFigura({ tipo: "bloco", comprimento: 0, largura: 2, altura: 3 }), null);
+  assert.deepEqual(numerosDaFigura(normalizarFigura({ tipo: "poligono", forma: "quadrado", lado: 4 })), [4]);
+  assert.equal(normalizarFigura({ tipo: "poligono", forma: "hexagono", base: 1, altura: 1 }), null);
+  assert.equal(normalizarFigura({ tipo: "linhas", itens: [{ rotulo: "jan", valor: 1 }] }), null, "linha precisa de 2 pontos");
+  assert.equal(normalizarFigura({ tipo: "setores", itens: [{ rotulo: "a", valor: 0 }, { rotulo: "b", valor: 0 }] }), null);
+  assert.deepEqual(normalizarFigura({ tipo: "relogio", hora: 25, minuto: 70 }), { tipo: "relogio", hora: 23, minuto: 59, legenda: "" });
+  const din = normalizarFigura({ tipo: "dinheiro", itens: [{ valor: 20, quantidade: 2 }, { valor: 3, quantidade: 1 }, { valor: 0.5, quantidade: 3 }] });
+  assert.deepEqual(din.itens, [{ valor: 20, quantidade: 2 }, { valor: 0.5, quantidade: 3 }], "não existe cédula de R$ 3");
+  assert.equal(normalizarFigura({ tipo: "angulo", graus: 400 }), null);
+});
+
+test("pedido de figuras: porcentagem, mínimo de questões e suportes por disciplina", () => {
+  assert.equal(validarPedidoAvaliacao(base).dados.figuras, 40, "padrão 40%");
+  assert.equal(validarPedidoAvaliacao({ ...base, figuras: 33 }).dados.figuras, 40);
+  assert.equal(minimoComFigura(5, 40), 2);
+  assert.equal(minimoComFigura(8, 60), 5);
+  assert.equal(minimoComFigura(8, 0), 0);
+  const p = montarPromptAvaliacao(validarPedidoAvaliacao({ ...base, itens: 5 }).dados, "EF07MA30");
+  assert.match(p, /pelo menos 2 dos 5 itens TÊM "figura"/);
+  assert.match(p, /"leituraFigura"/);
+  assert.match(p, /"tipo": "bloco"/);
+  assert.match(p, /aparecem SÓ na figura/);
+  assert.match(montarPromptAvaliacao(validarPedidoAvaliacao({ ...base, figuras: 0 }).dados), /Não use figuras/);
+  assert.match(suportesDaDisciplina("Geografia"), /climograma/);
+  assert.match(suportesDaDisciplina("Ciências"), /ciclo da água/);
+});
+
+test("figura × resolução: bloco ajustado às medidas da conta; número solto e dado repetido no texto avisam", () => {
+  const item = (figura, resolucao, textoBase = "Observe a figura.") => ({ figura, resolucao, textoBase, comando: "Qual é o volume?", alternativas: ["60", "600", "6 000", "60 000"], leituraFigura: "as medidas" });
+  const r = conferirFigura(item({ tipo: "bloco", comprimento: 30, largura: 25, altura: 10, unidade: "cm" }, "V = 30 × 20 × 10 = 6000. Portanto, 6 000 cm³."), 1);
+  assert.deepEqual([r.item.figura.comprimento, r.item.figura.largura, r.item.figura.altura], [30, 20, 10]);
+  assert.ok(r.avisos.some((a) => a.tipo === "corrigido" && /ajustada/.test(a.motivo)));
+  const ok = conferirFigura(item({ tipo: "bloco", comprimento: 20, largura: 30, altura: 10, unidade: "cm" }, "V = 30 × 20 × 10 = 6000."), 1);
+  assert.equal(ok.avisos.length, 0, "mesmas medidas em outra ordem: sem aviso");
+  const solto = conferirFigura(item({ tipo: "linhas", unidade: "m³", itens: [{ rotulo: "jan", valor: 12 }, { rotulo: "mar", valor: 18 }] }, "19 − 12 = 7; 7 × 1000 = 7000."), 2);
+  assert.match(solto.avisos.map((a) => a.motivo).join(" "), /usa 19/);
+  const repetido = conferirFigura(item({ tipo: "bloco", comprimento: 30, largura: 20, altura: 10 }, "V = 30 × 20 × 10 = 6000.", "A caixa tem 30 cm, 20 cm e 10 cm."), 3);
+  assert.match(repetido.avisos.map((a) => a.motivo).join(" "), /não depende da leitura da figura/);
+  assert.deepEqual(operandosDaResolucao("18 − 12 = 6 m³; 6 × 1000 = 6000. Portanto, 6 000 litros"), [18, 12, 1000]);
+});
+
+test("prova de teste: 3 questões com figura, sem avisos de figura, e meta de figuras cobrada", () => {
+  const d = validarPedidoAvaliacao({ ...base, itens: 5 }).dados;
+  const { avaliacao, avisos } = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_SIMULADA, d, OFICIAL, resolver));
+  assert.deepEqual(avaliacao.itens.map((i) => i.figura?.tipo || null), ["bloco", null, "tabela", null, "linhas"]);
+  assert.ok(!avisos.some((a) => /figura/i.test(a.motivo)), JSON.stringify(avisos));
+  assert.ok(avaliacao.itens.filter((i) => i.figura).every((i) => i.leituraFigura));
+  const semFig = conferirAvaliacao({ metaFiguras: 4, itens: avaliacao.itens });
+  assert.ok(semFig.avisos.some((a) => a.onde === "Suporte visual"));
+});

@@ -10,7 +10,7 @@ import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { conferirPedido } from "@/lib/coerencia";
 import { slugify } from "@/lib/material";
 import { exportarPdf } from "@/lib/pdf";
-import { QUANTIDADES_ITENS, LIMITES_AVALIACAO, adicionarAvaliacaoNaLista, contarLetras } from "@/lib/avaliacao";
+import { QUANTIDADES_ITENS, LIMITES_AVALIACAO, PORCENTAGENS_FIGURA, minimoComFigura, adicionarAvaliacaoNaLista, contarLetras } from "@/lib/avaliacao";
 
 // "Avaliação": prova de múltipla escolha no padrão Prova Paulista / SARESP (conta como 1 geração).
 // Fica salva NESTE navegador, como os planos de aula; o professor baixa o PDF do aluno e o do professor.
@@ -48,7 +48,7 @@ const FONTES = [
 export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
-  const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", itens: 8, observacoes: "" });
+  const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", itens: 8, figuras: 40, observacoes: "" });
   const [avaliacao, setAvaliacao] = useState(null);
   const [avisos, setAvisos] = useState([]);
   const [erro, setErro] = useState("");
@@ -234,6 +234,16 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
               ))}
             </select>
           </Campo>
+          <Campo rotulo="Questões com figura">
+            <select className="ipt" value={f.figuras} onChange={(e) => setF((x) => ({ ...x, figuras: Number(e.target.value) }))}>
+              {PORCENTAGENS_FIGURA.map((p) => (
+                <option key={p} value={p}>
+                  {p === 0 ? "Nenhuma" : p === 100 ? "Todas" : `Pelo menos ${p}% (${minimoComFigura(f.itens, p)} de ${f.itens})`}
+                  {p === 40 ? " · padrão" : ""}
+                </option>
+              ))}
+            </select>
+          </Campo>
           <div className="sm:col-span-2">
             <Campo rotulo="Orientações" opcional>
               <textarea className="ipt min-h-[80px]" value={f.observacoes} onChange={set("observacoes")} maxLength={LIMITES_AVALIACAO.observacoes} placeholder="Ex.: avaliação diagnóstica do bimestre; turma com dificuldade em conversão de unidades." />
@@ -296,7 +306,7 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
             </div>
             {letras && (
               <p className="mb-3 text-[12px] text-slate-600">
-                {avaliacao.itens.length} questões · respostas: {Object.entries(letras).map(([l, n]) => `${l} ${n}`).join(" · ")}
+                {avaliacao.itens.length} questões · {avaliacao.itens.filter((it) => it.figura).length} com figura · respostas: {Object.entries(letras).map(([l, n]) => `${l} ${n}`).join(" · ")}
               </p>
             )}
             {corrigidos.length > 0 && (

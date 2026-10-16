@@ -74,6 +74,9 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
   const itens = av.itens || [];
   const professor = versao === "professor";
   const habilidades = mapaHabilidades(itens);
+  // Figura 1, Figura 2... na ordem em que aparecem
+  const numFigura = [];
+  itens.reduce((k, it, i) => ((numFigura[i] = it.figura ? k + 1 : null), it.figura ? k + 1 : k), 0);
   return (
     <article ref={ref} className="folha-a4 folha-avaliacao bg-white font-sans text-[12.5px] leading-[1.5] text-slate-800">
       <header className="cabecalho-escola rounded-xl border-2 border-slate-300 p-4">
@@ -107,7 +110,16 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
               <Tx>{it.textoBase}</Tx>
             </p>
           )}
-          {it.figura && <FiguraDidatica figura={it.figura} className="mt-2.5" />}
+          {it.figura && (
+            <div className="mt-2.5 flex flex-col items-center">
+              <FiguraDidatica figura={it.figura} semLegenda />
+              <p className="mt-1 text-center text-[10.5px] text-slate-700">
+                <b>Figura {numFigura[i]}</b>
+                {it.figura.legenda ? ` – ${it.figura.legenda}` : ""}
+              </p>
+              <p className="text-center text-[9.5px] text-slate-500">Fonte: Elaborado pelo EduGera.</p>
+            </div>
+          )}
           <p className="mt-2 text-[12.5px] font-semibold">
             <Tx>{it.comando}</Tx>
           </p>
@@ -170,6 +182,11 @@ const FolhaAvaliacao = forwardRef(function FolhaAvaliacao({ avaliacao, versao = 
               <p className="font-extrabold text-slate-900">
                 Questão {dois(i + 1)} · resposta {it.correta || "—"}
               </p>
+              {it.figura && it.leituraFigura && (
+                <p className="mt-1">
+                  <b>O que ler na Figura {numFigura[i]}:</b> <Tx>{it.leituraFigura}</Tx>
+                </p>
+              )}
               {it.resolucao && (
                 <p className="mt-1">
                   <b>Resolução:</b> <Tx>{it.resolucao}</Tx>
