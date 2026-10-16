@@ -217,7 +217,13 @@ function Mapa({ f }) {
 
 
 // ===== Suportes visuais das avaliações (preto e branco: traço escuro, cinzas, rótulos diretos) =====
-const fmtN = (v) => String(Number(Number(v).toPrecision(10))).replace(".", ",");
+// medida escrita na figura: no máximo 2 casas (nunca 4,242640687); valor não exato ganha "≈"
+const fmtN = (v) => {
+  const n = Number(v);
+  const r = Math.round(n * 100) / 100;
+  const txt = String(r).replace(".", ",");
+  return Math.abs(n - r) > 1e-9 ? `≈ ${String(Math.round(n * 10) / 10).replace(".", ",")}` : txt;
+};
 const comUnidade = (v, u) => `${fmtN(v)}${u ? ` ${u}` : ""}`;
 
 // Bloco retangular em perspectiva cavaleira com as três medidas escritas nas arestas

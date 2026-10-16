@@ -106,7 +106,7 @@ test("conferência: letra errada é corrigida pela resolução e o distrator que
   assert.equal(aq.figura.tipo, "tabela");
   assert.equal(aq.distratores.C, undefined, "a correta não tem análise de distrator");
   assert.ok(aq.distratores.B, "a antiga marcada mantém a explicação do erro");
-  assert.deepEqual(avaliacao.itens.map((i) => i.dificuldade), ["facil", "facil", "media", "media", "dificil"]);
+  assert.deepEqual(avaliacao.itens.map((i) => i.dificuldade), ["facil", "facil", "media", "media", "media"], "gráfico de 2 passos: Difícil vira Média");
 });
 
 test("conferência: avisos de formato fora do padrão", () => {
@@ -350,4 +350,24 @@ test("regras de 16/10 (fim da tarde): valor com unidade/fração não apaga gaba
   assert.equal(unidadeDaAlternativa("33 m²"), "m²");
   const un = conferirItem({ comando: "Qual é a área do jardim?", textoBase: "O jardim tem 8 m por 3 m.", alternativas: ["11", "22", "24", "48"], correta: "C", resolucao: "8 × 3 = 24. Portanto, 24 m².", distratores: { A: "8 + 3 = 11.", B: "2 × (8 + 3) = 22.", D: "8 × 3 × 2 = 48." }, habilidades: [] }, 1);
   assert.deepEqual(un.item.alternativas, ["11 m²", "22 m²", "24 m²", "48 m²"]);
+});
+
+test("regras de 16/10 (noite): conta inteira com ° e %, nível coerente, questão que não passa sai da prova", async () => {
+  const { passosDaConta, retirarComProblema, montarPromptTrocar } = await import("../lib/avaliacao.js");
+  assert.equal(contasDoTexto("360° × (35/100) = 126°. Portanto, 126°.").erradas.length, 0, "não lê só o pedaço entre parênteses");
+  assert.equal(contasDoTexto("35% × 360 = 126").final, 126);
+  assert.equal(contasDoTexto("10 m × 5 m = 50 m²").final, 50);
+  assert.equal(passosDaConta("A = 8 × 5 = 40."), 1);
+  const um = normalizarItem({ comando: "?", dificuldade: "dificil", resolucao: "A = 8 × 5 = 40." });
+  assert.equal(um.dificuldade, "facil");
+  const dois = normalizarItem({ comando: "?", dificuldade: "dificil", resolucao: "18 − 12 = 6; 6 × 1000 = 6000." });
+  assert.equal(dois.dificuldade, "media");
+  const quatro = normalizarItem({ comando: "?", dificuldade: "dificil", resolucao: "10 × 5 = 50; (10 × 3) ÷ 2 = 15; 50 + 15 = 65." });
+  assert.equal(quatro.dificuldade, "dificil");
+  const d = validarPedidoAvaliacao({ ...base, tema: "Área", bncc: "", itens: 5 }).dados;
+  const p1 = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_AREA_SIMULADA, d, null, (c) => ({ c }))).avaliacao;
+  assert.match(montarPromptTrocar(p1, [3], d), /questões NOVAS/);
+  const r = retirarComProblema(p1);
+  assert.equal(r.avaliacao.itens.length, 1, "só a Q1 passa sem correção");
+  assert.equal(r.retiradas.length, 4);
 });

@@ -6,13 +6,13 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
-import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, aplicarRefeitos, finalizarAvaliacao } from "@/lib/avaliacao";
+import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 180; // geração + 2ª tentativa das questões com erro
+export const maxDuration = 300; // geração + até 3 rodadas de correção das questões com erro
 
 const BNCC = indexar(bnccDados.habilidades);
 const SISTEMA =
@@ -83,27 +83,40 @@ async function postRota(request, _contexto, requestId) {
   const primeira = conferirAvaliacao(normalizarAvaliacao(r.json, d, oficial, resolver));
   let atual = primeira.avaliacao;
   const corrigidos = primeira.avisos.filter((a) => a.tipo === "corrigido");
-  // 2ª tentativa (uma só): a IA refaz SÓ as questões com problema, com a lista do que corrigir
-  let refeitas = [];
-  const indices = itensParaRefazer(atual);
-  if (indices.length && Date.now() - t0 < 110_000) { // sobra tempo para a 2ª chamada dentro dos 180 s
-    const sistemaRef = "Você é revisor de itens de avaliações externas (Prova Paulista, SARESP). Corrige questões de múltipla escolha com rigor matemático. Responda em português do Brasil, só com JSON válido.";
-    const promptRef = montarPromptRefazer(atual, indices, d);
-    const rr = temOpenAI() ? await openaiJson({ sistema: sistemaRef, prompt: promptRef, modelo, temperatura: 0.2 }) : await geminiJson({ sistema: sistemaRef, prompt: promptRef, temperatura: 0.2 });
-    if (rr.ok) {
-      const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
-      atual = ap.avaliacao;
-      refeitas = ap.trocados;
-    } else console.error("Avaliação: 2ª tentativa falhou", { request_id: requestId, status: rr.status, erro: rr.erro });
+  // Questão com problema NÃO é entregue com aviso: é refeita (até 2 vezes); se ainda falhar,
+  // a IA escreve uma questão nova no lugar; se nem assim passar, a questão sai da prova.
+  const refeitas = new Set();
+  const sistemaRef = "Você é revisor de itens de avaliações externas (Prova Paulista, SARESP). Corrige questões de múltipla escolha com rigor matemático. Responda em português do Brasil, só com JSON válido.";
+  const rodadas = [montarPromptRefazer, montarPromptRefazer, montarPromptTrocar];
+  for (const [k, montar] of rodadas.entries()) {
+    const indices = itensParaRefazer(atual);
+    if (!indices.length) break;
+    if (Date.now() - t0 > 210_000) {
+      console.error("Avaliação: sem tempo para mais uma rodada", { request_id: requestId, rodada: k + 1 });
+      break;
+    }
+    const prompt = montar(atual, indices, d);
+    const rr = temOpenAI() ? await openaiJson({ sistema: sistemaRef, prompt, modelo, temperatura: k === 2 ? 0.5 : 0.2 }) : await geminiJson({ sistema: sistemaRef, prompt, temperatura: k === 2 ? 0.5 : 0.2 });
+    if (!rr.ok) {
+      console.error("Avaliação: rodada de correção falhou", { request_id: requestId, rodada: k + 1, status: rr.status, erro: rr.erro });
+      continue;
+    }
+    const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
+    atual = ap.avaliacao;
+    ap.trocados.forEach((n) => refeitas.add(n));
   }
+  const ret = retirarComProblema(atual);
+  atual = ret.avaliacao;
   // final: espalha o gabarito e confere de novo (avisos do que ainda precisa do professor)
   const fim = finalizarAvaliacao(atual);
   const avaliacao = { ...fim.avaliacao, itens: fim.avaliacao.itens.map(({ problemas, ...it }) => it) };
   const chave = (a) => `${a.onde}|${a.motivo}`;
   const vistos = new Set(fim.avisos.map(chave));
   const avisos = [
-    ...corrigidos.filter((a) => !vistos.has(chave(a)) && !refeitas.includes(Number(String(a.onde).replace(/\D/g, "")))),
-    ...refeitas.map((n) => ({ onde: `Item ${n}`, motivo: "a questão tinha erro de conta ou de gabarito e foi refeita automaticamente.", tipo: "corrigido", trecho: "" })),
+    // números dos itens mudam quando alguma questão sai: os avisos de correção ficam só quando nada saiu
+    ...(ret.retiradas.length ? [] : corrigidos.filter((a) => !vistos.has(chave(a)) && !refeitas.has(Number(String(a.onde).replace(/\D/g, ""))))),
+    ...(refeitas.size ? [{ onde: "Correção automática", motivo: `${refeitas.size} questão(ões) tinham erro de conta, gabarito ou figura e foram refeitas antes de chegar a você.`, tipo: "corrigido", trecho: "" }] : []),
+    ...(ret.retiradas.length ? [{ onde: "Questões retiradas", motivo: `${ret.retiradas.length} questão(ões) não passaram na conferência mesmo depois de refeitas e foram retiradas; a prova ficou com ${atual.itens.length} questões. Gere de novo se precisar de mais.`, tipo: "conferir", trecho: "" }] : []),
     ...fim.avisos,
   ];
   if (avaliacao.itens.length < Math.min(3, d.itens)) {

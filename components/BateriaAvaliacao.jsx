@@ -19,7 +19,7 @@ export default function BateriaAvaliacao({ admin }) {
       const r = await fetch("/api/gerar-avaliacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-      setRes((x) => ({ ...x, [i]: { estado: "pronto", avaliacao: j.avaliacao, avisosServidor: j.avisos || [], auditoria: auditarAvaliacao(j.avaliacao), segundos: Math.round((Date.now() - inicio) / 1000) } }));
+      setRes((x) => ({ ...x, [i]: { estado: "pronto", avaliacao: j.avaliacao, avisosServidor: j.avisos || [], auditoria: auditarAvaliacao(j.avaliacao, c.itens), segundos: Math.round((Date.now() - inicio) / 1000) } }));
     } catch (e) {
       setRes((x) => ({ ...x, [i]: { estado: "erro", erro: String(e.message || e) } }));
     }
@@ -76,6 +76,7 @@ export default function BateriaAvaliacao({ admin }) {
             <th>Questões</th>
             <th>Com figura</th>
             <th>Refeitas</th>
+            <th>Retiradas</th>
             <th>Sem gabarito</th>
             <th>Conta errada</th>
             <th>Resultado</th>
@@ -93,6 +94,7 @@ export default function BateriaAvaliacao({ admin }) {
                     <td>{r.auditoria.questoes}</td>
                     <td>{r.auditoria.comFigura}</td>
                     <td>{r.auditoria.refeitas}</td>
+                    <td className={r.auditoria.retiradas ? "font-bold text-amber-700" : ""}>{r.auditoria.retiradas}</td>
                     <td className={r.auditoria.semGabarito.length ? "font-bold text-rose-700" : ""}>{r.auditoria.semGabarito.length ? r.auditoria.semGabarito.join(", ") : "0"}</td>
                     <td className={r.auditoria.contasErradas.length ? "font-bold text-rose-700" : ""}>{r.auditoria.contasErradas.length}</td>
                     <td>
@@ -102,14 +104,14 @@ export default function BateriaAvaliacao({ admin }) {
                     </td>
                   </>
                 ) : (
-                  <td colSpan={6} className="text-slate-500">
+                  <td colSpan={7} className="text-slate-500">
                     {r.estado === "gerando" ? "gerando…" : r.estado === "erro" ? <span className="text-rose-700">erro: {r.erro}</span> : "—"}
                   </td>
                 )}
               </tr>
               {aberto === i && r.auditoria && (
                 <tr>
-                  <td colSpan={7} className="bg-slate-50 px-3 py-2 text-[12.5px]">
+                  <td colSpan={8} className="bg-slate-50 px-3 py-2 text-[12.5px]">
                     {[...r.auditoria.contasErradas, ...r.auditoria.outros].length ? (
                       <ul className="list-disc pl-5">
                         {[...r.auditoria.contasErradas, ...r.auditoria.outros].map((a, k) => (
