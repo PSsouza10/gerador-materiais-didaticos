@@ -46,6 +46,7 @@ import MinhasApostilas from "@/components/telas/MinhasApostilas";
 import Configuracoes from "@/components/telas/Configuracoes";
 import PlanoAula from "@/components/telas/PlanoAula";
 import Avaliacao from "@/components/telas/Avaliacao";
+import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
 import { exportarPdf } from "@/lib/pdf";
@@ -216,12 +217,12 @@ export default function GeradorApostilas() {
 
   // ===== CONTA E LIMITE =====
   const { data: sessao, status: statusSessao } = useSession();
-  const [conta, setConta] = useState({ authConfigurado: null, uso: null });
+  const [conta, setConta] = useState({ authConfigurado: null, uso: null, zerarTeste: false });
   const atualizarUso = async () => {
     try {
       const r = await fetch("/api/uso", { cache: "no-store" });
       const j = await r.json();
-      setConta({ authConfigurado: j.authConfigurado, uso: j.uso || null });
+      setConta({ authConfigurado: j.authConfigurado, uso: j.uso || null, zerarTeste: !!j.zerarTeste });
     } catch {
       /* sem rede: mantém o último estado */
     }
@@ -677,7 +678,7 @@ export default function GeradorApostilas() {
         )}
         {active === "Avaliação" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <Avaliacao professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} />
+            <Avaliacao professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} />
           </div>
         )}
         {active === "Configurações" && (
@@ -910,6 +911,7 @@ export default function GeradorApostilas() {
                   : `Você usou as ${conta.uso.limite} gerações deste mês do plano ${conta.uso.plano?.nome || "Grátis"}. O limite renova no dia 1º.`}{" "}
                 <a href="/planos" className="font-semibold underline">Ver planos</a> ·{" "}
                 <a href="/uso" className="font-semibold underline">Meu uso</a>
+                {conta.zerarTeste && <ZerarUsoTeste className="mt-2 flex" aoZerar={() => atualizarUso()} />}
               </p>
             )}
 

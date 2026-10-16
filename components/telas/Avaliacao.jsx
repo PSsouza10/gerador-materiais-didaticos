@@ -5,6 +5,7 @@ import { ClipboardCheck, Loader2, Download, KeyRound, AlertCircle, AlertTriangle
 import SeletorBNCC from "@/components/SeletorBNCC";
 import FolhaAvaliacao from "@/components/FolhaAvaliacao";
 import PreviewEscalado from "@/components/PreviewEscalado";
+import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
 import { conferirPedido } from "@/lib/coerencia";
@@ -45,7 +46,7 @@ const FONTES = [
   { id: "apostila", rotulo: "Apostila do EduGera", icone: BookMarked },
 ];
 
-export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar }) {
+export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar, zerarTeste = false }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
   const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", itens: 8, figuras: 40, observacoes: "" });
@@ -266,6 +267,16 @@ export default function Avaliacao({ professorPadrao = "", escolaPadrao = "", mat
           <p role="alert" className="mt-4 flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {erro}
           </p>
+        )}
+        {zerarTeste && (
+          <div className="mt-3">
+            <ZerarUsoTeste
+              aoZerar={() => {
+                setErro("");
+                aoGerar?.();
+              }}
+            />
+          </div>
         )}
         <button type="button" onClick={gerar} disabled={gerando} aria-busy={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75">
           {gerando ? <Loader2 className="h-5 w-5 animate-spin" /> : <ClipboardCheck className="h-5 w-5" />}

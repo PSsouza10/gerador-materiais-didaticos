@@ -196,3 +196,18 @@ test("prova de teste: 3 questões com figura, sem avisos de figura, e meta de fi
   const semFig = conferirAvaliacao({ metaFiguras: 4, itens: avaliacao.itens });
   assert.ok(semFig.avisos.some((a) => a.onde === "Suporte visual"));
 });
+
+test("até 2 habilidades por questão (a 2ª entra na matriz); código inválido é ignorado", () => {
+  const r = (c) => (["EF07MA30", "EF07MA36"].includes(c) ? { c } : null);
+  const it = normalizarItem({ habilidades: ["EF07MA30", "EF07MA36", "EF07MA37"], comando: "?" }, r);
+  assert.deepEqual(it.habilidades.map((h) => h.codigo), ["EF07MA30", "EF07MA36"]);
+  assert.equal(it.habilidade.codigo, "EF07MA30");
+  const texto = normalizarItem({ habilidade: "EF07MA30, EF07MA36", comando: "?" }, r);
+  assert.deepEqual(texto.habilidades.map((h) => h.codigo), ["EF07MA30", "EF07MA36"]);
+  assert.deepEqual(normalizarItem({ habilidade: "volume", comando: "?" }, r).habilidades, []);
+  const mapa = mapaHabilidades([it, normalizarItem({ habilidade: "EF07MA30", comando: "?" }, r)]);
+  assert.deepEqual(mapa.map((m) => [m.codigo, m.itens]), [["EF07MA30", [1, 2]], ["EF07MA36", [1]]]);
+  const d = validarPedidoAvaliacao({ ...base, itens: 5 }).dados;
+  const prova = normalizarAvaliacao(AVALIACAO_SIMULADA, d, OFICIAL, (c) => ({ c }));
+  assert.deepEqual(prova.itens[4].habilidades.map((h) => h.codigo), ["EF07MA30", "EF07MA36"], "gráfico de linhas também cobra estatística");
+});
