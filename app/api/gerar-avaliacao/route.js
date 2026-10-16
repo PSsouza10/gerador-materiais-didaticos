@@ -6,7 +6,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirGeracao, devolverGeracao } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
-import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao } from "@/lib/avaliacao";
+import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao, repararAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
@@ -89,6 +89,13 @@ async function postRota(request, _contexto, requestId) {
   const diagRodadas = []; // só para o administrador: o que cada rodada pediu e conseguiu
   const sistemaRef = "Você é revisor de itens de avaliações externas (Prova Paulista, SARESP). Corrige questões de múltipla escolha com rigor matemático. Responda em português do Brasil, só com JSON válido.";
   const rodadas = [montarPromptRefazer, montarPromptRefazer, montarPromptTrocar];
+  const reparar = () => {
+    const rp = repararAvaliacao(atual);
+    atual = rp.avaliacao;
+    rp.reparadas.forEach((n) => refeitas.add(n));
+    if (rp.reparadas.length) diagRodadas.push({ reparoDoSistema: rp.reparadas });
+  };
+  reparar(); // primeiro o sistema conserta o que consegue sozinho (alternativas erradas típicas)
   for (const [k, montar] of rodadas.entries()) {
     const indices = itensParaRefazer(atual);
     if (!indices.length) break;
@@ -108,6 +115,7 @@ async function postRota(request, _contexto, requestId) {
     atual = ap.avaliacao;
     ap.trocados.forEach((n) => refeitas.add(n));
   }
+  reparar(); // e de novo depois da IA, antes de retirar alguma questão
   const ret = retirarComProblema(atual);
   atual = ret.avaliacao;
   // final: espalha o gabarito e confere de novo (avisos do que ainda precisa do professor)

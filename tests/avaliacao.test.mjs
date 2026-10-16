@@ -392,3 +392,25 @@ test("casos reais da bateria (16/10, 17h): letras trocadas, explicações em lis
   const tq = conferirItem({ textoBase: "Veja as medidas na figura.", comando: "Quantos litros de água cabem no tanque?", figura: normalizarFigura({ tipo: "bloco", comprimento: 2, largura: 1.5, altura: 1, unidade: "m" }), leituraFigura: "x", alternativas: ["3 L", "300 L", "3 000 L", "300 000 L"], correta: "C", resolucao: "2 m × 1.5 m × 1 m = 3 m³; 3 × 1 000 = 3 000 L.", distratores: { A: "Não converteu: 2 × 1.5 × 1 = 3", B: "3 × 100 = 300", D: "Multiplicou por 100 000 em vez de 1 000: 3 × 100 000 = 300 000" }, habilidades: [] }, 5);
   assert.deepEqual(tq.item.problemas, [], JSON.stringify(tq.avisos));
 });
+
+test("reparo pelo sistema: alternativas erradas com número inventado viram erros típicos calculados", async () => {
+  const { repararDistratores, repararAvaliacao } = await import("../lib/avaliacao.js");
+  // caso real: retângulo 5 × 4 no texto, explicação "6 x 3 = 18" inventada
+  const q1 = conferirItem({ textoBase: "Lucas quer cobrir o chão retangular de seu quarto. O quarto tem 5 metros de comprimento e 4 metros de largura.", comando: "Qual é a área do chão do quarto de Lucas?", alternativas: ["9 m²", "18 m²", "20 m²", "25 m²"], correta: "C", resolucao: "5 m x 4 m = 20 m². Portanto, 20 m².", distratores: { A: "Somou as medidas: 5 + 4 = 9.", B: "Multiplicou incorretamente: 6 x 3 = 18.", D: "Multiplicou incorretamente: 5 x 5 = 25." }, habilidades: [] }, 1).item;
+  assert.ok(q1.problemas.length);
+  const r = repararDistratores(q1);
+  assert.ok(r, "o sistema conserta");
+  const ok = conferirItem({ ...r, problemas: undefined }, 1).item;
+  assert.deepEqual(ok.problemas, []);
+  assert.equal(ok.alternativas["ABCD".indexOf(ok.correta)], "20 m²");
+  const l18 = "ABCD"[ok.alternativas.indexOf("18 m²")];
+  assert.match(ok.distratores[l18], /perímetro: 2 × \(5 \+ 4\) = 18/, "18 é o perímetro: a explicação inventada virou a certa");
+  // caso real: quadrado de lado 7, explicações "usou 6", "7 por 8"
+  const q5 = conferirItem({ textoBase: "Um quadrado tem lado medindo 7 metros.", comando: "Qual é a área deste quadrado?", alternativas: ["36 m²", "42 m²", "49 m²", "56 m²"], correta: "C", resolucao: "7 m * 7 m = 49 m².", distratores: { A: "Usou 6 m em vez de 7 m: 6 × 6 = 36.", B: "Multiplicou 7 por 6: 7 × 6 = 42.", D: "Multiplicou 7 por 8: 7 × 8 = 56." }, habilidades: [] }, 5).item;
+  const av = repararAvaliacao({ itens: [q5] });
+  assert.deepEqual(av.reparadas, [1]);
+  assert.deepEqual(av.avaliacao.itens[0].problemas, []);
+  assert.deepEqual(av.avaliacao.itens[0].alternativas.sort(), ["14 m²", "28 m²", "49 m²", "98 m²"].sort());
+  // "40 − 30 = 10%": pontos percentuais não são erro de conta
+  assert.equal(contasDoTexto("40 - 30 = 10%. Portanto, 10%.").erradas.length, 0);
+});
