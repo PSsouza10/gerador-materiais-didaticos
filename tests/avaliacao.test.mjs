@@ -371,3 +371,24 @@ test("regras de 16/10 (noite): conta inteira com ° e %, nível coerente, quest�
   assert.equal(r.avaliacao.itens.length, 1, "só a Q1 passa sem correção");
   assert.equal(r.retiradas.length, 4);
 });
+
+test("casos reais da bateria (16/10, 17h): letras trocadas, explicações em lista, número inventado, conversão errada", () => {
+  // Volume Q3: a explicação de "20" estava na letra de "12"
+  const dep = normalizarItem({ textoBase: "Observe as medidas na figura.", comando: "Qual é o volume do depósito em metros cúbicos?", figura: { tipo: "bloco", comprimento: 5, largura: 4, altura: 3, unidade: "m" }, leituraFigura: "x", alternativas: ["12 m³", "20 m³", "40 m³", "60 m³"], correta: "D", resolucao: "5 m × 4 m × 3 m = 60 m³. Portanto, 60 m³.", distratores: { A: "Multiplicou apenas duas medidas: 5 × 4 = 20", B: "Subtraiu uma medida: 5 × 4 - 3 = 17", C: "(5 × 4) + 3 = 23" } });
+  const r = conferirItem(dep, 3);
+  assert.equal(r.item.distratores.B, "Multiplicou apenas duas medidas: 5 × 4 = 20", "foi para a letra de 20 m³");
+  assert.ok(r.avisos.some((a) => a.tipo === "corrigido" && /reorganizadas/.test(a.motivo)));
+  assert.ok(r.item.problemas.length > 0, "12 e 40 continuam sem explicação certa: refazer");
+  // explicações em lista
+  const lista = normalizarItem({ comando: "?", alternativas: ["9 m²", "20 m²", "25 m²", "40 m²"], correta: "B", distratores: ["Somou: 5 + 4 = 9.", "5 × 5 = 25.", "(5 × 4) × 2 = 40."] });
+  assert.deepEqual(Object.keys(lista.distratores), ["A", "C", "D"]);
+  const lista2 = normalizarItem({ comando: "?", alternativas: ["9 m²", "20 m²", "25 m²", "40 m²"], correta: "B", distratores: [{ letra: "C", explicacao: "5 × 5 = 25." }] });
+  assert.equal(lista2.distratores.C, "5 × 5 = 25.");
+  // Área Q4: "24 + 21 = 45" — 21 não sai das medidas
+  const L = normalizarFigura({ tipo: "contorno", unidade: "m", pontos: [[0, 0], [8, 0], [8, 3], [3, 3], [3, 6], [0, 6]], legenda: "Terreno" });
+  const t = conferirItem({ textoBase: "Observe a figura do terreno.", comando: "Qual é a área total do terreno?", figura: L, leituraFigura: "x", alternativas: ["18 m²", "24 m²", "33 m²", "45 m²"], correta: "C", resolucao: "8 × 3 = 24; 3 × 3 = 9; 24 + 9 = 33.", distratores: { A: "9 + 9 = 18.", B: "8 * 3 = 24.", D: "Somou incorretamente: 24 + 21 = 45." }, habilidades: [] }, 4);
+  assert.match(t.item.problemas.join(" "), /usa 21/);
+  // conversão errada por potência de 10 é erro típico (não é número inventado)
+  const tq = conferirItem({ textoBase: "Veja as medidas na figura.", comando: "Quantos litros de água cabem no tanque?", figura: normalizarFigura({ tipo: "bloco", comprimento: 2, largura: 1.5, altura: 1, unidade: "m" }), leituraFigura: "x", alternativas: ["3 L", "300 L", "3 000 L", "300 000 L"], correta: "C", resolucao: "2 m × 1.5 m × 1 m = 3 m³; 3 × 1 000 = 3 000 L.", distratores: { A: "Não converteu: 2 × 1.5 × 1 = 3", B: "3 × 100 = 300", D: "Multiplicou por 100 000 em vez de 1 000: 3 × 100 000 = 300 000" }, habilidades: [] }, 5);
+  assert.deepEqual(tq.item.problemas, [], JSON.stringify(tq.avisos));
+});
