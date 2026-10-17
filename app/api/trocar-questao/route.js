@@ -3,7 +3,7 @@ import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirTroca, devolverTroca, TROCAS_POR_GERACAO } from "@/lib/uso";
+import { consumirTroca, devolverTroca } from "@/lib/uso";
 import { openaiJson, geminiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import {
   pedidoDaAvaliacao,
@@ -66,7 +66,7 @@ async function postRota(request, _ctx, requestId) {
     return NextResponse.json({ error: "Não foi possível verificar seu limite agora. Tente de novo." }, { status: 503 });
   }
   if (!uso.ok)
-    return NextResponse.json({ error: `Você já usou as trocas deste mês (${TROCAS_POR_GERACAO} por avaliação gerada). Gere uma nova avaliação para ter mais trocas, ou edite a questão à mão.`, limiteAtingido: true }, { status: 429 });
+    return NextResponse.json({ error: `Você já usou as trocas deste mês (${uso.porProva} por avaliação gerada no plano ${uso.plano || "Grátis"}${uso.porProva < 3 ? "; no Pro são 3" : ""}). Gere uma nova avaliação para ter mais trocas, ou edite a questão à mão.`, limiteAtingido: true }, { status: 429 });
 
   const resolver = (c) => resolverCodigo(BNCC, c);
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;

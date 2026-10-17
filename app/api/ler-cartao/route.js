@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
+import { temCorrecaoPro } from "@/lib/uso";
 import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { montarPromptLeituraCartao, normalizarLeitura } from "@/lib/correcao";
 
@@ -18,6 +19,8 @@ async function postRota(request, _ctx, requestId) {
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta para ler cartões." }, { status: 401 });
+  if (!(await temCorrecaoPro(usuario.email).catch(() => false)))
+    return NextResponse.json({ error: "A leitura pela foto do cartão é do plano Pro. No Grátis, marque as respostas de cada aluno à mão.", pro: true }, { status: 403 });
   let body;
   try {
     body = await request.json();

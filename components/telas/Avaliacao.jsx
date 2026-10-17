@@ -78,6 +78,8 @@ export default function Avaliacao({
   materiais = [],
   aoGerar,
   zerarTeste = false,
+  correcaoPro = true,
+  trocasPorProva = 3,
 }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
@@ -668,7 +670,7 @@ export default function Avaliacao({
                   </ul>
                 </div>
               )}
-              <AjustarQuestoes avaliacao={avaliacao} aoMudar={mudarAvaliacao} />
+              <AjustarQuestoes avaliacao={avaliacao} aoMudar={mudarAvaliacao} trocasPorProva={trocasPorProva} />
             <PreviewEscalado>
                 <FolhaAvaliacao
                   ref={folhaRef}
@@ -681,7 +683,7 @@ export default function Avaliacao({
         </section>
       </div>
 
-      {avaliacao && avId && <CorrecaoTurma avaliacao={avaliacao} avId={avId} />}
+      {avaliacao && avId && <CorrecaoTurma avaliacao={avaliacao} avId={avId} pro={correcaoPro} />}
 
       {salvas.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">

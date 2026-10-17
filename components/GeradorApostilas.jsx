@@ -678,7 +678,7 @@ export default function GeradorApostilas() {
         )}
         {active === "Avaliação" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <Avaliacao professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} />
+            <Avaliacao professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} />
           </div>
         )}
         {active === "Configurações" && (

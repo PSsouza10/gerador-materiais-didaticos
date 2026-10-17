@@ -9,7 +9,7 @@ import { conferirEdicao } from "@/lib/avaliacao";
 const LETRAS = ["A", "B", "C", "D"];
 const NIVEL = { facil: "fácil", media: "média", dificil: "difícil" };
 
-export default function AjustarQuestoes({ avaliacao, aoMudar }) {
+export default function AjustarQuestoes({ avaliacao, aoMudar, trocasPorProva = 3 }) {
   const [trocando, setTrocando] = useState(null);
   const [editando, setEditando] = useState(null); // { i, item }
   const [msg, setMsg] = useState(null); // { tipo, texto }
@@ -55,7 +55,7 @@ export default function AjustarQuestoes({ avaliacao, aoMudar }) {
   return (
     <details className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px]">
       <summary className="cursor-pointer font-bold text-slate-800">Ajustar questões (trocar ou editar)</summary>
-      <p className="mt-1 text-slate-600">Trocar pede à IA outra questão da mesma habilidade e nível, conferida como as demais (até 3 trocas por avaliação gerada no mês). Editar muda o texto à mão.</p>
+      <p className="mt-1 text-slate-600">Trocar pede à IA outra questão da mesma habilidade e nível, conferida como as demais ({trocasPorProva == null ? "sem limite no seu plano" : `até ${trocasPorProva} ${trocasPorProva === 1 ? "troca" : "trocas"} por avaliação gerada no mês${trocasPorProva < 3 ? "; no Pro são 3" : ""}`}). Editar muda o texto à mão.</p>
       {msg && (
         <p className={`mt-2 rounded-lg px-2 py-1.5 font-semibold ${msg.tipo === "ok" ? "bg-emerald-50 text-emerald-900" : "bg-rose-50 text-rose-900"}`}>
           {msg.tipo === "erro" && <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />}

@@ -186,3 +186,19 @@ test("biblioteca limitada: só os 5 mais recentes vão para a tela, sem apagar n
   assert.equal(pro.itens.length, 8, "upgrade: todos voltam");
   assert.equal(pro.ocultos, 0);
 });
+
+test("Grátis × Pro: correção pela foto, relatório baixado e trocas de questão", async () => {
+  const { PLANOS, PLANO_ADMIN, resumoDoUso, RECURSOS_COMPARACAO } = await import("../lib/planos.js");
+  assert.equal(PLANOS.gratis.correcaoPro, false);
+  assert.equal(PLANOS.pro_mensal.correcaoPro, true);
+  assert.equal(PLANOS.pro_anual.correcaoPro, true);
+  assert.equal(PLANOS.gratis.limites.trocasPorProva, 1);
+  assert.equal(PLANOS.pro_mensal.limites.trocasPorProva, 3);
+  assert.equal(PLANO_ADMIN.limites.trocasPorProva, null);
+  const c = { mes: {}, dia: {} };
+  const g = resumoDoUso(c, { plano: PLANOS.gratis });
+  assert.equal(g.correcaoPro, false);
+  assert.equal(g.trocasPorProva, 1);
+  assert.equal(resumoDoUso(c, { plano: PLANO_ADMIN }).trocasPorProva, null);
+  assert.ok(RECURSOS_COMPARACAO.some(([nome, f]) => /foto do cartão/.test(nome) && f(PLANOS.pro_mensal) && !f(PLANOS.gratis)));
+});

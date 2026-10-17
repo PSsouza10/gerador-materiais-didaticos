@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Loader2, Trash2, Download, FileSpreadsheet, UserPlus, BarChart3, AlertTriangle, Pencil } from "lucide-react";
+import { Lock, Camera, Loader2, Trash2, Download, FileSpreadsheet, UserPlus, BarChart3, AlertTriangle, Pencil } from "lucide-react";
 import { LETRAS_CARTAO, BRANCO, DUPLA, FAIXAS, faixaDe, lerRespostasTexto, respostasParaTexto, corrigirAluno, relatorioTurma, relatorioCsv } from "@/lib/correcao";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
@@ -54,9 +54,14 @@ async function fotoParaJpeg(arquivo, lado = 1600) {
   }
 }
 
+const AVISO_PRO = {
+  foto: "A correção pela foto do cartão é do plano Pro. No Grátis, marque as respostas de cada aluno nas bolinhas ou digite em sequência (ex.: ABCDA).",
+  relatorio: "Baixar o relatório da turma em PDF e planilha é do plano Pro. No Grátis, o relatório completo aparece aqui na tela.",
+};
+
 const vazio = (n) => ({ id: null, numero: "", nome: "", respostas: Array(n).fill(BRANCO) });
 
-export default function CorrecaoTurma({ avaliacao, avId }) {
+export default function CorrecaoTurma({ avaliacao, avId, pro = true }) {
   const n = avaliacao?.itens?.length || 0;
   const [alunos, setAlunos] = useState([]);
   const [atual, setAtual] = useState(vazio(n));
@@ -166,8 +171,13 @@ export default function CorrecaoTurma({ avaliacao, avId }) {
             <input value={atual.nome} onChange={(e) => setAtual((a) => ({ ...a, nome: e.target.value.slice(0, 80) }))} className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
           </label>
           <input ref={fotoRef} type="file" accept="image/*" capture="environment" onChange={lerFoto} className="hidden" />
-          <button type="button" onClick={() => fotoRef.current?.click()} disabled={lendo} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
-            {lendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {lendo ? "Lendo o cartão…" : "Foto do cartão"}
+          <button
+            type="button"
+            onClick={() => (pro ? fotoRef.current?.click() : setErro(AVISO_PRO.foto))}
+            disabled={lendo}
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold disabled:opacity-60 ${pro ? "bg-indigo-600 text-white" : "border border-indigo-200 bg-indigo-50 text-indigo-700"}`}
+          >
+            {lendo ? <Loader2 className="h-4 w-4 animate-spin" /> : pro ? <Camera className="h-4 w-4" /> : <Lock className="h-4 w-4" />} {lendo ? "Lendo o cartão…" : pro ? "Foto do cartão" : "Foto do cartão (Pro)"}
           </button>
         </div>
         <label className="mt-3 block">
@@ -209,7 +219,7 @@ export default function CorrecaoTurma({ avaliacao, avId }) {
             </span>
           )}
         </div>
-        {erro && <p className="mt-2 text-[12.5px] font-semibold text-rose-700">{erro}</p>}
+        {erro && <MsgErro erro={erro} />}
       </div>
 
       {/* ---------- relatório ---------- */}
@@ -219,13 +229,14 @@ export default function CorrecaoTurma({ avaliacao, avId }) {
             <p className="mr-auto text-sm font-bold text-slate-800">
               {alunos.length} aluno(s) lançado(s) · média {String(rel.media).replace(".", ",")}
             </p>
-            <button type="button" onClick={baixarPdf} disabled={baixando} className="btn-prev">
-              {baixando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} Relatório (PDF)
+            <button type="button" onClick={() => (pro ? baixarPdf() : setErro(AVISO_PRO.relatorio))} disabled={baixando} className="btn-prev">
+              {baixando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : pro ? <Download className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />} Relatório (PDF){pro ? "" : " · Pro"}
             </button>
-            <button type="button" onClick={baixarCsv} className="btn-prev">
-              <FileSpreadsheet className="h-3.5 w-3.5" /> Planilha (Excel)
+            <button type="button" onClick={() => (pro ? baixarCsv() : setErro(AVISO_PRO.relatorio))} className="btn-prev">
+              {pro ? <FileSpreadsheet className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />} Planilha (Excel){pro ? "" : " · Pro"}
             </button>
           </div>
+          {erro === AVISO_PRO.relatorio && <MsgErro erro={erro} />}
           <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200">
             <div ref={relRef} className="folha-a4 !min-h-0 bg-white text-slate-800">
               <Relatorio avaliacao={avaliacao} rel={rel} aoEditar={editar} aoRemover={remover} />
@@ -234,6 +245,20 @@ export default function CorrecaoTurma({ avaliacao, avId }) {
         </>
       )}
     </section>
+  );
+}
+
+function MsgErro({ erro }) {
+  const pro = Object.values(AVISO_PRO).includes(erro);
+  return (
+    <p className={`mt-2 text-[12.5px] font-semibold ${pro ? "rounded-lg bg-indigo-50 px-2 py-1.5 text-indigo-900" : "text-rose-700"}`}>
+      {erro}{" "}
+      {pro && (
+        <a href="/planos" className="underline">
+          Ver o plano Pro
+        </a>
+      )}
+    </p>
   );
 }
 
