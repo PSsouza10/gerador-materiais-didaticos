@@ -84,6 +84,11 @@ async function postRota(request, _contexto, requestId) {
     if (temGemini()) {
       r = await geminiJson({ sistema: SISTEMA, prompt, temperatura: 0.4 });
       if (!r.ok) {
+        // falha passageira (resposta cortada, JSON inválido, lotado): uma 2ª tentativa antes de desistir
+        console.error("Avaliação: Gemini falhou, tentando de novo", { request_id: requestId, status: r.status, erro: r.erro });
+        r = await geminiJson({ sistema: SISTEMA, prompt, temperatura: 0.3 });
+      }
+      if (!r.ok) {
         falhas.push(r);
         console.error("Avaliação: Gemini falhou", { request_id: requestId, status: r.status, erro: r.erro });
       }
