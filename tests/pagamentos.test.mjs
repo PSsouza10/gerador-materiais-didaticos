@@ -130,7 +130,7 @@ test("anual: Pix aprovado → 12 meses de Pro; devolução corta na hora; pagame
 // ===================== Asaas =====================
 import { configAsaas, corpoCheckoutAsaas, lerAvisoAsaas, tokenWebhookConfere, estadoDaCobrancaAsaas, valorConfereAsaas, linkDoCheckout } from "../lib/asaas.js";
 import { iniciarCheckoutAsaas, processarAvisoAsaas, cancelarAssinaturaAsaas } from "../lib/cobranca.js";
-import { provedorAtivo } from "../lib/provedorPagamento.js";
+import { provedorAtivo, vendaAberta } from "../lib/provedorPagamento.js";
 
 function asaasFalso() {
   const cobr = new Map();
@@ -163,6 +163,12 @@ test("Asaas: teste só com chave de sandbox; produção só com interruptor e ch
   assert.ok(colado.ok && colado.chave === "$aact_prod_abc");
   assert.equal(configAsaas({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_abc" }).api, "https://api-sandbox.asaas.com/v3");
   assert.equal(provedorAtivo({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_x", MP_ACCESS_TOKEN: "TEST-1" }).provedor, "asaas");
+  // venda em produção: fechada até o lançamento, mesmo com chave e PAGAMENTOS_PRODUCAO=1
+  const envProd = { VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc", PAGAMENTOS_PRODUCAO: "1" };
+  assert.equal(provedorAtivo(envProd).ok, true, "aviso/cancelar continuam");
+  assert.equal(vendaAberta(envProd).ok, false, "nova venda fechada");
+  assert.equal(vendaAberta(envProd, true).ok, true, "liberada no lançamento");
+  assert.equal(vendaAberta({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_x" }).ok, true, "site de teste sempre testa");
   assert.equal(linkDoCheckout({ id: "abc" }, true), "https://sandbox.asaas.com/checkoutSession/show?id=abc");
 });
 

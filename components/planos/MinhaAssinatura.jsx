@@ -87,8 +87,18 @@ export default function MinhaAssinatura({ plano, cobranca, retorno, podeCancelar
               </div>
               {cobranca.validoAte && (
                 <div>
-                  <dt className="font-semibold text-marinho">{cobranca.ativa ? "Pro válido até" : "Pro valeu até"}</dt>
-                  <dd>{data(cobranca.validoAte)}</dd>
+                  {/* mensal no cartão: mostra a data da renovação; os 3 dias de tolerância ficam só por dentro */}
+                  {cobranca.ativa && cobranca.tipo === "assinatura" && ["ACTIVE", "authorized"].includes(cobranca.status) ? (
+                    <>
+                      <dt className="font-semibold text-marinho">Renova em</dt>
+                      <dd>{data(new Date(Date.parse(cobranca.validoAte) - 3 * 86400000).toISOString())}</dd>
+                    </>
+                  ) : (
+                    <>
+                      <dt className="font-semibold text-marinho">{cobranca.ativa ? "Pro válido até" : "Pro valeu até"}</dt>
+                      <dd>{data(cobranca.validoAte)}</dd>
+                    </>
+                  )}
                 </div>
               )}
             </dl>

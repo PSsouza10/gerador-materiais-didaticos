@@ -4,7 +4,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { bancoLigado } from "@/lib/banco";
 import { clienteMercadoPago } from "@/lib/pagamentos";
 import { clienteAsaas } from "@/lib/asaas";
-import { provedorAtivo } from "@/lib/provedorPagamento";
+import { vendaAberta as provedorAtivo } from "@/lib/provedorPagamento";
 import { iniciarCheckout, iniciarCheckoutAsaas } from "@/lib/cobranca";
 
 // POST { plano: "pro_mensal" | "pro_anual", forma?: "cartao" | "pix", emailPagador? } → { url } do pagamento.

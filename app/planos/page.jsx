@@ -5,7 +5,7 @@ import { simulacaoAssinatura } from "@/lib/ambiente";
 import { ehAdmin } from "@/lib/uso";
 import { PLANOS, ORDEM_PLANOS, suporteEmail, suporteWhatsapp, SUPORTE_TEXTO_PADRAO, planoVigente, avisoTransicao } from "@/lib/planos";
 import Planos from "@/components/planos/Planos";
-import { provedorAtivo } from "@/lib/provedorPagamento";
+import { vendaAberta as provedorAtivo } from "@/lib/provedorPagamento";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
