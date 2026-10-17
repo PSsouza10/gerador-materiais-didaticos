@@ -257,6 +257,8 @@ async function postRota(request, _contexto, requestId) {
     );
   }
   avaliacao.geradaEm = new Date().toISOString();
+  // o que foi pedido (para "trocar esta questão" gerar outra no mesmo tema, habilidade e cota de figuras)
+  avaliacao.pedido = { disciplina: d.disciplina, nivel: d.nivel, ano: d.ano, bncc: oficial?.c || d.bncc || "", tema: d.temaDoMaterial ? avaliacao.identificacao?.tema || d.tema : d.tema, itens: d.itens, figuras: d.figuras ?? 40 };
   return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { modelo, retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
 }
 

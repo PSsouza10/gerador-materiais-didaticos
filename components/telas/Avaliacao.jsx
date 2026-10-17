@@ -19,6 +19,7 @@ import {
 import SeletorBNCC from "@/components/SeletorBNCC";
 import FolhaAvaliacao from "@/components/FolhaAvaliacao";
 import CorrecaoTurma from "@/components/CorrecaoTurma";
+import AjustarQuestoes from "@/components/AjustarQuestoes";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
@@ -243,6 +244,17 @@ export default function Avaliacao({
     setVersao("aluno");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  // questão trocada ou editada: atualiza a prova aberta e a cópia salva neste navegador
+  const mudarAvaliacao = (nova, i, avisosNovos = []) => {
+    setAvaliacao(nova);
+    setAvisos((l) => [...l.filter((a) => a.onde !== `Item ${i + 1}`), ...avisosNovos]);
+    if (avId) {
+      const l = lerSalvas().map((s) => (s.id === avId ? { ...s, avaliacao: nova } : s));
+      gravarSalvas(l);
+      setSalvas(l);
+    }
+  };
+
   const removerSalva = (id) => {
     const s = salvas.find((x) => x.id === id);
     if (
@@ -656,7 +668,8 @@ export default function Avaliacao({
                   </ul>
                 </div>
               )}
-              <PreviewEscalado>
+              <AjustarQuestoes avaliacao={avaliacao} aoMudar={mudarAvaliacao} />
+            <PreviewEscalado>
                 <FolhaAvaliacao
                   ref={folhaRef}
                   avaliacao={avaliacao}

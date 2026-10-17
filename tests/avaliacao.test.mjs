@@ -520,3 +520,27 @@ test("reposição: completa o número pedido e cumpre a cota de figuras", async 
   // repetida não entra
   assert.equal(aceitarReposicao(av, [ok("q1", g)], d).avaliacao.itens.length, 3);
 });
+
+test("trocar uma questão: pedido da prova, escolha com cota de figuras e edição à mão", async () => {
+  const { pedidoDaAvaliacao, montarPromptTrocarUma, escolherTroca, conferirEdicao } = await import("../lib/avaliacao.js");
+  const g = { tipo: "barras", itens: [] };
+  const q = (comando, figura = null, extra = {}) => ({ comando, textoBase: "", alternativas: ["1 m", "2 m", "3 m", "4 m"], correta: "B", figura, problemas: [], habilidades: [{ codigo: "EF06MA32" }], dificuldade: "media", ...extra });
+  const av = { identificacao: { componente: "Matemática", etapa: "Ensino Fundamental — 6º ano", tema: "Gráficos" }, itens: [q("a", g), q("b", g), q("c"), q("d"), q("e")] };
+  const d = pedidoDaAvaliacao(av);
+  assert.equal(d.ano, "6");
+  assert.equal(d.bncc, "EF06MA32");
+  assert.equal(d.itens, 5);
+  assert.equal(pedidoDaAvaliacao({ ...av, pedido: { tema: "X", ano: "7", figuras: 60 } }).figuras, 60);
+  const p = montarPromptTrocarUma(av, 0, d);
+  assert.match(p, /OBRIGATÓRIO: as questões TÊM "figura"/);
+  assert.match(p, /NÃO quer[^\n]*\na\n/);
+  // a 1 tem figura e a cota (2 de 5) depende dela: só entra questão nova com figura
+  assert.equal(escolherTroca(av, 0, [q("nova sem figura")], d), null);
+  assert.equal(escolherTroca(av, 0, [q("nova sem figura"), q("nova com figura", g)], d).comando, "nova com figura");
+  assert.equal(escolherTroca(av, 2, [q("c")], d), null, "não devolve a mesma questão");
+  assert.equal(escolherTroca(av, 2, [q("d")], d), null, "nem uma repetida de outra da prova");
+  // edição: a letra é a do professor; se a conta discordar, avisa
+  const e = conferirEdicao({ ...q("Quanto é 1 + 2?"), resolucao: "1 + 2 = 3. Portanto, 3 m.", distratores: { A: "Leu só o 1.", C: "x", D: "y" } }, 1);
+  assert.equal(e.item.correta, "B");
+  assert.ok(e.avisos.some((a) => /seria a alternativa C/.test(a.motivo)));
+});
