@@ -2,7 +2,7 @@ import Link from "next/link";
 import { suporteEmail, suporteWhatsapp } from "@/lib/planos";
 
 // Moldura simples e legível para as páginas públicas (privacidade, termos).
-export const ATUALIZADO_EM = "14 de outubro de 2026";
+export const ATUALIZADO_EM = "17 de outubro de 2026";
 export const CONTATO = suporteEmail();
 const WHATSAPP = suporteWhatsapp();
 

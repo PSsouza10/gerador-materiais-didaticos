@@ -67,8 +67,14 @@ export default function PoliticaPrivacidade() {
 
       <H2>4. Dados de estudantes</H2>
       <p>
-        O EduGera não precisa de nenhum dado de alunos. <b>Não escreva nomes ou informações pessoais de estudantes</b> no
-        formulário: o texto das orientações é enviado ao serviço de IA.
+        Para gerar materiais, o EduGera não precisa de nenhum dado de alunos. <b>Não escreva nomes ou informações pessoais de
+        estudantes</b> nos campos de tema, orientações ou observações: esse texto é enviado ao serviço de IA.
+      </p>
+      <p>
+        <b>Correção da turma (Avaliação):</b> os nomes e números dos alunos e as respostas que você lança ficam{" "}
+        <b>só no seu navegador</b> (armazenamento local) e não são enviados ao servidor do EduGera. Na leitura pela foto, a imagem
+        do cartão-resposta é enviada ao serviço de IA apenas para identificar as letras marcadas; o EduGera não guarda a foto, e o
+        nome escrito no cartão não é lido. O relatório em PDF ou planilha é gerado no seu aparelho.
       </p>
 
       <H2>5. Com quem compartilhamos</H2>
@@ -78,9 +84,10 @@ export default function PoliticaPrivacidade() {
         <li><b>Vercel</b>: hospedagem do site e armazenamento das ilustrações, dos links compartilhados, da lista &ldquo;Minhas Apostilas&rdquo; e do contador de uso.</li>
         <li><b>Asaas</b> (Brasil): processamento dos pagamentos dos planos Pro.</li>
         <li><b>OpenAI</b>: geração do texto e da ilustração a partir do que você preencheu. Pela política da API da OpenAI, os dados enviados não são usados para treinar modelos.</li>
+        <li><b>Google (Gemini)</b>: geração e conferência do texto (inclusive quando a OpenAI está indisponível) e leitura da foto do cartão-resposta na correção da turma.</li>
       </Lista>
       <p>
-        Google, Vercel e OpenAI ficam nos Estados Unidos, o que configura transferência internacional de dados. Ela é feita para
+        Google (inclusive o Gemini), Vercel e OpenAI ficam nos Estados Unidos, o que configura transferência internacional de dados. Ela é feita para
         executar o serviço que você pediu e com fornecedores que adotam cláusulas e medidas de proteção compatíveis com a LGPD
         (art. 33).
       </p>

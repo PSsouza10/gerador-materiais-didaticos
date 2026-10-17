@@ -20,8 +20,10 @@ export default function TermosDeUso() {
 
       <H2>1. O serviço</H2>
       <p>
-        O EduGera gera apostilas, fichas de estudo e exercícios alinhados à BNCC com apoio de inteligência artificial, além de
-        prévia em A4, PDF, impressão e links de compartilhamento.
+        O EduGera gera apostilas, fichas de estudo, exercícios, planos de aula e avaliações de múltipla escolha (no padrão da
+        Prova Paulista e do SARESP) alinhados à BNCC, com apoio de inteligência artificial, além de prévia em A4, PDF, impressão
+        e links de compartilhamento. Também ajuda na correção da turma: notas e relatório por habilidade a partir das respostas
+        que o(a) professor(a) lança.
       </p>
 
       <H2>2. Conta</H2>
@@ -52,13 +54,19 @@ export default function TermosDeUso() {
           parcelas). Vale por 12 meses e <b>não renova sozinho</b>.
         </li>
         <li>
+          <b>Quem já é Pro e compra o anual</b> (vindo do mensal ou renovando o anual): os 12 meses começam quando termina o
+          período que você já pagou, sem perder dias. As datas de início e fim aparecem antes do pagamento. Se você tinha o mensal
+          no cartão, a renovação mensal é cancelada automaticamente quando o anual é pago.
+        </li>
+        <li>
           <b>Cancelamento:</b> o mensal pode ser cancelado a qualquer momento, sem multa, em &ldquo;Minha assinatura&rdquo;.
           Nenhuma nova cobrança é feita e o Pro continua até o fim do mês já pago; depois a conta volta ao plano gratuito.
         </li>
         <li>
           <b>Arrependimento em 7 dias:</b> em até 7 dias da contratação você pode desistir e receber o valor de volta (Código de
           Defesa do Consumidor, art. 49). Peça pelo e-mail{" "}
-          <a className="text-indigo-600 underline" href={`mailto:${CONTATO}`}>{CONTATO}</a>.
+          <a className="text-indigo-600 underline" href={`mailto:${CONTATO}`}>{CONTATO}</a>. Depois desse prazo, não há devolução
+          proporcional do período já pago; no mensal, basta cancelar para não haver novas cobranças.
         </li>
         <li>
           <b>Pagamento:</b> é processado pelo Asaas, numa página do próprio Asaas. O EduGera não recebe nem guarda os dados do
@@ -66,7 +74,9 @@ export default function TermosDeUso() {
         </li>
         <li>
           Se a renovação do mensal não for aprovada, o Pro continua por até 3 dias; sem pagamento, a conta volta ao plano
-          gratuito. Pagamento devolvido ou contestado encerra o Pro. Em todos os casos, seus materiais continuam guardados.
+          gratuito. Pagamento devolvido ou contestado encerra o período daquele pagamento; se você tinha outro período já pago
+          (por exemplo, o mensal antes do anual), ele continua valendo até o fim. Em todos os casos, seus materiais continuam
+          guardados.
         </li>
         <li>
           Mudanças de preço são avisadas antes de valer e não alteram o período que você já pagou.
@@ -80,6 +90,11 @@ export default function TermosDeUso() {
           antes de usar com os estudantes. A decisão pedagógica é sempre do(a) professor(a).
         </li>
         <li>
+          Nas avaliações, o EduGera refaz as contas e confere o gabarito automaticamente, mas isso não substitui a revisão do(a)
+          professor(a). Na correção pela foto do cartão-resposta, confira a leitura antes de salvar: a IA pode errar em marcações
+          fracas, rasuras ou fotos com pouca luz.
+        </li>
+        <li>
           O texto oficial das habilidades vem da base da BNCC compilada pelo projeto bncc-dados (licença CC BY 4.0). Os textos
           normativos da BNCC são atos oficiais.
         </li>
@@ -89,7 +104,11 @@ export default function TermosDeUso() {
       <H2>6. Uso adequado</H2>
       <p>Não é permitido:</p>
       <Lista>
-        <li>inserir nomes ou dados pessoais de estudantes no formulário;</li>
+        <li>
+          inserir nomes ou dados pessoais de estudantes nos campos enviados à IA (tema, orientações, observações). A exceção é a
+          correção da turma: ali os nomes ficam só no seu navegador, e a foto do cartão-resposta é lida pela IA e descartada. Use
+          esse recurso de acordo com as regras da sua escola ou rede;
+        </li>
         <li>gerar conteúdo ilegal, discriminatório, violento ou impróprio para o ambiente escolar;</li>
         <li>tentar burlar os limites de uso, automatizar requisições ou prejudicar o funcionamento do site;</li>
         <li>compartilhar links com conteúdo que viole direitos de terceiros.</li>
