@@ -34,6 +34,8 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
     } catch (e) {
       setMsg(e.message);
       setOcupado(null);
+      // a mensagem fica no topo da página: leva o professor até ela
+      setTimeout(() => document.getElementById("msg-planos")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
     }
   };
 
@@ -212,7 +214,7 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
             </p>
           )}
           {msg && (
-            <p role="status" className="mx-auto mt-4 max-w-[60ch] text-[15px] font-semibold text-marinho">
+            <p id="msg-planos" role="status" className="mx-auto mt-4 max-w-[60ch] rounded-xl bg-amber-50 px-4 py-2 text-[15px] font-semibold text-marinho">
               {msg}
             </p>
           )}
