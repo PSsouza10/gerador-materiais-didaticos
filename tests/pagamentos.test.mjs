@@ -312,3 +312,30 @@ test("estado do mensal no Pix: renovação antes do fim começa do fim atual", (
   const cartao = estadoDaCobrancaAsaas({ status: "CONFIRMED", value: 39.9, dueDate: "2026-10-14", subscription: "sub_1" }, "pro_mensal", agora);
   assert.equal(cartao.validoAte, "2026-11-17T12:00:00.000Z");
 });
+
+test("Asaas mensal: estorno do cartão (assinatura) e do Pix avulso cortam o Pro na hora; estorno negado não mexe", async () => {
+  const as = asaasFalso();
+  const hoje = new Date().toISOString().slice(0, 10);
+  // cartão (assinatura)
+  const r = await iniciarCheckoutAsaas({ email: "e1@x.br", plano: "pro_mensal", origem: "https://e.app", cliente: as, sandbox: true });
+  const chk = as.checkouts.at(-1);
+  as.cobr.set("pay_c1", { id: "pay_c1", status: "CONFIRMED", value: 39.9, dueDate: hoje, subscription: "sub_e1", checkoutSession: chk.id });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_c1" }, as);
+  assert.equal((await C.cobrancaAtiva("e1@x.br")).plano, "pro_mensal");
+  as.cobr.get("pay_c1").status = "REFUND_IN_PROGRESS";
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_c1" }, as);
+  assert.equal(await C.cobrancaAtiva("e1@x.br"), null, "estorno do cartão em andamento: volta ao Grátis");
+  assert.ok(r.ok);
+  // Pix avulso (1 mês)
+  const r2 = await iniciarCheckoutAsaas({ email: "e2@x.br", plano: "pro_mensal", forma: "pix", origem: "https://e.app", cliente: as, sandbox: true });
+  as.cobr.set("pay_p1", { id: "pay_p1", status: "RECEIVED", value: 39.9, confirmedDate: hoje, externalReference: r2.referencia });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_p1" }, as);
+  const antes = await C.cobrancaAtiva("e2@x.br");
+  assert.equal(antes.plano, "pro_mensal");
+  // estorno NEGADO: o Asaas avisa, mas a cobrança continua RECEIVED → nada muda
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_p1" }, as);
+  assert.equal((await C.cobrancaAtiva("e2@x.br")).validoAte, antes.validoAte);
+  as.cobr.get("pay_p1").status = "REFUNDED";
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_p1" }, as);
+  assert.equal(await C.cobrancaAtiva("e2@x.br"), null, "estorno do Pix: volta ao Grátis");
+});
