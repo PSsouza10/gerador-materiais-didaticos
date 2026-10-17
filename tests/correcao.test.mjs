@@ -47,10 +47,14 @@ test("relatório da turma: por questão, por habilidade, erro mais comum e o que
   assert.equal(rel.sugestoes[0].codigo, "EF07MA30");
   assert.match(rel.sugestoes[0].erro, /75% marcaram A: Somou as medidas\./);
   assert.deepEqual(rel.sugestoes[0].alunos, ["Ana", "Duda"]);
+  assert.deepEqual(rel.sugestoes[0].descritores, ["Volume", "Volume em litros"], "todos os descritores da habilidade");
+  assert.equal(rel.sugestoes[0].descritorDaQuestao, "Volume");
+  assert.equal(rel.porQuestao[1].distribuicao["-"], 0);
   assert.equal(rel.porAluno[0].nome, "Bruno", "ordem pelo número de chamada");
   assert.equal(rel.media, 5);
   const csv = relatorioCsv(av, rel);
   assert.match(csv, /Nº;Nome;Q1;Q2;Q3;Q4;Acertos;Nota;Reforçar/);
+  assert.match(csv, /Questão;Habilidade;Descritor;% acerto;Branco;Dupla marcação;Erro mais comum/);
   assert.match(csv, /1;Bruno;A;A;A;D;2\/4;5;/);
 });
 

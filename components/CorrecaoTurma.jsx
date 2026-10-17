@@ -203,9 +203,11 @@ export default function CorrecaoTurma({ avaliacao, avId }) {
               Cancelar edição
             </button>
           )}
-          <span className="text-[12.5px] text-slate-600">
-            Prévia: {parcial.acertos}/{parcial.total} acertos · nota {String(parcial.nota).replace(".", ",")}
-          </span>
+          {atual.respostas.some((r) => r !== BRANCO) && (
+            <span className="text-[12.5px] text-slate-600">
+              Prévia: {parcial.acertos}/{parcial.total} acertos · nota {String(parcial.nota).replace(".", ",")}
+            </span>
+          )}
         </div>
         {erro && <p className="mt-2 text-[12.5px] font-semibold text-rose-700">{erro}</p>}
       </div>
@@ -255,11 +257,16 @@ function Relatorio({ avaliacao, rel, aoEditar, aoRemover }) {
           <ol className="ml-5 list-decimal space-y-1.5">
             {rel.sugestoes.map((s) => (
               <li key={s.codigo}>
-                <b>{s.codigo}</b> {s.descritor && `— ${s.descritor}`} ·{" "}
+                <b>{s.codigo}</b>
+                {s.descritores.length > 0 && ` — ${s.descritores.slice(0, 3).join("; ")}${s.descritores.length > 3 ? "…" : ""}`} ·{" "}
                 <span className={`rounded px-1.5 py-0.5 text-[11.5px] font-bold ${COR_FAIXA[s.faixa]}`}>
                   {s.percentual}% · {rotuloFaixa(s.faixa)}
                 </span>
-                {s.erro && <span className="block text-slate-700">Erro mais comum (questão {s.questao}): {s.erro}</span>}
+                {s.erro && (
+                  <span className="block text-slate-700">
+                    Questão {s.questao} (a de menor acerto{s.descritorDaQuestao ? `: ${s.descritorDaQuestao}` : ""}) — {s.erro}
+                  </span>
+                )}
                 {s.alunos.length > 0 && <span className="block text-slate-600">Alunos para acompanhar: {s.alunos.join(", ")}.</span>}
               </li>
             ))}
@@ -300,7 +307,7 @@ function Relatorio({ avaliacao, rel, aoEditar, aoRemover }) {
             <tr>
               <th className="py-1">Q</th>
               <th>Gab.</th>
-              <th>A · B · C · D · branco</th>
+              <th>A · B · C · D · branco · dupla</th>
               <th className="w-44">Acerto</th>
               <th>Erro mais comum</th>
             </tr>
@@ -317,7 +324,7 @@ function Relatorio({ avaliacao, rel, aoEditar, aoRemover }) {
                       {" · "}
                     </span>
                   ))}
-                  {q.distribuicao[BRANCO] + q.distribuicao[DUPLA]}
+                  {q.distribuicao[BRANCO]} · {q.distribuicao[DUPLA]}
                 </td>
                 <td>
                   <Barra pct={q.percentual} faixa={q.faixa} />
