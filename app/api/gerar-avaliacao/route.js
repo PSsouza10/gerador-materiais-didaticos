@@ -95,6 +95,17 @@ async function postRota(request, _contexto, requestId) {
   }
 
   const resolver = (c) => resolverCodigo(BNCC, c);
+  // Correções e reposição: OpenAI; se ela falhar (sem crédito, fora do ar), o Gemini faz o pedido
+  let openaiFora = !temOpenAI() || falhas.some((f) => f.status === 429 || f.status === 401);
+  const pedirIA = async ({ sistema, prompt, temperatura }) => {
+    if (!openaiFora) {
+      const a = await openaiJson({ sistema, prompt, modelo, temperatura });
+      if (a.ok || !temGemini()) return a;
+      if (a.status === 429 || a.status === 401) openaiFora = true;
+      console.error("Avaliação: OpenAI falhou, usando o Gemini", { request_id: requestId, status: a.status, erro: a.erro });
+    }
+    return temGemini() ? geminiJson({ sistema, prompt, temperatura }) : { ok: false, status: 500, erro: "sem IA disponível" };
+  };
   // 1ª conferência: contas refeitas pelo sistema, gabarito, explicações, figuras
   const primeira = conferirAvaliacao(normalizarAvaliacao(r.json, d, oficial, resolver));
   let atual = primeira.avaliacao;
@@ -152,7 +163,7 @@ async function postRota(request, _contexto, requestId) {
       break;
     }
     const prompt = montar(atual, indices, d);
-    const rr = temOpenAI() ? await openaiJson({ sistema: sistemaRef, prompt, modelo, temperatura: k === 2 ? 0.5 : 0.2 }) : await geminiJson({ sistema: sistemaRef, prompt, temperatura: k === 2 ? 0.5 : 0.2 });
+    const rr = await pedirIA({ sistema: sistemaRef, prompt, temperatura: k === 2 ? 0.5 : 0.2 });
     if (!rr.ok) {
       console.error("Avaliação: rodada de correção falhou", { request_id: requestId, rodada: k + 1, status: rr.status, erro: rr.erro });
       diagRodadas.push({ rodada: k + 1, erro: `${rr.status} ${rr.erro}`.slice(0, 200) });
@@ -189,7 +200,7 @@ async function postRota(request, _contexto, requestId) {
   for (let tentativa = 1; atual.itens.length < d.itens && tentativa <= 2 && Date.now() - t0 < 235_000; tentativa++) {
     const faltam = d.itens - atual.itens.length;
     const pr = montarPromptRepor(atual, faltam, d);
-    const rn = temOpenAI() ? await openaiJson({ sistema: SISTEMA, prompt: pr, modelo, temperatura: 0.5 }) : await geminiJson({ sistema: SISTEMA, prompt: pr, temperatura: 0.5 });
+    const rn = await pedirIA({ sistema: SISTEMA, prompt: pr, temperatura: 0.5 });
     if (!rn.ok) {
       diagRodadas.push({ reposicao: tentativa, erro: `${rn.status} ${rn.erro}`.slice(0, 160) });
       continue;
