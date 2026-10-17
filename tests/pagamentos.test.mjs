@@ -232,9 +232,9 @@ test("Asaas mensal: checkout → 1ª cobrança paga → Pro; 2ª mensalidade só
   const c3 = await C.cobrancaAtiva("a1@x.br");
   assert.equal(c3.status, "CANCELLED");
   assert.equal(c3.validoAte, c2.validoAte, "continua até o fim do mês pago");
-  // com Pro valendo, não abre outro pagamento (nem mensal nem anual)
+  // com Pro valendo, não abre outro MENSAL (o anual pode: soma a partir do fim, ver teste abaixo)
   const n = as.checkouts.length;
-  const dup = await iniciarCheckoutAsaas({ email: "a1@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  const dup = await iniciarCheckoutAsaas({ email: "a1@x.br", plano: "pro_mensal", origem: "https://e.app", cliente: as, sandbox: true });
   assert.equal(dup.ok, false);
   assert.equal(dup.status, 409);
   assert.match(dup.erro, /já tem o Pro ativo até/);
@@ -338,4 +338,55 @@ test("Asaas mensal: estorno do cartão (assinatura) e do Pix avulso cortam o Pro
   as.cobr.get("pay_p1").status = "REFUNDED";
   await processarAvisoAsaas({ recurso: "cobranca", id: "pay_p1" }, as);
   assert.equal(await C.cobrancaAtiva("e2@x.br"), null, "estorno do Pix: volta ao Grátis");
+});
+
+
+test("Asaas: mensal → anual começa no fim do mês pago, cancela a renovação do cartão; estorno do anual volta ao fim do mensal; anual + anual soma 1 ano", async () => {
+  const as = asaasFalso();
+  const hoje = new Date().toISOString().slice(0, 10);
+  const r1 = await iniciarCheckoutAsaas({ email: "u1@x.br", plano: "pro_mensal", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r1.ok);
+  as.cobr.set("pay_m1", { id: "pay_m1", status: "CONFIRMED", value: 39.9, dueDate: hoje, subscription: "sub_u1", checkoutSession: as.checkouts.at(-1).id });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_m1" }, as);
+  const mensal = await C.cobrancaAtiva("u1@x.br");
+  assert.equal(mensal.plano, "pro_mensal");
+  // (a) antes de pagar: as datas do anual
+  const r2 = await iniciarCheckoutAsaas({ email: "u1@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r2.ok, JSON.stringify(r2));
+  assert.equal(r2.periodo.inicio, mensal.validoAte);
+  const esperado = new Date(mensal.validoAte);
+  esperado.setUTCMonth(esperado.getUTCMonth() + 12);
+  assert.equal(r2.periodo.fim, esperado.toISOString());
+  assert.match(as.checkouts.at(-1).items[0].description, /de \d{2}\/\d{2}\/\d{4} a \d{2}\/\d{2}\/\d{4}/);
+  // anual pago: vale até o fim do mensal + 12 meses, e a mensal no cartão é cancelada
+  as.cobr.set("pay_a1", { id: "pay_a1", status: "RECEIVED", value: 358.8, confirmedDate: hoje, externalReference: r2.referencia });
+  const pa = await processarAvisoAsaas({ recurso: "cobranca", id: "pay_a1" }, as);
+  assert.deepEqual(pa.mensalCancelada, ["sub_u1"]);
+  assert.ok(as.canceladas.includes("sub_u1"));
+  const anual = await C.cobrancaAtiva("u1@x.br");
+  assert.equal(anual.plano, "pro_anual");
+  assert.equal(anual.validoAte.slice(0, 10), esperado.toISOString().slice(0, 10), "fim do mensal + 12 meses");
+  // aviso repetido não muda
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_a1" }, as);
+  assert.equal((await C.cobrancaAtiva("u1@x.br")).validoAte, anual.validoAte);
+  // (b) estorno do anual: volta para o fim do mensal, não para o Grátis
+  as.cobr.get("pay_a1").status = "REFUNDED";
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_a1" }, as);
+  const volta = await C.cobrancaAtiva("u1@x.br");
+  assert.equal(volta.plano, "pro_mensal");
+  assert.equal(volta.validoAte, mensal.validoAte);
+  // (c) anual + anual: soma 1 ano a partir do fim do anual atual
+  const r3 = await iniciarCheckoutAsaas({ email: "u2@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  as.cobr.set("pay_b1", { id: "pay_b1", status: "RECEIVED", value: 358.8, confirmedDate: hoje, externalReference: r3.referencia });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_b1" }, as);
+  const a1 = await C.cobrancaAtiva("u2@x.br");
+  const r4 = await iniciarCheckoutAsaas({ email: "u2@x.br", plano: "pro_anual", origem: "https://e.app", cliente: as, sandbox: true });
+  assert.ok(r4.ok);
+  assert.equal(r4.periodo.inicio, a1.validoAte);
+  as.cobr.set("pay_b2", { id: "pay_b2", status: "RECEIVED", value: 358.8, confirmedDate: hoje, externalReference: r4.referencia });
+  await processarAvisoAsaas({ recurso: "cobranca", id: "pay_b2" }, as);
+  const a2 = await C.cobrancaAtiva("u2@x.br");
+  const dois = new Date(a1.validoAte);
+  dois.setUTCMonth(dois.getUTCMonth() + 12);
+  assert.equal(a2.validoAte.slice(0, 10), dois.toISOString().slice(0, 10), "fim do anual atual + 12 meses");
 });

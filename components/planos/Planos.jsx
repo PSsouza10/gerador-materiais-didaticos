@@ -90,7 +90,30 @@ export default function Planos({ planos, logado, atual, assinatura, simulacao, s
         </span>
       );
     }
-    if (ehAtual) return <span className="btn-primario w-full justify-center opacity-90">Seu plano atual{assinatura?.origem === "simulada" ? " (simulado)" : ""}</span>;
+    // anual no Asaas: quem já é Pro (mensal ou anual) também compra; o ano começa no fim do que já está pago
+    const anualSoma = p.id === "pro_anual" && pagamento === "asaas" && logado && assinatura?.origem !== "simulada";
+    if (ehAtual && !anualSoma) return <span className="btn-primario w-full justify-center opacity-90">Seu plano atual{assinatura?.origem === "simulada" ? " (simulado)" : ""}</span>;
+    if (anualSoma) {
+      const fimAtual = assinatura?.fim && Date.parse(assinatura.fim) > Date.now() ? assinatura.fim : null;
+      const inicio = fimAtual || new Date().toISOString();
+      const fim = new Date(inicio);
+      fim.setUTCMonth(fim.getUTCMonth() + 12);
+      const br = (iso) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      return (
+        <div className="space-y-2">
+          <button type="button" onClick={() => assinar("pro_anual")} disabled={!!ocupado} className="btn-primario w-full justify-center">
+            {ocupado === "pro_anual" ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {ehAtual ? "Renovar por mais 1 ano" : fimAtual ? "Passar para o anual" : "Assinar"}
+          </button>
+          <p className="text-center text-[12.5px] text-tinta">
+            {fimAtual ? "O ano começa quando o seu Pro atual termina: " : "Vale "}
+            <b>
+              de {br(inicio)} a {br(fim.toISOString())}
+            </b>
+            .{fimAtual && atual === "pro_mensal" ? " A renovação mensal no cartão é cancelada sozinha quando o anual for pago." : ""}
+          </p>
+        </div>
+      );
+    }
     if (pagamento && p.contratavel) {
       if (!logado)
         return (
