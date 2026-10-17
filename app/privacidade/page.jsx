@@ -19,7 +19,7 @@ export default function PoliticaPrivacidade() {
 
       <H2>1. Quem é o responsável</H2>
       <p>
-        O controlador dos dados é Paulo Sergio Souza de Jesus (PS Souza), responsável pelo EduGera. Contato do encarregado:{" "}
+        O controlador dos dados é Paulo Sergio Souza de Jesus (PS Souza), CPF 014.320.325-85, responsável pelo EduGera. Contato do encarregado:{" "}
         <a className="text-indigo-600 underline" href={`mailto:${CONTATO}`}>{CONTATO}</a>.
       </p>
 

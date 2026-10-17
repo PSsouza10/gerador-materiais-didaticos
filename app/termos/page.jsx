@@ -1,4 +1,5 @@
-import PaginaLegal, { H2, Lista, CONTATO } from "@/components/PaginaLegal";
+import PaginaLegal, { H2, Lista, CONTATO, RESPONSAVEL } from "@/components/PaginaLegal";
+import { suporteWhatsapp } from "@/lib/planos";
 import { DOMINIO } from "@/lib/site";
 import { PLANOS, formatarPreco } from "@/lib/planos";
 
@@ -13,8 +14,9 @@ export default function TermosDeUso() {
   return (
     <PaginaLegal titulo="Termos de Uso">
       <p>
-        Estes termos valem para o uso do <b>EduGera</b> ({DOMINIO}), mantido por Paulo Sergio Souza de Jesus (PS
-        Souza). Ao entrar com sua conta e usar o serviço, você concorda com eles. O tratamento de dados está descrito na{" "}
+        Estes termos valem para o uso do <b>EduGera</b> ({DOMINIO}), mantido por {RESPONSAVEL.nome} (PS Souza),{" "}
+        {RESPONSAVEL.documento}. Contato: <a className="text-indigo-600 underline" href={`mailto:${CONTATO}`}>{CONTATO}</a> e WhatsApp{" "}
+        {suporteWhatsapp().rotulo}. Ao entrar com sua conta e usar o serviço, você concorda com eles. O tratamento de dados está descrito na{" "}
         <a className="text-indigo-600 underline" href="/privacidade">Política de Privacidade</a>.
       </p>
 
