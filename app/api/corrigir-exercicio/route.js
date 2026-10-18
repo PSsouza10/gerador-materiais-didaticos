@@ -7,7 +7,7 @@ import { consumirCorrecao } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
-import { openaiJson, geminiJson, temOpenAI, temGemini } from "@/lib/provedoresIA";
+import { geminiJson, temGemini } from "@/lib/provedoresIA";
 
 // Refaz UM exercício da apostila, com o motivo do problema (revisão exercício por exercício).
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
@@ -19,7 +19,7 @@ const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
 async function postRota(request, _contexto, requestId) {
-  if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "IA não configurada." }, { status: 500 });
+  if (!temGemini()) return NextResponse.json({ error: "Gemini não configurado." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
@@ -65,13 +65,9 @@ Regras: fique no tema e na habilidade; a "fala" é de um personagem (lia, theo, 
 
 Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado": "...", "tipo": "...", "exigencia": "...", "alternativas": [...], "figura": null, "resolucao": "...", "resposta": "..." }`;
 
-  // OpenAI primeiro; se falhar (sem crédito, fora do ar), o Gemini corrige
+  // Esta ação usa exclusivamente Gemini; não recorrer à OpenAI para evitar cobrança nesse fluxo.
   const sistema = "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido.";
-  let r = temOpenAI() ? await openaiJson({ sistema, prompt, modelo: "gpt-4o", temperatura: 0.5 }) : { ok: false, status: 500, erro: "sem OpenAI" };
-  if (!r.ok && temGemini()) {
-    console.error("Corrigir exercício: OpenAI falhou, usando Gemini:", r.status, r.erro);
-    r = await geminiJson({ sistema, prompt, temperatura: 0.5 });
-  }
+  const r = await geminiJson({ sistema, prompt, temperatura: 0.5 });
   if (!r.ok) {
     console.error("Erro IA (corrigir exercício):", r.status, r.erro);
     return NextResponse.json({ error: r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao corrigir o exercício." }, { status: 502 });
