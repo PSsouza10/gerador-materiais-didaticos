@@ -166,7 +166,7 @@ test("Asaas: teste só com chave de sandbox; produção só com interruptor e ch
   // venda em produção: fechada até o lançamento, mesmo com chave e PAGAMENTOS_PRODUCAO=1
   const envProd = { VERCEL_ENV: "production", ASAAS_API_KEY: "$aact_prod_abc", PAGAMENTOS_PRODUCAO: "1" };
   assert.equal(provedorAtivo(envProd).ok, true, "aviso/cancelar continuam");
-  assert.equal(vendaAberta(envProd).ok, false, "nova venda fechada");
+  assert.equal(vendaAberta(envProd, false).ok, false, "nova venda fechada");
   assert.equal(vendaAberta(envProd, true).ok, true, "liberada no lançamento");
   assert.equal(vendaAberta({ VERCEL_ENV: "preview", ASAAS_API_KEY: "$aact_hmlg_x" }).ok, true, "site de teste sempre testa");
   assert.equal(linkDoCheckout({ id: "abc" }, true), "https://sandbox.asaas.com/checkoutSession/show?id=abc");
