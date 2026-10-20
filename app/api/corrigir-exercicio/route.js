@@ -3,7 +3,7 @@ import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
 import { indexar, resolverCodigo, rotuloAno } from "@/lib/bncc";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirCorrecao } from "@/lib/uso";
+import { consumirCorrecao, ehAdmin } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
