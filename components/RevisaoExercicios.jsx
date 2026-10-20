@@ -22,6 +22,8 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
   const [editando, setEditando] = useState(false);
   const [rascunho, setRascunho] = useState(null);
   const [corrigindo, setCorrigindo] = useState(false);
+  const [corrigindoBateria, setCorrigindoBateria] = useState(false);
+  const [progressoBateria, setProgressoBateria] = useState("");
   const [erro, setErro] = useState("");
   const [instrucao, setInstrucao] = useState("");
   const [revisando, setRevisando] = useState(false);
@@ -155,6 +157,54 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
     }
   }
 
+  async function corrigirBateria() {
+    if (corrigindo || corrigindoBateria) return;
+    const gerais = (material?.revisorGeral || []).map((p) => p.motivo).filter(Boolean);
+    const pendentes = exercicios
+      .map((e, k) => ({ e, k, motivos: [...(problemas[k + 1] || []).map((p) => p.motivo), ...gerais] }))
+      .filter(({ e, motivos }) => !e.aprovado || motivos.length > 0);
+    if (!pendentes.length) return;
+    if (!window.confirm(`A IA vai revisar ${pendentes.length} exercício(s) em sequência. Cada alteração ficará pendente de aprovação. Continuar?`)) return;
+
+    setErro("");
+    setCorrigindoBateria(true);
+    let trabalhando = { ...material, exercicios: [...exercicios], avisosGabarito: [] };
+    try {
+      for (let pos = 0; pos < pendentes.length; pos += 1) {
+        const { k, motivos } = pendentes[pos];
+        setProgressoBateria(`${pos + 1} de ${pendentes.length}`);
+        const atualEx = trabalhando.exercicios[k];
+        const res = await fetch("/api/corrigir-exercicio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            form: { disciplina: form.disciplina, nivel: form.nivel, ano: form.ano, tema: form.tema, bncc: form.bncc },
+            exercicio: atualEx,
+            numero: k + 1,
+            motivos: [...new Set(motivos)],
+            instrucao: "Correção em bateria: mantenha o tema e a faixa etária, corrija todos os apontamentos e não entregue a resposta na fala do personagem. Se houver lacuna de conteúdo no material, use esta questão para praticar o conceito ausente. Confira a resolução e o gabarito antes de responder.",
+            outros: trabalhando.exercicios.filter((_, n) => n !== k).map((e) => e.enunciado),
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.exercicio) throw new Error(json.error || `Não foi possível corrigir o exercício ${k + 1}.`);
+        trabalhando = {
+          ...trabalhando,
+          avisosGabarito: [],
+          exercicios: trabalhando.exercicios.map((e, n) => (n === k ? { ...json.exercicio, fala: json.exercicio.fala || e.fala, aprovado: false } : e)),
+        };
+        onMudar(trabalhando);
+      }
+      setAtual(0);
+      setInstrucao("");
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setProgressoBateria("");
+      setCorrigindoBateria(false);
+    }
+  }
+
   const status = (e, k) => (e.aprovado ? "aprovado" : (problemas[k + 1] || []).length ? "atencao" : "ok");
   const cor = { aprovado: "bg-emerald-500", ok: "bg-indigo-300", atencao: "bg-amber-400" };
 
@@ -162,9 +212,19 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
     <section aria-labelledby="titulo-revisao" className="nao-imprimir mt-6 rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="titulo-revisao" className="text-base font-extrabold text-slate-800">Revisar exercícios</h2>
-        <span className="text-xs font-bold text-slate-500">
-          {aprovados} de {exercicios.length} aprovados
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500">{aprovados} de {exercicios.length} aprovados</span>
+          <button
+            type="button"
+            onClick={corrigirBateria}
+            disabled={corrigindo || corrigindoBateria}
+            className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
+            title="Corrige em sequência os exercícios não aprovados ou com apontamentos"
+          >
+            {corrigindoBateria ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+            {corrigindoBateria ? `Corrigindo ${progressoBateria}…` : "Corrigir bateria"}
+          </button>
+        </div>
       </div>
       <p className="mt-1 text-[12px] text-slate-600">Confira um por vez. Aprove, peça para a IA corrigir só este exercício, edite ou remova.</p>
 
