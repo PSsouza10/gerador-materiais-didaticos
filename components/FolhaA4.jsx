@@ -89,10 +89,10 @@ const FolhaA4 = forwardRef(function FolhaA4(
             </Chip>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-[1fr_120px_110px] gap-4 text-[11px] text-slate-500">
-          <span className="border-b border-slate-300 pb-1">Nome:</span>
-          <span className="border-b border-slate-300 pb-1">Turma: {form.turma || ""}</span>
-          <span className="border-b border-slate-300 pb-1">Data: ___/___/___</span>
+        <div className="mt-3 grid grid-cols-[1fr_120px_110px] gap-4 text-[11px] text-slate-500" role="group" aria-label="Identificação do estudante">
+          <span className="border-b border-slate-300 pb-1" aria-label="Nome do estudante">Nome:</span>
+          <span className="border-b border-slate-300 pb-1" aria-label={`Turma${form.turma ? `: ${form.turma}` : ""}`}>Turma: {form.turma || ""}</span>
+          <span className="border-b border-slate-300 pb-1" aria-label="Data da atividade">Data: ___/___/___</span>
         </div>
       </header>
 
