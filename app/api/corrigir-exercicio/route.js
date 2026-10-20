@@ -7,7 +7,7 @@ import { consumirCorrecao, ehAdmin } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
-import { geminiJson, temGemini } from "@/lib/provedoresIA";
+import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 
 // Refaz UM exercício da apostila, com o motivo do problema (revisão exercício por exercício).
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
@@ -37,7 +37,7 @@ const extrairExercicio = (json) => {
 };
 
 async function postRota(request, _contexto, requestId) {
-  if (!temGemini()) return NextResponse.json({ error: "Gemini não configurado." }, { status: 500 });
+  if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "Nenhum provedor de IA configurado." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
@@ -83,10 +83,15 @@ Regras: fique no tema e na habilidade; a "fala" é de um personagem (lia, theo, 
 
 Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado": "...", "tipo": "...", "exigencia": "...", "alternativas": [...], "figura": null, "resolucao": "...", "resposta": "..." }`;
 
-  // Esta ação usa exclusivamente Gemini; não recorrer à OpenAI para evitar cobrança nesse fluxo.
+  // Correção usa o modelo econômico da OpenAI. Gemini fica como reserva apenas se OpenAI não estiver configurado.
   const sistema = "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido.";
   const reforco = `\n\nIMPORTANTE: devolva um objeto JSON de exercício diretamente, sem a chave "exercicios", sem markdown e sem explicações fora do JSON. O objeto precisa conter pelo menos "enunciado", "tipo", "alternativas", "resolucao" e "resposta".`;
-  let r = await geminiJson({ sistema, prompt, temperatura: 0.2 });
+  const provedor = temOpenAI() ? "openai" : "gemini";
+  const chamar = (p, pedido) =>
+    p === "openai"
+      ? openaiJson({ sistema, prompt: pedido, modelo: "gpt-4o-mini", temperatura: 0.1 })
+      : geminiJson({ sistema, prompt: pedido, temperatura: 0.2 });
+  let r = await chamar(provedor, prompt);
 
   const validar = (resposta) => {
     if (!resposta.ok) return { ok: false, motivo: resposta.erro || `status ${resposta.status}` };
@@ -106,7 +111,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
   // Uma resposta JSON incompleta acontece ocasionalmente no Gemini; uma nova
   // chamada com instrução mais curta recupera o exercício sem cobrar OpenAI.
   if (!resultado.ok) {
-    r = await geminiJson({ sistema, prompt: prompt + reforco, temperatura: 0.1 });
+    r = await chamar(provedor, prompt + reforco);
     resultado = validar(r);
   }
   if (resultado.ok) return NextResponse.json({ exercicio: resultado.exercicio, avisos: resultado.avisos });
@@ -122,7 +127,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
       error: mensagem,
       requestId,
       ...(ehAdmin(usuario.email)
-        ? { detalhe: { status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
+        ? { detalhe: { provedor, modelo: provedor === "openai" ? "gpt-4o-mini" : undefined, status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
         : {}),
     },
     { status: 502 }
