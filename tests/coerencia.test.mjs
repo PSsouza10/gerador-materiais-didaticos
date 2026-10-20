@@ -18,6 +18,32 @@ test("menos de 3 exercícios é apontado", () => {
   assert.equal(conferirCoerencia({}, { exercicios: ex(1) })[0].onde, "Exercícios");
 });
 
+test("pedido EF06MA11 avisa quando falta cobertura das operações", async () => {
+  const { conferirCoberturaOperacoes, pedidoExigeQuatroOperacoes } = await import("../lib/coerencia.js");
+  const form = { nivel: "Ensino Fundamental", bncc: "EF06MA11", tema: "As quatro operações" };
+  assert.equal(pedidoExigeQuatroOperacoes(form), true);
+  const avisos = conferirCoberturaOperacoes(form, {
+    conceitos: [{ termo: "Multiplicação", definicao: "Usamos vezes." }],
+    exercicios: [{ enunciado: "Calcule 3 × 2,5.", resolucao: "3 × 2,5 = 7,5", resposta: "7,5" }],
+  });
+  assert.ok(avisos.some((a) => /adição/.test(a.trecho)));
+  assert.ok(avisos.some((a) => /divisão/.test(a.trecho)));
+  assert.ok(avisos.some((a) => /potenciação/.test(a.trecho)));
+});
+
+test("pedido completo não gera aviso de cobertura quando cada conteúdo é praticado", async () => {
+  const { conferirCoberturaOperacoes } = await import("../lib/coerencia.js");
+  const form = { nivel: "Ensino Fundamental", bncc: "EF06MA11", tema: "As quatro operações" };
+  const exercicios = [
+    { enunciado: "Some os preços: 2 + 3.", resolucao: "2 + 3 = 5", resposta: "5" },
+    { enunciado: "Calcule a diferença: 8 − 3.", resolucao: "8 − 3 = 5", resposta: "5" },
+    { enunciado: "Multiplique: 4 × 2.", resolucao: "4 × 2 = 8", resposta: "8" },
+    { enunciado: "Divida 12 para repartir.", resolucao: "12 ÷ 3 = 4", resposta: "4" },
+    { enunciado: "Calcule 3^2.", resolucao: "3^2 = 9", resposta: "9" },
+  ];
+  assert.deepEqual(conferirCoberturaOperacoes(form, { exercicios }), []);
+});
+
 test("pedido: ano e disciplina do código BNCC (antes de gerar)", async () => {
   const { conferirPedido, anosDoCodigo } = await import("../lib/coerencia.js");
   assert.deepEqual(anosDoCodigo("EF06MA03"), [6]);
