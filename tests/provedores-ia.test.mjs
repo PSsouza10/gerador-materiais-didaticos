@@ -5,7 +5,7 @@ import { geminiJson, openaiJson, provedorRevisorPadrao } from "../lib/provedores
 const guardar = () => ({ ...process.env });
 const restaurar = (e) => { for (const k of Object.keys(process.env)) if (!(k in e)) delete process.env[k]; Object.assign(process.env, e); };
 
-test("provedor padrão do revisor: OpenAI, a menos que REVISOR_PROVEDOR=gemini e haja chave", () => {
+test("provedor padrão do revisor: Gemini quando disponível, com preferência configurável", () => {
   const e = guardar();
   process.env.OPENAI_API_KEY = "x"; delete process.env.GEMINI_API_KEY; delete process.env.REVISOR_PROVEDOR;
   assert.equal(provedorRevisorPadrao(), "openai");
@@ -13,6 +13,8 @@ test("provedor padrão do revisor: OpenAI, a menos que REVISOR_PROVEDOR=gemini e
   assert.equal(provedorRevisorPadrao(), "openai"); // sem chave do Gemini
   process.env.GEMINI_API_KEY = "y";
   assert.equal(provedorRevisorPadrao(), "gemini");
+  delete process.env.REVISOR_PROVEDOR;
+  assert.equal(provedorRevisorPadrao(), "gemini"); // Gemini evita consumir a cota da OpenAI
   delete process.env.OPENAI_API_KEY; delete process.env.REVISOR_PROVEDOR;
   assert.equal(provedorRevisorPadrao(), "gemini");
   delete process.env.GEMINI_API_KEY;
