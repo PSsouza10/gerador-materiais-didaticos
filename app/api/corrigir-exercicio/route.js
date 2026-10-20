@@ -7,7 +7,7 @@ import { consumirCorrecao, ehAdmin } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
-import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
+import { geminiJson, temGemini } from "@/lib/provedoresIA";
 
 // Refaz UM exercício da apostila, com o motivo do problema (revisão exercício por exercício).
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
@@ -37,7 +37,6 @@ const extrairExercicio = (json) => {
 };
 
 async function postRota(request, _contexto, requestId) {
-  if (!temOpenAI() && !temGemini()) return NextResponse.json({ error: "Nenhum provedor de IA configurado." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta." }, { status: 401 });
@@ -83,15 +82,13 @@ Regras: fique no tema e na habilidade; a "fala" é de um personagem (lia, theo, 
 
 Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado": "...", "tipo": "...", "exigencia": "...", "alternativas": [...], "figura": null, "resolucao": "...", "resposta": "..." }`;
 
-  // Correção usa o modelo econômico da OpenAI. Gemini fica como reserva apenas se OpenAI não estiver configurado.
+  // Correção usa Gemini no nível gratuito quando houver chave. Se a cota acabar,
+  // a conferência local mantém o fluxo funcionando sem fazer uma chamada paga.
   const sistema = "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido.";
   const reforco = `\n\nIMPORTANTE: devolva um objeto JSON de exercício diretamente, sem a chave "exercicios", sem markdown e sem explicações fora do JSON. O objeto precisa conter pelo menos "enunciado", "tipo", "alternativas", "resolucao" e "resposta".`;
-  const provedor = temOpenAI() ? "openai" : "gemini";
-  const chamar = (p, pedido) =>
-    p === "openai"
-      ? openaiJson({ sistema, prompt: pedido, modelo: "gpt-4o-mini", temperatura: 0.1 })
-      : geminiJson({ sistema, prompt: pedido, temperatura: 0.2 });
-  let r = await chamar(provedor, prompt);
+  const provedor = temGemini() ? "gemini" : "local";
+  const chamar = (pedido) => geminiJson({ sistema, prompt: pedido, temperatura: 0.2 });
+  let r = provedor === "gemini" ? await chamar(prompt) : { ok: false, status: 503, erro: "Gemini não configurado" };
 
   const validar = (resposta) => {
     if (!resposta.ok) return { ok: false, motivo: resposta.erro || `status ${resposta.status}` };
@@ -111,10 +108,25 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
   // Uma resposta JSON incompleta acontece ocasionalmente no Gemini; uma nova
   // chamada com instrução mais curta recupera o exercício sem cobrar OpenAI.
   if (!resultado.ok) {
-    r = await chamar(provedor, prompt + reforco);
+    r = await chamar(prompt + reforco);
     resultado = validar(r);
   }
   if (resultado.ok) return NextResponse.json({ exercicio: resultado.exercicio, avisos: resultado.avisos });
+
+  // Fallback sem API: preserva o exercício, normaliza seus campos e recalcula
+  // apenas a conferência local. Não inventa conteúdo nem consome crédito.
+  try {
+    const [local] = normalizarMaterial({ exercicios: [{ ...ex, enunciado: ex.enunciado }] }, f.tema).exercicios;
+    if (local) {
+      const conferido = conferirExercicio(local, Number(body.numero) || 1);
+      return NextResponse.json({
+        exercicio: conferido.exercicio,
+        avisos: [...(conferido.avisos || []), "Correção local aplicada sem usar API. Revise o conteúdo pedagógico manualmente."],
+      });
+    }
+  } catch (e) {
+    console.error("Erro na correção local:", e);
+  }
 
   console.error("Erro IA (corrigir exercício):", r.status, resultado.motivo);
   const mensagem = r.status === 429
@@ -127,7 +139,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
       error: mensagem,
       requestId,
       ...(ehAdmin(usuario.email)
-        ? { detalhe: { provedor, modelo: provedor === "openai" ? "gpt-4o-mini" : undefined, status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
+        ? { detalhe: { provedor, modelo: provedor === "gemini" ? "gemini-2.5-flash" : undefined, status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
         : {}),
     },
     { status: 502 }
