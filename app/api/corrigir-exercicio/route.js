@@ -22,8 +22,18 @@ const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(
 // (`exercicio`, `questao` ou `item`). Aceitamos os formatos equivalentes antes
 // de concluir que a resposta veio inválida.
 const extrairExercicio = (json) => {
-  const candidatos = [json, json?.exercicio, json?.questao, json?.item, json?.exercicioCorrigido];
-  return candidatos.find((v) => v && typeof v === "object" && txt(v.enunciado)) || null;
+  const candidatos = [
+    json,
+    json?.exercicio,
+    json?.questao,
+    json?.item,
+    json?.exercicioCorrigido,
+    json?.correcao,
+    json?.resultado,
+    ...(Array.isArray(json?.exercicios) ? json.exercicios : []),
+    ...(Array.isArray(json?.questoes) ? json.questoes : []),
+  ];
+  return candidatos.find((v) => v && typeof v === "object" && txt(v.enunciado || v.pergunta || v.comando)) || null;
 };
 
 async function postRota(request, _contexto, requestId) {
@@ -83,7 +93,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
     try {
       const novo = extrairExercicio(resposta.json);
       if (!novo) return { ok: false, motivo: "JSON sem enunciado" };
-      const [normalizado] = normalizarMaterial({ exercicios: [novo] }, f.tema).exercicios;
+      const [normalizado] = normalizarMaterial({ exercicios: [{ ...novo, enunciado: novo.enunciado || novo.pergunta || novo.comando }] }, f.tema).exercicios;
       if (!normalizado) return { ok: false, motivo: "exercício sem enunciado após normalização" };
       const { exercicio, avisos } = conferirExercicio(normalizado, Number(body.numero) || 1);
       return { ok: true, exercicio, avisos };
@@ -95,7 +105,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
   let resultado = validar(r);
   // Uma resposta JSON incompleta acontece ocasionalmente no Gemini; uma nova
   // chamada com instrução mais curta recupera o exercício sem cobrar OpenAI.
-  if (!resultado.ok && r.status !== 429) {
+  if (!resultado.ok) {
     r = await geminiJson({ sistema, prompt: prompt + reforco, temperatura: 0.1 });
     resultado = validar(r);
   }
@@ -107,7 +117,16 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
     : /JSON|enunciado|normaliza/i.test(resultado.motivo || "")
     ? "O Gemini devolveu uma correção incompleta. Tente novamente."
     : "Falha ao corrigir o exercício.";
-  return NextResponse.json({ error: mensagem, requestId }, { status: 502 });
+  return NextResponse.json(
+    {
+      error: mensagem,
+      requestId,
+      ...(ehAdmin(usuario.email)
+        ? { detalhe: { status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
+        : {}),
+    },
+    { status: 502 }
+  );
 }
 
 // request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
