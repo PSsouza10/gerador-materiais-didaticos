@@ -79,6 +79,22 @@ async function postRota(request, _contexto, requestId) {
     ? `${bncc}${habilidade ? ` — ${habilidade}` : ""} (habilidade informada pelo docente, não localizada na BNCC nacional)`
     : "não informado";
 
+  // EF06MA11 e pedidos que mencionam explicitamente as quatro operações
+  // precisam cobrir o conjunto completo, não apenas multiplicação.
+  const pedidoCompleto = `${bncc} ${habilidade} ${tema} ${conteudo}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const exigeQuatroOperacoes = /EF06MA11|quatro\s+operacoes|4\s+operacoes/i.test(pedidoCompleto);
+  const regraCobertura = exigeQuatroOperacoes
+    ? `
+COBERTURA OBRIGATÓRIA PARA ESTE PEDIDO:
+- O tema exige as quatro operações com números racionais positivos na representação decimal: adição, subtração, multiplicação e divisão.
+- Inclua também potenciação, com base e expoente explicados e pelo menos um exercício que peça calcular ou interpretar uma potência.
+- Distribua adição, subtração, multiplicação, divisão e potenciação entre conceitos, exemplos e exercícios; não concentre a apostila em uma única operação.
+- Inclua pelo menos um exercício contextualizado para cada operação e pelo menos um exercício que peça verificar se uma resposta é razoável por estimativa ou arredondamento.
+- Em compras, mostre a soma de produtos diferentes e o cálculo de troco, além de compras de várias unidades do mesmo item.
+- Antes de finalizar, confira internamente se todos os cinco conteúdos aparecem de modo ensinável e são praticados nos exercícios. Simplifique a linguagem e a decoração, nunca elimine uma operação.
+`
+    : "";
+
   // Task 3.2 — nível de dificuldade / adaptação
   const nivelDif = obterNivel(dificuldade);
 
@@ -94,6 +110,8 @@ async function postRota(request, _contexto, requestId) {
 - Orientações do professor: ${conteudo || "nenhuma"}
 
 ${nivelDif.prompt}
+
+${regraCobertura}
 
 Retorne um JSON com esta estrutura EXATA:
 {
