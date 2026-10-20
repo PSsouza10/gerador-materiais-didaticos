@@ -18,6 +18,14 @@ export const maxDuration = 60;
 const BNCC = indexar(bnccDados.habilidades);
 const txt = (v, max = 400) => limparTexto(typeof v === "string" ? v : "").slice(0, max);
 
+// O Gemini pode devolver o exercício diretamente ou encapsulado em uma chave
+// (`exercicio`, `questao` ou `item`). Aceitamos os formatos equivalentes antes
+// de concluir que a resposta veio inválida.
+const extrairExercicio = (json) => {
+  const candidatos = [json, json?.exercicio, json?.questao, json?.item, json?.exercicioCorrigido];
+  return candidatos.find((v) => v && typeof v === "object" && txt(v.enunciado)) || null;
+};
+
 async function postRota(request, _contexto, requestId) {
   if (!temGemini()) return NextResponse.json({ error: "Gemini não configurado." }, { status: 500 });
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
@@ -67,21 +75,39 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
 
   // Esta ação usa exclusivamente Gemini; não recorrer à OpenAI para evitar cobrança nesse fluxo.
   const sistema = "Você é um especialista em material didático alinhado à BNCC. Responda em português do Brasil, só com JSON válido.";
-  const r = await geminiJson({ sistema, prompt, temperatura: 0.5 });
-  if (!r.ok) {
-    console.error("Erro IA (corrigir exercício):", r.status, r.erro);
-    return NextResponse.json({ error: r.status === 429 ? "IA ocupada. Tente em instantes." : "Falha ao corrigir o exercício." }, { status: 502 });
+  const reforco = `\n\nIMPORTANTE: devolva um objeto JSON de exercício diretamente, sem a chave "exercicios", sem markdown e sem explicações fora do JSON. O objeto precisa conter pelo menos "enunciado", "tipo", "alternativas", "resolucao" e "resposta".`;
+  let r = await geminiJson({ sistema, prompt, temperatura: 0.2 });
+
+  const validar = (resposta) => {
+    if (!resposta.ok) return { ok: false, motivo: resposta.erro || `status ${resposta.status}` };
+    try {
+      const novo = extrairExercicio(resposta.json);
+      if (!novo) return { ok: false, motivo: "JSON sem enunciado" };
+      const [normalizado] = normalizarMaterial({ exercicios: [novo] }, f.tema).exercicios;
+      if (!normalizado) return { ok: false, motivo: "exercício sem enunciado após normalização" };
+      const { exercicio, avisos } = conferirExercicio(normalizado, Number(body.numero) || 1);
+      return { ok: true, exercicio, avisos };
+    } catch (e) {
+      return { ok: false, motivo: `normalização: ${e.message || e}` };
+    }
+  };
+
+  let resultado = validar(r);
+  // Uma resposta JSON incompleta acontece ocasionalmente no Gemini; uma nova
+  // chamada com instrução mais curta recupera o exercício sem cobrar OpenAI.
+  if (!resultado.ok && r.status !== 429) {
+    r = await geminiJson({ sistema, prompt: prompt + reforco, temperatura: 0.1 });
+    resultado = validar(r);
   }
-  try {
-    const novo = r.json || {};
-    const [normalizado] = normalizarMaterial({ exercicios: [novo] }, f.tema).exercicios;
-    if (!normalizado) throw new Error("vazio");
-    const { exercicio, avisos } = conferirExercicio(normalizado, Number(body.numero) || 1);
-    return NextResponse.json({ exercicio, avisos });
-  } catch (e) {
-    console.error("Resposta inválida (corrigir exercício):", e);
-    return NextResponse.json({ error: "A IA devolveu um exercício inválido. Tente de novo." }, { status: 502 });
-  }
+  if (resultado.ok) return NextResponse.json({ exercicio: resultado.exercicio, avisos: resultado.avisos });
+
+  console.error("Erro IA (corrigir exercício):", r.status, resultado.motivo);
+  const mensagem = r.status === 429
+    ? "IA ocupada. Tente em instantes."
+    : /JSON|enunciado|normaliza/i.test(resultado.motivo || "")
+    ? "O Gemini devolveu uma correção incompleta. Tente novamente."
+    : "Falha ao corrigir o exercício.";
+  return NextResponse.json({ error: mensagem, requestId }, { status: 502 });
 }
 
 // request_id em cada pedido (cabeçalho x-request-id + registro); a resposta não muda
