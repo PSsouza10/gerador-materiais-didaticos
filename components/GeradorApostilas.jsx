@@ -58,6 +58,7 @@ import { avisoTransicao } from "@/lib/planos";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
+import { auditarMaterial } from "@/lib/auditoria";
 import { conferirCoerencia, conferirPedido } from "@/lib/coerencia";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
@@ -554,6 +555,12 @@ export default function GeradorApostilas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialPreview, gerado, formPreview.nivel, formPreview.bncc]);
 
+  const auditoriaAtual = useMemo(
+    () => (gerado ? auditarMaterial(formPreview, materialPreview, { questoes: formPreview.questoes }) : null),
+    [gerado, materialPreview, formPreview.disciplina, formPreview.nivel, formPreview.ano, formPreview.bncc, formPreview.questoes]
+  );
+  const achadosPedagogicos = auditoriaAtual?.problemas.filter((p) => p.fonte === "pedagógica") || [];
+
   const ocupado = loading || loadingImagem;
   const temExercicios = materialPreview.exercicios?.length > 0;
   const gabaritoVisivel = gabaritoForcado ?? mostrarGabarito;
@@ -994,7 +1001,30 @@ export default function GeradorApostilas() {
               </div>
             </div>
 
-            {/* Verificações automáticas: unidades (área × volume × comprimento) e gabarito */}
+            {gerado && !loading && auditoriaAtual && (
+              <div role="status" className="nao-imprimir mb-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-[12.5px] text-indigo-950">
+                <p className="flex items-center gap-1.5 font-bold">
+                  <ShieldCheck className="h-4 w-4" /> Auditoria automática: {auditoriaAtual.erros} erro(s) · {auditoriaAtual.avisos} aviso(s)
+                </p>
+                <p className="mt-1 text-indigo-900">Conferência determinística, sem chamada extra de IA. Não bloqueia o download e não substitui a revisão do professor.</p>
+                {achadosPedagogicos.length > 0 ? (
+                  <ul className="mt-2 space-y-1.5">
+                    {achadosPedagogicos.map((p, i) => (
+                      <li key={`${p.onde}-${i}`} className="flex items-start gap-1.5">
+                        <span className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${p.gravidade === "erro" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800"}`}>
+                          {p.gravidade === "erro" ? "Erro" : "Aviso"}
+                        </span>
+                        <span><b>{p.onde}:</b> {p.motivo}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1">Nenhuma inconsistência dos tipos pedagógicos específicos foi identificada; confira também os alertas listados abaixo.</p>
+                )}
+              </div>
+            )}
+
+            {/* Alertas existentes que pedem confirmação explícita antes da impressão */}
             {alertas.length > 0 && (
               <div role="alert" className="nao-imprimir mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[12.5px] text-amber-900">
                 <p className="flex items-center gap-1.5 font-bold">

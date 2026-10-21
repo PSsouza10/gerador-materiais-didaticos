@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { auditarMaterial, resumirBateria } from "../lib/auditoria.js";
+import { auditarInconsistenciasPedagogicas } from "../lib/auditoriaPedagogica.js";
 import { CASOS_BATERIA } from "../lib/bateria.js";
 import { normalizarMaterial } from "../lib/material.js";
 
@@ -64,4 +65,55 @@ test("conjunto 2 da bateria: códigos existem na BNCC e combinam com disciplina,
     assert.ok(bncc.has(c.bncc), c.bncc);
     assert.deepEqual(conferirPedido(c), [], `${c.bncc} ${c.disciplina} ${c.ano}`);
   }
+});
+
+test("auditoria pedagógica identifica rótulo incorreto, troca na subtração, totais divergentes e associação incompleta", () => {
+  const material = {
+    formulas: [{ nome: "Propriedade da Igualdade", expressao: "a + b = b + a", descricao: "A ordem dos números não altera a soma." }],
+    dicas: ["Ao adicionar ou subtrair, experimente trocar a ordem dos números."],
+    aplicacaoPratica: {
+      situacao: "Encontrar combinações diferentes que resultem no mesmo total.",
+      exemplos: ["Comprar 2 maçãs e 2 bananas por 10 reais.", "Comprar 4 maçãs e 1 banana por 11 reais."],
+    },
+    cena: { figura: { tipo: "tabela", cabecalho: ["Fruta", "Preço"], linhas: [["Maçã", "R$ 2"], ["Banana", "R$ 3"]] } },
+    exercicios: [{
+      tipo: "associar",
+      enunciado: "Associe as expressões: 1, 2, 3 e A, B, C.",
+      figura: { tipo: "tabela", cabecalho: ["Expressões"], linhas: [["1 + 9"], ["2 + 8"], ["5 + 5"]] },
+    }],
+  };
+  const problemas = auditarInconsistenciasPedagogicas({ disciplina: "Matemática" }, material);
+  assert.equal(problemas.length, 4);
+  assert.match(problemas.map((p) => p.motivo).join("\n"), /propriedade comutativa da adição/);
+  assert.match(problemas.map((p) => p.motivo).join("\n"), /essa operação não é comutativa/);
+  assert.match(problemas.map((p) => p.motivo).join("\n"), /mesmo total/);
+  assert.match(problemas.map((p) => p.motivo).join("\n"), /apenas uma coluna/);
+  assert.ok(problemas.every((p) => p.fonte === "pedagógica" && ["erro", "aviso"].includes(p.gravidade)));
+});
+
+test("auditoria pedagógica não acusa regra correta, exemplos com totais iguais ou associação com duas colunas", () => {
+  const material = {
+    formulas: [{ nome: "Propriedade comutativa da adição", expressao: "a + b = b + a", descricao: "A ordem das parcelas pode ser trocada." }],
+    dicas: ["Na subtração, não troque a ordem dos termos."],
+    aplicacaoPratica: {
+      situacao: "Compare combinações diferentes que resultem no mesmo total.",
+      exemplos: ["Comprar 2 maçãs e 2 bananas por 10 reais.", "Comprar 5 maçãs por 10 reais."],
+    },
+    cena: { figura: { tipo: "tabela", cabecalho: ["Fruta", "Preço"], linhas: [["Maçã", "R$ 2"], ["Banana", "R$ 3"]] } },
+    exercicios: [{
+      tipo: "associar",
+      enunciado: "Associe as expressões: 1, 2, 3 e A, B, C.",
+      figura: { tipo: "tabela", cabecalho: ["Expressões", "Correspondência"], linhas: [["1 + 9", "A"], ["2 + 8", "B"], ["5 + 5", "C"]] },
+    }],
+  };
+  assert.deepEqual(auditarInconsistenciasPedagogicas({ disciplina: "Matemática" }, material), []);
+});
+
+test("auditarMaterial inclui as novas verificações pedagógicas no resultado estruturado", () => {
+  const material = {
+    ...base(),
+    formulas: [{ nome: "Propriedade da Igualdade", expressao: "a+b=b+a", descricao: "A ordem dos termos não altera a soma." }],
+  };
+  const auditoria = auditarMaterial(form, material, { semRevisor: true });
+  assert.ok(auditoria.problemas.some((p) => p.fonte === "pedagógica" && /propriedade comutativa/.test(p.motivo)));
 });
