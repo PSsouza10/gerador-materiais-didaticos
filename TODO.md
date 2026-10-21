@@ -1,15 +1,17 @@
-# TODO — Auditoria automática do EduGera
+# TODO — Apoios de acessibilidade no EduGera
 
-## Auditoria sem custo extra de IA — concluído
+## Seleção pedagógica e privacidade — concluído
+- [x] No gerador de apostilas, exibir apoios opcionais para “Instruções curtas e diretas”, “Etapas curtas e numeradas”, “Exemplo guiado antes dos exercícios” e “Ilustração simples, sem detalhes decorativos”.
+- [x] Explicar que os apoios podem ajudar estudantes com TEA e outras necessidades, que cada estudante é único e que a escolha deve fazer sentido para a atividade, sem presumir um perfil comum.
+- [x] Não solicitar nome, diagnóstico, laudo ou outros dados pessoais de estudantes; orientar o professor a não inserir esses dados no campo livre.
 
-A auditoria determinística existente foi integrada ao resultado da geração e ampliada para detectar os quatro problemas aprovados: nome inadequado para a propriedade comutativa da adição; orientação que pode sugerir trocar a ordem dos termos na subtração; divergência entre preços e totais declarados em exemplos de compra quando a apostila inclui tabela de preços; e exercício de associação com duas colunas pedidas, mas apenas uma apresentada. A revisão semântica com Gemini/OpenAI não é chamada automaticamente.
+## Geração, material e auditoria — concluído
+- [x] Aplicar somente os apoios escolhidos dentro da chamada de geração existente, sem nova chamada de IA; preservar habilidade BNCC, objetivo de aprendizagem e dificuldade selecionada.
+- [x] Incluir um exemplo guiado com título e 2–5 etapas somente se solicitado; descartar resposta não solicitada da IA; exibir antes dos exercícios na prévia, impressão, PDF e link compartilhado.
+- [x] Se “Ilustração simples” for selecionada, ajustar somente o prompt da chamada de imagem já existente, sem gerar imagem adicional.
+- [x] Conferir deterministicamente se o exemplo guiado pedido tem título e pelo menos duas etapas; mostrar eventual aviso ao professor sem bloquear geração, impressão ou download.
+- [x] Descrever as conferências como estruturais, não semânticas ou diagnósticas; lembrar que é necessária revisão docente e que o recurso não substitui planejamento individual, AEE, PAEE ou PEI.
+- [x] Fazer a conferência usar os apoios da geração efetivamente exibida e avisar quando a seleção atual do formulário mudou depois de gerar.
 
-## Exibição sem bloqueio — concluído
-
-O gerador mostra um resumo de erros e avisos, apresenta os achados pedagógicos específicos e informa que a análise não substitui a revisão do professor. O resultado da nova auditoria não bloqueia automaticamente a geração nem o download; os alertas e confirmações preexistentes continuam separados.
-
-## Validação e publicação — validado, ainda não publicado
-
-Os testes incluem os quatro casos positivos, exemplos de regra correta e combinação de preços correta sem falso alerta, exercício com duas colunas e inclusão dos achados no resumo da auditoria. A suíte completa do projeto passou (275 testes, 0 falhas), o build Next.js compilou e `git diff --check` não encontrou problemas de whitespace.
-
-A implementação está na branch local `feature/auditoria-automatica-didatica`, baseada na `main` atual. Nenhuma publicação em produção foi feita. Antes de disponibilizar em produção, é necessário revisar e integrar a branch.
+## Entrega — concluído para revisão
+- [x] Manter a alteração em `feature/apoios-acessibilidade-tea`, pronta para revisão e sem publicação em produção.
