@@ -50,6 +50,17 @@ test("P7: conceito definido e nunca usado é apontado", () => {
   assert.deepEqual(orfaos, ["Anabolismo"]);
 });
 
+test("P7: conceito usado no exemplo guiado não é marcado como órfão", () => {
+  const { avisos } = revisarMaterial({
+    conceitos: [{ termo: "Frações equivalentes", definicao: "Frações diferentes que representam a mesma quantidade." }],
+    exemploGuiado: {
+      titulo: "Como encontrar frações equivalentes",
+      passos: ["Multiplique numerador e denominador pelo mesmo número.", "Confira se a quantidade representada continua igual."],
+    },
+  });
+  assert.deepEqual(avisos.filter((a) => a.onde === "Conceitos"), []);
+});
+
 test("material limpo passa sem avisos e sem perder conteúdo", () => {
   const m = {
     tituloDidatico: "Volume",

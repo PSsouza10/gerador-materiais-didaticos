@@ -23,6 +23,15 @@ test("tema visual: só 'premium' passa; o resto vira 'padrao'", async () => {
   assert.equal(normalizarMaterial({}).tema, "padrao");
 });
 
+test("exemplo guiado é opcional, normalizado e limitado a cinco etapas", async () => {
+  const { normalizarMaterial } = await import("../lib/material.js");
+  assert.equal(normalizarMaterial({}).exemploGuiado, null);
+  const bruto = { exemploGuiado: { titulo: "  Modelo  ", passos: ["A", "B", "C", "D", "E", "F", 4] } };
+  assert.equal(normalizarMaterial(bruto).exemploGuiado, null, "resposta não solicitada da IA é descartada");
+  const material = normalizarMaterial(bruto, "", { apoiosAcessibilidade: ["exemplo-guiado"] });
+  assert.deepEqual(material.exemploGuiado, { titulo: "Modelo", passos: ["A", "B", "C", "D", "E"] });
+});
+
 test("gabarito não repete a mesma frase (resposta + resolução)", async () => {
   const { juntarResposta, semFrasesRepetidas } = await import("../lib/material.js");
   assert.equal(

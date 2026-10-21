@@ -15,6 +15,7 @@ import { conferirQualidade } from "@/lib/qualidade";
 import { auditarMaterial } from "@/lib/auditoria";
 import { figurasObrigatorias } from "@/lib/figuras";
 import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from "@/lib/provedoresIA";
+import { montarPromptApoiosAcessibilidade } from "@/lib/apoiosAcessibilidade";
 
 // Task 1.1 — Vercel: limite de duração da função e sem cache.
 // Vercel no plano Pro (desde 15/10/2026); o streaming entrega o primeiro byte na hora,
@@ -42,7 +43,7 @@ async function postRota(request, _contexto, requestId) {
   // Validação no servidor (não confia no navegador): obrigatórios, limites, controle
   const v = validarPedido(body);
   if (!v.ok) return erroJson(v.erro, 400);
-  const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade, questoes } = v.dados;
+  const { bncc, habilidade, disciplina, nivel, ano, tema, conteudo, dificuldade, questoes, apoiosAcessibilidade } = v.dados;
   if (!temOpenAI() && !temGemini()) {
     return erroJson("Nenhuma chave de IA configurada no servidor.", 500);
   }
@@ -98,6 +99,7 @@ COBERTURA OBRIGATÓRIA PARA ESTE PEDIDO:
 
   // Task 3.2 — nível de dificuldade / adaptação
   const nivelDif = obterNivel(dificuldade);
+  const regrasAcessibilidade = montarPromptApoiosAcessibilidade(apoiosAcessibilidade);
 
   const systemPrompt =
     "Você é um especialista em produção de material didático alinhado à BNCC brasileira. Responda sempre em português do Brasil e com rigor pedagógico. Retorne APENAS JSON válido, sem markdown, sem comentários.";
@@ -113,6 +115,8 @@ COBERTURA OBRIGATÓRIA PARA ESTE PEDIDO:
 ${nivelDif.prompt}
 
 ${regraCobertura}
+
+${regrasAcessibilidade}
 
 Retorne um JSON com esta estrutura EXATA:
 {
@@ -141,8 +145,11 @@ Retorne um JSON com esta estrutura EXATA:
   "exercicios": [
     { "fala": { "quem": "lia" | "theo" | "vo" | "edu", "texto": "fala curta do personagem que apresenta a situação ou a dúvida da questão" }, "enunciado": "o que o aluno deve fazer", "tipo": "multipla_escolha" | "aberta" | "completar" | "verdadeiro_falso" | "associar" | "explicar", "exigencia": "lembrar" | "compreender" | "aplicar" | "analisar" | "avaliar" | "criar", "alternativas": ["a) ...", "b) ...", "c) ...", "d) ..."], "figura": { "tipo": "tabela", "cabecalho": ["...", "..."], "linhas": [["...", "..."]], "legenda": "" } ou null${figurasObrigatorias(disciplina) ? " (PELO MENOS 2 exercícios com figura)" : " (só quando ajudar a responder)"}, "resolucao": "cálculo ou justificativa curta, feito ANTES de escolher a alternativa, com a conta terminando em = resultado e depois uma frase natural de conclusão ('Portanto, ...')", "resposta": "letra e texto da alternativa que contém o resultado da resolução (ou a resposta da questão aberta)" }
   ],
+  "exemploGuiado": null,
   "figuraExplicativa": null
 }
+
+Se os apoios selecionados incluírem exemplo guiado, substitua "exemploGuiado": null por um objeto com "titulo" e "passos" (array de 2 a 5 etapas curtas). Caso contrário, mantenha null.
 
 FIGURAS (desenhadas pelo sistema a partir destes dados; use em QUALQUER disciplina quando ajudar a entender):
 - { "tipo": "reta", "inicio": 0, "fim": 1, "divisoes": 4, "rotulos": "extremos" | "todos" | "nenhum", "marcar": null ou o número do tracinho (0 a divisoes) a destacar com a letra A, "legenda": "" }
@@ -271,7 +278,7 @@ Regras:
         }
         // confere letra × resolução do gabarito (corrige quando a própria resolução prova o erro)
         // revisão determinística: typos conhecidos, blocos repetidos, conceitos órfãos
-        const { material: revisado, avisos: avisosRevisao } = revisarMaterial(normalizarMaterial(parsed, tema));
+        const { material: revisado, avisos: avisosRevisao } = revisarMaterial(normalizarMaterial(parsed, tema, { apoiosAcessibilidade }));
         const { material, avisos: avisosGabarito } = conferirGabarito(revisado);
         material.bncc = oficial
           ? { codigo: oficial.c, texto: oficial.t, verificada: true }

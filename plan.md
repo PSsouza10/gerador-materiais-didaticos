@@ -1,25 +1,27 @@
-# Plano — Auditoria automática de apostilas
+# Plano — Apoios de acessibilidade no EduGera
 
 ## Decisão aprovada
+Preparar um MVP opcional de apoios de acessibilidade para a geração de apostilas, em branch de revisão, sem publicar em produção. Os apoios são escolhas pedagógicas para a atividade — não um diagnóstico nem um perfil clínico do estudante. Não criar chamada extra de IA; encaminhar as escolhas permitidas junto do pedido normal de geração e da chamada de imagem já existente, quando aplicável.
 
-Integrar auditoria determinística ao fluxo normal de geração, sem chamada adicional à OpenAI ou ao Gemini. Exibir erros e avisos ao professor, sem fazer a auditoria bloquear automaticamente a geração ou o download. Preparar a mudança para revisão em branch; não publicar em produção.
+## Escopo do MVP
 
-## Implementação
+1. Adicionar ao formulário um conjunto opcional de apoios: instruções curtas e diretas; orientações divididas em passos curtos e numerados; exemplo guiado antes dos exercícios; e ilustração simples, sem detalhes decorativos.
+2. Não solicitar nem enviar nome, diagnóstico, laudo ou outros dados pessoais do estudante. Explicar na interface que os apoios podem ajudar estudantes com TEA e outras necessidades, que cada estudante é único e que a escolha é pedagógica e específica para a atividade.
+3. Aplicar whitelist e normalização aos IDs no servidor; dados ausentes ou desconhecidos resultam em nenhuma seleção, sem falhar pedidos antigos.
+4. Incluir instruções selecionadas no prompt da geração existente. Incluir e exibir um objeto opcional `exemploGuiado` com título e 2–5 passos somente quando o professor o solicitar; descartar deterministicamente um exemplo retornado sem essa seleção. Apresentá-lo na prévia, impressão, PDF e página compartilhada da apostila.
+5. Quando “ilustração simples” for selecionada, acrescentar uma orientação visual ao prompt da chamada de imagem existente; não criar chamada adicional.
+6. Fazer uma conferência determinística e não bloqueante do exemplo solicitado (título e pelo menos dois passos). Mostrar o aviso ao professor sem impedir geração, impressão ou download. Outras qualidades linguísticas/semânticas continuam exigindo revisão humana.
+7. Preservar BNCC, objetivos de aprendizagem, opções de dificuldade, cotas, provedores, fluxo de correção e auditoria existente. O recurso não substitui o planejamento do professor, do AEE, PAEE ou PEI.
 
-1. Reutilizar `lib/auditoria.js` e suas conferências testáveis no pós-processamento do material em `app/api/gerar-material/route.js`; anexar ao objeto retornado pela conclusão do SSE um resumo `auditoria` com nota, contagens e problemas estruturados.
-2. Expandir as regras determinísticas em `lib/auditoria.js` ou em helpers puros próximos para os quatro defeitos aprovados: uso do rótulo de igualdade para a comutatividade, orientação que sugere permutar termos de uma subtração, exemplos numéricos que declaram o mesmo total sem atingi-lo e questões de associação com colunas/rótulos incompletos. As regras só devem emitir achados quando os dados permitirem comprovação confiável; não inferir fatos ausentes.
-3. Integrar o resultado na interface do gerador em `components/GeradorApostilas.jsx`, com resumo legível de erros/avisos e detalhes para o professor. Manter o alerta e o fluxo atuais de download separados da nova auditoria, de modo que os achados novos não criem bloqueio automático.
-4. Preservar as verificações já existentes (gabarito, BNCC, unidades, revisão, qualidade), formato do material e comportamento de cotas/provedores. Não chamar `/api/revisar-conteudo` automaticamente nem alterar provedores.
-5. Adicionar testes em `tests/auditoria.test.mjs` para os quatro casos aprovados, ausência de falso positivo em materiais não correspondentes e integração dos resultados no material concluído.
+## Estrutura relevante
 
-## Estrutura relevante do projeto
+- `components/GeradorApostilas.jsx`: seleção dos apoios, snapshot do que foi enviado, indicação se a seleção mudou depois da geração e aviso não bloqueante.
+- `lib/apoiosAcessibilidade.js`: whitelist, instruções de prompt, orientação visual e conferência determinística do exemplo.
+- `lib/validacao.js` e `app/api/gerar-material/route.js`: normalização segura no servidor, integração à geração existente e descarte do campo opcional quando não solicitado.
+- `app/api/gerar-imagem/route.js`: adaptação do prompt da imagem existente, apenas quando escolhida.
+- `lib/material.js` e `components/FolhaA4.jsx`: normalização condicional e renderização do exemplo guiado em todos os formatos que usam a folha.
+- `lib/revisao.js`: inclusão do exemplo guiado na conferência de conceitos para evitar falso aviso de conceito órfão.
+- `tests/apoios-acessibilidade.test.mjs`, `tests/revisao.test.mjs` e `tests/material.test.mjs`: regressões para seleção, estrutura, compatibilidade e revisão.
 
-- `app/api/gerar-material/route.js`: geração por SSE e montagem final do objeto do material.
-- `lib/auditoria.js`: composição das conferências, nota e problemas estruturados.
-- `lib/gabarito.js`, `lib/coerencia.js`, `lib/unidades.js`, `lib/revisao.js`, `lib/qualidade.js`: validadores puros já existentes.
-- `components/GeradorApostilas.jsx`: pré-visualização, alertas e botões de exportação.
-- `tests/auditoria.test.mjs`: testes unitários e de bateria da auditoria.
-
-## Direção visual
-
-Reutilizar a interface atual do gerador e seu padrão de alertas discretos, com hierarquia visual por erro/aviso e texto claro de que a conferência automática não substitui a revisão do professor. Não criar uma tela ou identidade visual nova.
+## Direção de interface
+Reutilizar o formulário, a prévia A4 e o padrão atual de avisos; tornar as opções claramente opcionais, legíveis por teclado e sem bloquear download. Não exibir rótulo de deficiência no material do aluno.

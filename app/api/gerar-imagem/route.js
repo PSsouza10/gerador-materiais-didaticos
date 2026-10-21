@@ -6,6 +6,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirImagem, devolverImagem, temPremium } from "@/lib/uso";
 import { normalizarEstilo } from "@/lib/opcoes";
 import { limparTexto, LIMITES } from "@/lib/validacao";
+import { promptImagemAcessibilidade } from "@/lib/apoiosAcessibilidade";
 
 export const runtime = "nodejs";
 // Task 1.1 — geração de imagem costuma levar 20–40 s, às vezes mais. Desde 15/10/2026 a
@@ -97,6 +98,7 @@ async function processar(request, ctx) {
       : mascote
       ? `Personagem mascote original e simpático para uma capa de material didático escolar brasileiro sobre ${sobre}: um(a) estudante com óculos ou um robozinho amigável, o que combinar melhor com o tema. Corpo inteiro, sorrindo, virado levemente para a direita e apontando com a mão para a direita, com 2 ou 3 objetos 3D relacionados ao tema ao redor. Animação 3D colorida e original (não imite personagens existentes), formas arredondadas, iluminação suave de estúdio, alta qualidade. Fundo liso lilás bem claro (#EEF0FB), sem cenário. Sem texto, sem letras e sem números na imagem.`
       : `Ilustração educacional sobre ${sobre}, voltada para material didático escolar brasileiro. ${direcaoVisual}. Sem texto, sem letras e sem números na imagem. Composição central, fundo limpo.`;
+    const promptFinal = `${prompt}${promptImagemAcessibilidade(body.apoiosAcessibilidade)}`;
 
     // 1) Gera a imagem com gpt-image-2 (upgrade do dall-e-3: modelo de
     // imagem atual da OpenAI, mesma família usada no protótipo "Criador
@@ -117,7 +119,7 @@ async function processar(request, ctx) {
           },
           body: JSON.stringify({
             model: "gpt-image-2",
-            prompt,
+            prompt: promptFinal,
             size: historia ? "1536x1024" : "1024x1024", // capa História: ilustração horizontal, sem corte
             quality: QUALIDADE,
           }),

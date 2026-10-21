@@ -215,6 +215,15 @@ const FolhaA4 = forwardRef(function FolhaA4(
         </section>
       )}
 
+      {m.exemploGuiado?.passos?.length >= 2 && (
+        <section className="bloco-exercicio mt-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5">
+          <Rotulo icon={BookOpen} className="text-indigo-700">{m.exemploGuiado.titulo || "Exemplo guiado"}</Rotulo>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[12px] leading-relaxed text-slate-700">
+            {m.exemploGuiado.passos.map((passo, i) => <li key={i}><Tx>{passo}</Tx></li>)}
+          </ol>
+        </section>
+      )}
+
       {/* Exercícios — o título vai no mesmo bloco do 1º exercício para nunca ficar sozinho no pé da página */}
       {exercicios.map((ex, i) => (
         <div key={i} className="bloco-exercicio">

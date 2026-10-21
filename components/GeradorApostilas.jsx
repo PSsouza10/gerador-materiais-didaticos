@@ -59,6 +59,7 @@ import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
 import { auditarMaterial } from "@/lib/auditoria";
+import { APOIOS_ACESSIBILIDADE, auditarApoiosAcessibilidade } from "@/lib/apoiosAcessibilidade";
 import { conferirCoerencia, conferirPedido } from "@/lib/coerencia";
 import { DISCIPLINAS, NIVEIS, ESTILOS, CAPAS, normalizarCapa } from "@/lib/opcoes";
 import {
@@ -182,6 +183,7 @@ const formDaConfig = (cfg) => ({
   dificuldade: cfg.dificuldade,
   capa: normalizarCapa(cfg.capa),
   questoes: 5,
+  apoiosAcessibilidade: [],
 });
 
 export default function GeradorApostilas() {
@@ -283,6 +285,7 @@ export default function GeradorApostilas() {
 
   // ===== RESULTADO DA IA =====
   const [material, setMaterial] = useState(null);
+  const [apoiosGerados, setApoiosGerados] = useState([]);
   const [pedidoRevisao, setPedidoRevisao] = useState(0);
   const [urlImagem, setUrlImagem] = useState(null);
   const gerado = !!material;
@@ -405,7 +408,7 @@ export default function GeradorApostilas() {
         imagemPromise = fetch("/api/gerar-imagem", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina, capa: capaEfetiva }),
+          body: JSON.stringify({ tema: form.tema, estilo: form.estilo, disciplina: form.disciplina, capa: capaEfetiva, apoiosAcessibilidade: formEnviado.apoiosAcessibilidade }),
         });
       }
       novoMaterial = await lerStreamMaterial(res, {
@@ -413,6 +416,7 @@ export default function GeradorApostilas() {
         onUso: (uso) => setConta((c) => ({ ...c, uso: { ...c.uso, ...uso } })),
       });
       setMaterial(novoMaterial);
+      setApoiosGerados(formEnviado.apoiosAcessibilidade || []);
       setPedidoRevisao(Date.now());
       setUrlImagem(null);
     } catch (e) {
@@ -505,7 +509,7 @@ export default function GeradorApostilas() {
     salvarConfig(cfg);
     setConfig(cfg);
     // aplica ao formulário sem apagar o que já foi digitado no tema/BNCC
-    setForm((f) => ({ ...formDaConfig(cfg), tema: f.tema, conteudo: f.conteudo, bncc: f.bncc, habilidade: f.habilidade, bnccVerificada: f.bnccVerificada }));
+    setForm((f) => ({ ...formDaConfig(cfg), tema: f.tema, conteudo: f.conteudo, bncc: f.bncc, habilidade: f.habilidade, bnccVerificada: f.bnccVerificada, apoiosAcessibilidade: f.apoiosAcessibilidade || [] }));
   };
 
   const revogarLink = async (m) => {
@@ -560,6 +564,12 @@ export default function GeradorApostilas() {
     [gerado, materialPreview, formPreview.disciplina, formPreview.nivel, formPreview.ano, formPreview.bncc, formPreview.questoes]
   );
   const achadosPedagogicos = auditoriaAtual?.problemas.filter((p) => p.fonte === "pedagógica") || [];
+  const apoiosAtuais = formPreview.apoiosAcessibilidade || [];
+  const apoiosMudaram = gerado && (apoiosAtuais.length !== apoiosGerados.length || apoiosAtuais.some((id) => !apoiosGerados.includes(id)));
+  const achadosApoios = useMemo(
+    () => (gerado ? auditarApoiosAcessibilidade(apoiosGerados, materialPreview) : []),
+    [gerado, apoiosGerados, materialPreview]
+  );
 
   const ocupado = loading || loadingImagem;
   const temExercicios = materialPreview.exercicios?.length > 0;
@@ -817,6 +827,38 @@ export default function GeradorApostilas() {
                 </div>
               </fieldset>
 
+              <fieldset className="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+                <legend className="px-1 text-xs font-bold text-slate-700">Apoios de acessibilidade (opcionais)</legend>
+                <p id="ajuda-apoios-acessibilidade" className="mb-3 text-[11.5px] leading-relaxed text-slate-600">
+                  Podem apoiar estudantes com TEA e outras necessidades, mas escolha o que fizer sentido para esta atividade. Cada estudante é único; essas opções não indicam diagnóstico e não substituem o planejamento pedagógico individual.
+                  Não informe nome, laudo ou dados pessoais de estudantes.
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {APOIOS_ACESSIBILIDADE.map((apoio) => (
+                    <label key={apoio.id} className="block cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={apoio.id}
+                        checked={(form.apoiosAcessibilidade || []).includes(apoio.id)}
+                        onChange={() => setForm((f) => {
+                          const atuais = f.apoiosAcessibilidade || [];
+                          const apoiosAcessibilidade = atuais.includes(apoio.id)
+                            ? atuais.filter((id) => id !== apoio.id)
+                            : [...atuais, apoio.id];
+                          return { ...f, apoiosAcessibilidade };
+                        })}
+                        aria-describedby="ajuda-apoios-acessibilidade"
+                        className="peer sr-only"
+                      />
+                      <span className="block h-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-indigo-500">
+                        <b className="block text-[12px] text-slate-700">{apoio.titulo}</b>
+                        <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">{apoio.descricao}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               <div className="sm:col-span-2">
                 <Field label="Conteúdo ou Orientação" icon={Lightbulb} optional name="conteudo">
                   <textarea
@@ -1020,6 +1062,20 @@ export default function GeradorApostilas() {
                   </ul>
                 ) : (
                   <p className="mt-1">Nenhuma inconsistência dos tipos pedagógicos específicos foi identificada; confira também os alertas listados abaixo.</p>
+                )}
+                {apoiosGerados.length > 0 && (
+                  <div className="mt-2 border-t border-indigo-200 pt-2">
+                    <p><b>Apoios usados nesta geração:</b> {APOIOS_ACESSIBILIDADE.filter((a) => apoiosGerados.includes(a.id)).map((a) => a.titulo).join(" · ")}</p>
+                    {apoiosMudaram && <p className="mt-1 font-semibold">A seleção mudou depois desta geração. Gere novamente para aplicar as novas escolhas; esta conferência se refere ao material atual.</p>}
+                    {achadosApoios.length > 0 ? (
+                      <ul className="mt-1 list-disc pl-5">
+                        {achadosApoios.map((a, i) => <li key={`${a.onde}-${i}`}><b>{a.onde}:</b> {a.motivo}</li>)}
+                      </ul>
+                    ) : apoiosGerados.includes("exemplo-guiado") ? (
+                      <p className="mt-1">Conferência estrutural: o exemplo guiado tem título e pelo menos duas etapas. Revise a clareza e a adequação pedagógica.</p>
+                    ) : null}
+                    <p className="mt-1 text-indigo-900">A conferência não avalia diagnóstico nem substitui a revisão do professor ou o planejamento com o AEE.</p>
+                  </div>
                 )}
               </div>
             )}
