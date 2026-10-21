@@ -12,6 +12,7 @@ import { validarPedido } from "@/lib/validacao";
 import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
+import { auditarMaterial } from "@/lib/auditoria";
 import { figurasObrigatorias } from "@/lib/figuras";
 import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from "@/lib/provedoresIA";
 
@@ -283,6 +284,7 @@ Regras:
         material.avisosGabarito = avisosGabarito;
         material.avisosRevisao = avisosRevisao;
         material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito, ...avisosRevisao, ...conferirQualidade(material)];
+        material.auditoria = auditarMaterial({ disciplina, nivel, ano, bncc, questoes }, material, { questoes });
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
