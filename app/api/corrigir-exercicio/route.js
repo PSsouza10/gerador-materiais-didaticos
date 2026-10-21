@@ -7,7 +7,7 @@ import { consumirCorrecao, ehAdmin } from "@/lib/uso";
 import { normalizarMaterial } from "@/lib/material";
 import { conferirExercicio } from "@/lib/gabarito";
 import { limparTexto } from "@/lib/validacao";
-import { geminiJson, temGemini } from "@/lib/provedoresIA";
+import { geminiJson, MODELO_GEMINI, temGemini } from "@/lib/provedoresIA";
 
 // Refaz UM exercício da apostila, com o motivo do problema (revisão exercício por exercício).
 // Bem mais barato que gerar a apostila de novo: entrada e saída pequenas.
@@ -139,7 +139,7 @@ Retorne APENAS o JSON: { "fala": { "quem": "...", "texto": "..." }, "enunciado":
       error: mensagem,
       requestId,
       ...(ehAdmin(usuario.email)
-        ? { detalhe: { provedor, modelo: provedor === "gemini" ? "gemini-2.5-flash" : undefined, status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
+        ? { detalhe: { provedor, modelo: provedor === "gemini" ? r.modelo || MODELO_GEMINI() : undefined, status: r.status || null, erro: String(r.erro || "").slice(0, 400), validacao: resultado.motivo } }
         : {}),
     },
     { status: 502 }
