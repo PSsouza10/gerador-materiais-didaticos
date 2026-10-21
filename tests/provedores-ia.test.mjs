@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { geminiJson, openaiJson, provedorRevisorPadrao } from "../lib/provedoresIA.js";
+import { geminiJson, MODELO_GEMINI, modelosGemini, openaiJson, provedorRevisorPadrao } from "../lib/provedoresIA.js";
 
 const guardar = () => ({ ...process.env });
 const restaurar = (e) => { for (const k of Object.keys(process.env)) if (!(k in e)) delete process.env[k]; Object.assign(process.env, e); };
@@ -41,6 +41,42 @@ test("Gemini: monta o pedido certo e lê o JSON (mesmo com ```json)", async () =
   const corpo = JSON.parse(visto.op.body);
   assert.equal(corpo.generationConfig.responseMimeType, "application/json");
   assert.equal(corpo.contents[0].parts[0].text, "P");
+});
+
+test("Gemini: usa Flash-Lite 3.1 e reservas progressivas sem chamar OpenAI", async () => {
+  const e = guardar();
+  delete process.env.MODELO_GEMINI;
+  delete process.env.MODELOS_GEMINI;
+  process.env.GEMINI_API_KEY = "chave-teste";
+  const modeloPadrao = MODELO_GEMINI();
+  const lista = modelosGemini(modeloPadrao);
+  const orig = globalThis.fetch;
+  const chamadas = [];
+  globalThis.fetch = async (url, op) => {
+    chamadas.push({ url, corpo: JSON.parse(op.body) });
+    if (chamadas.length < 3) return new Response('{"error":{"code":404}}', { status: 404 });
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] }), { status: 200 });
+  };
+  let r;
+  try {
+    r = await geminiJson({ sistema: "S", prompt: "P" });
+  } finally {
+    globalThis.fetch = orig;
+    restaurar(e);
+  }
+  assert.equal(modeloPadrao, "gemini-3.1-flash-lite");
+  assert.deepEqual(lista, ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+  assert.equal(r.ok, true);
+  assert.equal(r.modelo, "gemini-3.8-flash");
+  assert.equal(chamadas.length, 3);
+  assert.ok(chamadas.every(({ url }) => url.startsWith("https://generativelanguage.googleapis.com/")));
+  assert.deepEqual(chamadas.map(({ url }) => decodeURIComponent(url.match(/models\/([^:]+)/)[1])), ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+  assert.equal(chamadas[0].corpo.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+  assert.equal(chamadas[0].corpo.generationConfig.temperature, 0.2);
+  assert.equal(chamadas[1].corpo.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+  assert.equal(chamadas[1].corpo.generationConfig.temperature, 0.2);
+  assert.equal(chamadas[2].corpo.generationConfig.thinkingConfig.thinkingLevel, "low");
+  assert.equal("temperature" in chamadas[2].corpo.generationConfig, false);
 });
 
 test("sem chave: devolve erro em vez de lançar", async () => {
