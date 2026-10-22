@@ -2,7 +2,7 @@ import Link from "next/link";
 import { suporteEmail, suporteWhatsapp } from "@/lib/planos";
 
 // Moldura simples e legível para as páginas públicas (privacidade, termos).
-export const ATUALIZADO_EM = "17 de outubro de 2026";
+export const ATUALIZADO_EM = "22 de outubro de 2026";
 export const CONTATO = suporteEmail();
 // Identificação de quem vende (Decreto 7.962/2013, art. 2º). Trocar pelo CNPJ se abrir MEI.
 export const RESPONSAVEL = { nome: "Paulo Sergio Souza de Jesus", documento: "CPF 014.320.325-85" };

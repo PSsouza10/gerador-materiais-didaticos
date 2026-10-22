@@ -73,8 +73,9 @@ export default function PoliticaPrivacidade() {
       <p>
         <b>Correção da turma (Avaliação):</b> os nomes e números dos alunos e as respostas que você lança ficam{" "}
         <b>só no seu navegador</b> (armazenamento local) e não são enviados ao servidor do EduGera. Na leitura pela foto, a imagem
-        do cartão-resposta é enviada ao serviço de IA apenas para identificar as letras marcadas; o EduGera não guarda a foto, e o
-        nome escrito no cartão não é lido. O relatório em PDF ou planilha é gerado no seu aparelho.
+        do cartão-resposta é enviada ao serviço de IA (Google Gemini; se ele estiver indisponível, a OpenAI) apenas para
+        identificar as letras marcadas. A foto pode mostrar o nome escrito no cartão, mas a IA é instruída a não extraí-lo, e o
+        EduGera não guarda a foto. O relatório em PDF ou planilha é gerado no seu aparelho.
       </p>
 
       <H2>5. Com quem compartilhamos</H2>
@@ -83,7 +84,7 @@ export default function PoliticaPrivacidade() {
         <li><b>Google</b>: autenticação (login).</li>
         <li><b>Vercel</b>: hospedagem do site e armazenamento das ilustrações, dos links compartilhados, da lista &ldquo;Minhas Apostilas&rdquo; e do contador de uso.</li>
         <li><b>Asaas</b> (Brasil): processamento dos pagamentos dos planos Pro.</li>
-        <li><b>OpenAI</b>: geração do texto e da ilustração a partir do que você preencheu. Pela política da API da OpenAI, os dados enviados não são usados para treinar modelos.</li>
+        <li><b>OpenAI</b>: geração do texto e da ilustração a partir do que você preencheu e, como alternativa ao Gemini, leitura da foto do cartão-resposta. Pela política da API da OpenAI, os dados enviados não são usados para treinar modelos.</li>
         <li><b>Google (Gemini)</b>: geração e conferência do texto (inclusive quando a OpenAI está indisponível) e leitura da foto do cartão-resposta na correção da turma.</li>
       </Lista>
       <p>
