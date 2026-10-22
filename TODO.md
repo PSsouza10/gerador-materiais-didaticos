@@ -11,10 +11,15 @@
 - [x] Ajustar escala e manter o texto pesquisável; preservar as saídas completas existentes.
 - [x] Validar em testes e build, auditar o contexto das falas e publicar pelo PR #14.
 
-## Contador agregado de auditorias — PR #15 aberto
-- [x] Registrar uma vez por execução concluída da auditoria determinística no servidor, sem nova chamada de IA e sem bloquear a geração.
-- [x] Persistir somente o total agregado em Blob privado, com atualização condicional por ETag e separação entre Preview/teste e produção.
-- [x] Mostrar a métrica em página administrativa não indexada e protegida por autenticação/role.
-- [x] Explicar que o contador começa com a ativação, não retroage e pode deixar de registrar um evento se o armazenamento falhar; nenhuma informação pessoal ou conteúdo é guardado.
-- [x] Validar incrementos concorrentes; os 289 testes e o build de produção passam.
-- [x] Abrir o PR #15; aguardar autorização antes de mesclar/publicar.
+## Contador agregado de auditorias — PR #15 publicado
+- [x] Registrar uma execução concluída da auditoria determinística no servidor, sem nova chamada de IA e sem bloquear a geração.
+- [x] Persistir apenas o total agregado em Blob privado, com atualização condicional por ETag e separação de caminhos entre Preview/teste e produção.
+- [x] Mostrar a métrica em página administrativa não indexada e protegida por autenticação/role; documentar que a contagem não é retroativa.
+- [x] Mesclar e publicar a primeira versão pelo PR #15; a tela de métricas mostrou “Indisponível” porque o aplicativo ainda não selecionava o store privado conectado.
+
+## Correção do acesso ao store privado — em branch
+- [x] Criar o store privado `edugera-auditorias` em `gru1` e conectá-lo ao projeto `gerador-materiais-didaticos` somente em Production e Preview, usando as variáveis `AUDITORIAS_*` sem substituir as variáveis `BLOB_*` existentes.
+- [x] Corrigir o contador para passar o ID do store, priorizar OIDC e limitar o fallback ao token `AUDITORIAS_READ_WRITE_TOKEN`; nunca usar o token do store público.
+- [x] Adicionar testes de OIDC, fallback escopado, ausência de credenciais, concorrência e separação de caminhos.
+- [ ] Executar suíte completa, build e checks do preview do PR; confirmar o contador depois do deploy autorizado.
+- [ ] Manter em branch/PR e aguardar autorização antes de mesclar a correção.

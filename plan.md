@@ -39,3 +39,7 @@ Reutilizar o formulário, a prévia A4 e o padrão atual de avisos; tornar as op
 
 ## Extensão aprovada — contador agregado da auditoria pedagógica
 Registrar uma unidade por material concluído depois que `auditarMaterial` termina na rota de geração. Persistir apenas um total inteiro global em Vercel Blob, com atualização condicional via ETag, e escopo de armazenamento separado no Preview/teste. Expor o total somente numa página administrativa não indexada. Não salvar texto, nome, e-mail, diagnóstico, identificador de estudante ou conteúdo do material. A contagem começa após a implantação da métrica; não reconstruir o histórico anterior, pois os eventos não foram registrados especificamente como auditorias. Se a gravação da métrica falhar, a geração do material continua normalmente.
+
+
+## Correção aprovada — acesso do contador ao store privado
+O contador foi conectado ao store privado `edugera-auditorias` no projeto `gerador-materiais-didaticos`, somente em Production e Preview, com prefixo próprio `AUDITORIAS`. O código deve selecionar explicitamente `AUDITORIAS_STORE_ID`, preferir as credenciais OIDC do Vercel e usar apenas `AUDITORIAS_READ_WRITE_TOKEN` como fallback fora do OIDC. Nunca deve recorrer a `BLOB_READ_WRITE_TOKEN`, pois ele pertence ao store público preexistente. O isolamento de caminhos continua usando `teste/` no Preview; o arquivo permanece restrito ao total agregado.
