@@ -54,6 +54,7 @@ export default function MolduraAtividades({ trilha = [], jsonLd = null, children
         <nav aria-label="Rodapé" className="mx-auto flex max-w-[1080px] flex-wrap gap-x-6 gap-y-2 px-5 py-6 text-[14px] text-tinta sm:px-8">
           <Link href="/" className="hover:text-roxo">Início</Link>
           <Link href="/atividades" className="hover:text-roxo">Atividades por ano</Link>
+          <Link href="/prova-paulista" className="hover:text-roxo">Simulados Prova Paulista</Link>
           <Link href="/planos" className="hover:text-roxo">Planos</Link>
           <Link href="/privacidade" className="hover:text-roxo">Privacidade</Link>
           <Link href="/termos" className="hover:text-roxo">Termos de Uso</Link>
@@ -66,11 +67,12 @@ export default function MolduraAtividades({ trilha = [], jsonLd = null, children
 }
 
 // Botão-chamada para o gerador, usado nas três páginas.
-export function ChamadaCriar({ texto, botao }) {
+export function ChamadaCriar({ texto, botao, href = "/criar", sub = null }) {
   return (
     <div className="mt-12 rounded-3xl bg-marinho p-6 text-center text-white sm:p-8">
       <p className="font-titulo text-[1.5rem] font-semibold leading-tight">{texto}</p>
-      <Link href="/criar" className="btn-primario mt-4 inline-flex">
+      {sub && <p className="mx-auto mt-2 max-w-[56ch] text-[15px] text-white/80">{sub}</p>}
+      <Link href={href} className="btn-primario mt-4 inline-flex">
         {botao} <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </div>

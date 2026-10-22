@@ -64,11 +64,15 @@ const FONTES = [
   { id: "pdf", rotulo: "Anexar PDF", icone: FileUp },
 ];
 
-export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar, pdfLiberado = true }) {
+export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", materiais = [], aoGerar, pdfLiberado = true, inicial = null }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
   const [pdf, setPdf] = useState(null); // { nome, base64, tamanho }
   const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", aulas: 2, periodo: "", observacoes: "" });
+  // veio de uma página pública (/bncc): já abre com a habilidade e o ano
+  useEffect(() => {
+    if (inicial) setF((x) => ({ ...x, ...(inicial.disciplina ? { disciplina: inicial.disciplina } : {}), nivel: inicial.nivel || x.nivel, ano: inicial.ano || x.ano, bncc: inicial.bncc || x.bncc }));
+  }, [inicial]);
   const [plano, setPlano] = useState(null);
   const [avisos, setAvisos] = useState([]);
   const [erro, setErro] = useState("");

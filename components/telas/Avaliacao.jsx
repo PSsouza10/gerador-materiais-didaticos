@@ -80,6 +80,7 @@ export default function Avaliacao({
   zerarTeste = false,
   correcaoPro = true,
   trocasPorProva = 3,
+  inicial = null,
 }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
@@ -97,6 +98,10 @@ export default function Avaliacao({
     figuras: 40,
     observacoes: "",
   });
+  // veio de uma página pública (/bncc, /prova-paulista): já abre com a habilidade e o ano
+  useEffect(() => {
+    if (inicial) setF((x) => ({ ...x, ...(inicial.disciplina ? { disciplina: inicial.disciplina } : {}), nivel: inicial.nivel || x.nivel, ano: inicial.ano || x.ano, bncc: inicial.bncc || x.bncc }));
+  }, [inicial]);
   const [avaliacao, setAvaliacao] = useState(null);
   const [avisos, setAvisos] = useState([]);
   const [erro, setErro] = useState("");

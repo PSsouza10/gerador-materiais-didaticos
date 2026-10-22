@@ -168,6 +168,25 @@ const NAV = [
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
 
+// Links das páginas públicas: /criar?aba=prova|plano|apostila&bncc=EF07MA32&disciplina=Matemática&ano=7
+const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material" };
+function pedidoDoEndereco() {
+  if (typeof window === "undefined") return null;
+  const q = new URLSearchParams(window.location.search);
+  const aba = ABAS_DO_LINK[q.get("aba")];
+  if (!aba) return null;
+  const bncc = String(q.get("bncc") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  const disciplina = DISCIPLINAS.includes(q.get("disciplina")) ? q.get("disciplina") : null;
+  const ano = /^[1-9]$/.test(q.get("ano") || "") ? q.get("ano") : "";
+  const campos = {
+    ...(disciplina ? { disciplina } : {}),
+    ...(bncc ? { bncc, habilidade: "", bnccVerificada: false } : {}),
+    nivel: bncc.startsWith("EM") ? "Ensino Médio" : "Ensino Fundamental",
+    ...(ano ? { ano } : {}),
+  };
+  return { aba, campos };
+}
+
 const formDaConfig = (cfg) => ({
   professor: cfg.professor,
   escola: cfg.escola,
@@ -189,6 +208,7 @@ const formDaConfig = (cfg) => ({
 
 export default function GeradorApostilas() {
   const [active, setActive] = useState("Gerar Material");
+  const [inicial, setInicial] = useState(null); // vindo das páginas públicas (/bncc, /prova-paulista)
   const [loading, setLoading] = useState(false);
   const [progresso, setProgresso] = useState(0);
   const [loadingImagem, setLoadingImagem] = useState(false);
@@ -269,8 +289,13 @@ export default function GeradorApostilas() {
   useEffect(() => {
     const cfg = lerConfig();
     setConfig(cfg);
-    setForm(formDaConfig(cfg));
+    const pre = pedidoDoEndereco();
+    setForm({ ...formDaConfig(cfg), ...(pre ? pre.campos : {}) });
     setMateriais(lerMateriais());
+    if (pre) {
+      setInicial(pre.campos);
+      setActive(pre.aba);
+    }
   }, []);
 
   // Logado: junta a lista deste aparelho com a da conta (a mesma no computador e no celular)
@@ -699,12 +724,12 @@ export default function GeradorApostilas() {
         )}
         {active === "Plano de Aula" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <PlanoAula professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} pdfLiberado={conta.uso ? !!conta.uso.planoAulaPdf : true} />
+            <PlanoAula inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} pdfLiberado={conta.uso ? !!conta.uso.planoAulaPdf : true} />
           </div>
         )}
         {active === "Avaliação" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <Avaliacao professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} />
+            <Avaliacao inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} />
           </div>
         )}
         {active === "Configurações" && (

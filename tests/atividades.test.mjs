@@ -42,6 +42,6 @@ test("caminhos: hub, uma por disciplina e uma por combinação, sem repetição"
 test("perguntas frequentes: não prometem o que o site não faz", () => {
   const txt = perguntasDoCombo("Matemática", ANOS[6]).map((f) => f.q + " " + f.a).join(" ");
   assert.match(txt, /7º ano/);
-  assert.match(txt, /nenhuma cobrança/);
+  assert.match(txt, /R\$ 39,90/, "preço atual do Pro (a venda está aberta)");
   assert.doesNotMatch(txt, /ilimitad|garant|100%/i);
 });
