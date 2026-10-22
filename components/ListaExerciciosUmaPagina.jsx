@@ -1,6 +1,7 @@
 "use client";
 import React, { forwardRef } from "react";
 import { bnccDoMaterial, linhaEtapa } from "@/lib/material";
+import { PERSONAGENS } from "@/lib/cena";
 import FiguraDidatica from "@/components/FiguraDidatica";
 import Tx from "@/components/Tx";
 
@@ -34,6 +35,11 @@ const ListaExerciciosUmaPagina = forwardRef(function ListaExerciciosUmaPagina({ 
       <ol className="lista-uma-exercicios">
         {exercicios.map((ex, i) => (
           <li key={ex.id || i} className="lista-uma-item">
+            {ex.fala?.texto && (
+              <p className="lista-uma-fala">
+                <strong>{PERSONAGENS[ex.fala.quem]?.nome || "Personagem"}:</strong> <Tx>{ex.fala.texto}</Tx>
+              </p>
+            )}
             <div className="lista-uma-enunciado">
               <span className="lista-uma-numero">{i + 1}.</span>
               <span><Tx>{ex.enunciado}</Tx></span>
