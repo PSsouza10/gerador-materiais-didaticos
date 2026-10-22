@@ -1,5 +1,15 @@
 # Plano — Apoios de acessibilidade no EduGera
 
+## Extensão aprovada — lista de exercícios econômica
+Adicionar ao gerador uma opção extra, desmarcada por padrão, para baixar um PDF A4 de página única contendo somente os exercícios já gerados, identificação do estudante e BNCC. O material completo continua disponível; esta saída não inclui capa, resumo, conceitos ou gabarito e não faz uma nova chamada de IA. O exportador deve reduzir proporcionalmente o conteúdo compacto se necessário, manter texto pesquisável no PDF e sempre produzir exatamente uma página.
+
+## Arquitetura da extensão
+- `components/GeradorApostilas.jsx`: opção no formulário, botão condicional após a geração e encaminhamento da folha compacta ao exportador.
+- `components/ListaExerciciosUmaPagina.jsx`: composição A4 com título, identificação, BNCC e exercícios, sem conteúdo editorial da apostila.
+- `app/globals.css`: hierarquia compacta específica da lista, sem alterar o layout A4 existente.
+- `lib/pdf.js`: modo opcional de uma página com escala proporcional, camada de texto pesquisável e sem capa; a exportação normal segue com paginação atual.
+- `tests/lista-uma-pagina.test.mjs`: teste do limite de escala e preservação do tamanho quando a folha já cabe.
+
 ## Decisão aprovada
 Preparar um MVP opcional de apoios de acessibilidade para a geração de apostilas, em branch de revisão, sem publicar em produção. Os apoios são escolhas pedagógicas para a atividade — não um diagnóstico nem um perfil clínico do estudante. Não criar chamada extra de IA; encaminhar as escolhas permitidas junto do pedido normal de geração e da chamada de imagem já existente, quando aplicável.
 

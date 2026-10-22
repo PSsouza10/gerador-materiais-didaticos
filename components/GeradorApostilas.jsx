@@ -37,6 +37,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
+import ListaExerciciosUmaPagina from "@/components/ListaExerciciosUmaPagina";
 import RevisaoExercicios from "@/components/RevisaoExercicios";
 import CapaA4 from "@/components/CapaA4";
 import PreviewEscalado from "@/components/PreviewEscalado";
@@ -197,6 +198,7 @@ export default function GeradorApostilas() {
   const [aviso, setAviso] = useState(null);
   const [mostrarGabarito, setMostrarGabarito] = useState(false);
   const [gabaritoForcado, setGabaritoForcado] = useState(null); // usado só durante a exportação
+  const [listaEconomica, setListaEconomica] = useState(false);
 
   const [config, setConfig] = useState(CONFIG_PADRAO);
   const [materiais, setMateriais] = useState([]);
@@ -238,6 +240,7 @@ export default function GeradorApostilas() {
   const [compartilhar, setCompartilhar] = useState({ estado: "vazio", url: null, chave: null });
 
   const folhaRef = useRef(null);
+  const listaRef = useRef(null);
   const capaRef = useRef(null);
 
   // ===== FORMULÁRIO =====
@@ -472,7 +475,8 @@ export default function GeradorApostilas() {
 
   // ===== EXPORTAÇÃO EM PDF: aluno (sem gabarito) ou professor (gabarito em página própria) =====
   const handleBaixarPdf = async (tipo) => {
-    if (!folhaRef.current) return;
+    const folhaExportar = tipo === "lista" ? listaRef.current : folhaRef.current;
+    if (!folhaExportar) return;
     // pontos que o professor precisa conferir (correções automáticas não bloqueiam)
     const pendentes = alertas.filter((a) => a.tipo !== "corrigido");
     const naoAprovados = gerado ? (material?.exercicios || []).filter((e) => !e.aprovado).length : 0;
@@ -490,12 +494,17 @@ export default function GeradorApostilas() {
     flushSync(() => setGabaritoForcado(tipo === "professor"));
     try {
       const base = `apostila-${slugify(formPreview.tema) || "material"}`;
-      await exportarPdf(folhaRef.current, `${base}${tipo === "professor" ? "-professor" : ""}.pdf`, {
-        capa: capaEfetiva !== "nenhuma" ? capaRef.current : null,
-        titulo: materialPreview.tituloDidatico || formPreview.tema,
-        assunto: [formPreview.disciplina, formPreview.tema].filter(Boolean).join(" · "),
-        autor: formPreview.professor,
-      });
+      await exportarPdf(
+        folhaExportar,
+        `${base}${tipo === "professor" ? "-professor" : tipo === "lista" ? "-lista-1-pagina" : ""}.pdf`,
+        {
+          capa: tipo !== "lista" && capaEfetiva !== "nenhuma" ? capaRef.current : null,
+          titulo: materialPreview.tituloDidatico || formPreview.tema,
+          assunto: [formPreview.disciplina, formPreview.tema].filter(Boolean).join(" · "),
+          autor: formPreview.professor,
+          umaPagina: tipo === "lista",
+        }
+      );
     } catch (e) {
       console.error("Erro ao gerar PDF:", e);
       setErro("Não foi possível gerar o PDF. Tente novamente.");
@@ -895,6 +904,22 @@ export default function GeradorApostilas() {
                 </select>
               </Field>
 
+              <label className="sm:col-span-2 flex cursor-pointer items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-left transition-colors hover:bg-emerald-50">
+                <input
+                  type="checkbox"
+                  checked={listaEconomica}
+                  onChange={(e) => setListaEconomica(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 flex-none accent-emerald-600"
+                  aria-describedby="ajuda-lista-economica"
+                />
+                <span>
+                  <b className="block text-[12px] text-slate-800">Também quero a lista de exercícios em 1 página</b>
+                  <span id="ajuda-lista-economica" className="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                    Depois de gerar, baixe um PDF A4 só com os exercícios, identificação e BNCC — sem capa, resumo ou gabarito. Reaproveita esta geração, sem custo de IA extra, e ajusta a escala para caber em uma folha.
+                  </span>
+                </span>
+              </label>
+
               <div className="sm:col-span-2">
                 <Field label="Capa" icon={PanelTop} name="capa">
                   <select value={form.capa} onChange={set("capa")} className="ipt">
@@ -1029,6 +1054,12 @@ export default function GeradorApostilas() {
                   {baixandoPdf === "aluno" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                   PDF do aluno
                 </button>
+                {listaEconomica && gerado && temExercicios && (
+                  <button type="button" onClick={() => handleBaixarPdf("lista")} disabled={!!baixandoPdf || loading} className="btn-prev !bg-emerald-50 !text-emerald-800 !ring-emerald-200">
+                    {baixandoPdf === "lista" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                    Lista · 1 página
+                  </button>
+                )}
                 {temExercicios && (
                   <button type="button"
                     onClick={() => handleBaixarPdf("professor")}
@@ -1173,6 +1204,11 @@ export default function GeradorApostilas() {
                 imagemNaCapa={capaEfetiva !== "nenhuma"}
               />
             </PreviewEscalado>
+            {gerado && listaEconomica && temExercicios && (
+              <div aria-hidden="true" style={{ position: "fixed", left: "-10000px", top: 0, zIndex: -1 }}>
+                <ListaExerciciosUmaPagina ref={listaRef} form={formPreview} material={materialPreview} />
+              </div>
+            )}
           </section>
         </div>
       </main>

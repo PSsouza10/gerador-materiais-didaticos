@@ -15,3 +15,11 @@
 
 ## Entrega — concluído para revisão
 - [x] Manter a alteração em `feature/apoios-acessibilidade-tea`, pronta para revisão e sem publicação em produção.
+
+
+## Lista econômica de exercícios em uma página — em revisão
+- [x] Oferecer no gerador uma opção para baixar uma folha A4 somente com os exercícios, identificação e BNCC, sem capa, resumo ou gabarito.
+- [x] Reaproveitar os exercícios já gerados, sem fazer chamada extra de IA.
+- [x] Ajustar proporcionalmente o conteúdo para que o PDF compacto caiba em uma página A4, preservando a camada de texto pesquisável.
+- [x] Manter o PDF completo do aluno/professor e a opção econômica como saídas distintas.
+- [x] Validar com testes automatizados e build; manter a alteração em branch separada até aprovação.
