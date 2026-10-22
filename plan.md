@@ -35,3 +35,7 @@ Preparar um MVP opcional de apoios de acessibilidade para a geração de apostil
 
 ## Direção de interface
 Reutilizar o formulário, a prévia A4 e o padrão atual de avisos; tornar as opções claramente opcionais, legíveis por teclado e sem bloquear download. Não exibir rótulo de deficiência no material do aluno.
+
+
+## Extensão aprovada — contador agregado da auditoria pedagógica
+Registrar uma unidade por material concluído depois que `auditarMaterial` termina na rota de geração. Persistir apenas um total inteiro global em Vercel Blob, com atualização condicional via ETag, e escopo de armazenamento separado no Preview/teste. Expor o total somente numa página administrativa não indexada. Não salvar texto, nome, e-mail, diagnóstico, identificador de estudante ou conteúdo do material. A contagem começa após a implantação da métrica; não reconstruir o histórico anterior, pois os eventos não foram registrados especificamente como auditorias. Se a gravação da métrica falhar, a geração do material continua normalmente.

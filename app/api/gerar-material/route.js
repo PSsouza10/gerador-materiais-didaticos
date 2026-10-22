@@ -1,4 +1,5 @@
 import { conferirCoerencia } from "@/lib/coerencia";
+import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import bnccDados from "@/data/bncc-habilidades.json";
@@ -13,6 +14,7 @@ import { conferirGabarito } from "@/lib/gabarito";
 import { revisarMaterial } from "@/lib/revisao";
 import { conferirQualidade } from "@/lib/qualidade";
 import { auditarMaterial } from "@/lib/auditoria";
+import { incrementarContagemAuditorias } from "@/lib/contadorAuditorias";
 import { figurasObrigatorias } from "@/lib/figuras";
 import { openaiStream, geminiStream, temOpenAI, temGemini, textoParaJson } from "@/lib/provedoresIA";
 import { montarPromptApoiosAcessibilidade } from "@/lib/apoiosAcessibilidade";
@@ -292,6 +294,15 @@ Regras:
         material.avisosRevisao = avisosRevisao;
         material.alertas = [...conferirCoerencia({ nivel, bncc }, material), ...verificarUnidades(material), ...avisosGabarito, ...avisosRevisao, ...conferirQualidade(material)];
         material.auditoria = auditarMaterial({ disciplina, nivel, ano, bncc, questoes }, material, { questoes });
+        try {
+          waitUntil(
+            incrementarContagemAuditorias().catch((erroContagem) => {
+              console.error("Não foi possível registrar a contagem da auditoria:", erroContagem?.message || erroContagem);
+            })
+          );
+        } catch (erroAgendamento) {
+          console.error("Não foi possível agendar a contagem da auditoria:", erroAgendamento?.message || erroAgendamento);
+        }
         enviar(ctrl, { tipo: "concluido", material, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes } });
       } catch (e) {
         const motivo = controller.signal.aborted
