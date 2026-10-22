@@ -32,6 +32,28 @@ body {
   min-height: 0;
 }
 
+/* Lista econômica: só os exercícios, sem capa, resumo ou gabarito. */
+.lista-exercicios-uma-pagina {
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+.lista-uma-cabecalho { border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+.lista-uma-identificacao { display: flex; justify-content: space-between; gap: 8px; font-size: 9px; color: #475569; }
+.lista-uma-identificacao strong { color: #1e293b; }
+.lista-uma-aluno { display: grid; grid-template-columns: 1fr 0.55fr 0.55fr; gap: 10px; margin-top: 7px; font-size: 9px; color: #475569; }
+.lista-uma-titulo { margin: 8px 0 2px; color: #4338ca; text-align: center; font-size: 17px; font-weight: 800; line-height: 1.15; }
+.lista-uma-bncc { margin: 3px auto 0; max-width: 100%; color: #475569; font-size: 8.5px; line-height: 1.2; }
+.lista-uma-legenda { margin: 4px 0 7px; color: #64748b; text-align: center; font-size: 8px; }
+.lista-uma-exercicios { display: grid; grid-template-columns: 1fr; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.lista-uma-item { break-inside: avoid; border-bottom: 1px solid #e2e8f0; padding: 3px 0 4px; }
+.lista-uma-enunciado { display: flex; align-items: flex-start; gap: 5px; line-height: 1.25; }
+.lista-uma-numero { flex: none; color: #4338ca; font-weight: 800; }
+.lista-uma-alternativas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 8px; margin: 3px 0 0 17px; font-size: 9px; line-height: 1.2; }
+.lista-uma-resposta { height: 11px; margin: 5px 0 0 17px; border-bottom: 1px solid #94a3b8; }
+.lista-uma-figura { max-height: 44px; margin: 3px 0 0 17px; overflow: hidden; }
+.lista-uma-figura svg { max-height: 44px; width: auto; }
+.lista-uma-rodape { margin-top: 7px; border-top: 1px solid #e2e8f0; padding-top: 3px; color: #94a3b8; text-align: right; font-size: 7px; }
+
 /* Capa: página A4 inteira, sangrada; o conteúdo começa na página seguinte */
 .capa-a4 {
   -webkit-print-color-adjust: exact;
