@@ -16,7 +16,7 @@ Regra do Paulo: **um item por vez, e só avança com o OK dele.** Ele quer respo
 2. **Item 3:** incluir a disciplina **Espanhol** (hoje não existe).
 3. **Item 4 — Instagram:** "comente EDUGERA" → direct com o link de campanha (ManyChat, a partir de US$ 15/mês; conferir como ele verifica se a pessoa segue). Entregar o roteiro do Reel, a legenda e as mensagens do direct.
 
-- **Bloqueio de contas novas no Grátis** (pedido do Paulo, 23/10): no teste (`fase-0`). Cookie `eg_d` (middleware) + IP, guardados só como HMAC em `eventos_uso` (migração 0013). Grátis: até 2 contas por aparelho e 10 por rede no mês (`lib/dispositivo.js`); vale para geração, cruzadinha e correção de prova. Frase curta na Política (seção 7).
+- **Bloqueio de contas novas no Grátis** (pedido do Paulo, 23/10): no teste (`fase-0`). Cookie `eg_d` (middleware) + IP, guardados só como HMAC em `eventos_uso` (migração 0013). Grátis: até 2 contas por aparelho e 30 por rede no mês (`lib/dispositivo.js`); vale para geração, cruzadinha e correção de prova. Frase curta na Política (seção 7).
 
 ## Pendências paradas
 - Política de Privacidade:
