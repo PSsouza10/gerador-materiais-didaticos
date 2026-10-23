@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Grid3x3, Loader2, Printer, AlertCircle, Info, Shuffle, Eye, EyeOff, Trash2, FolderOpen } from "lucide-react";
+import { Grid3x3, Download, Loader2, Printer, AlertCircle, Info, Shuffle, Eye, EyeOff, Trash2, FolderOpen } from "lucide-react";
 import SeletorBNCC from "@/components/SeletorBNCC";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
 import { ANOS_POR_NIVEL } from "@/lib/bncc";
@@ -136,13 +136,39 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
     if (cz.id) atualizarSalva(cz.id, (({ id, ...resto }) => resto)(nova));
   };
 
+  // imprime por um quadro escondido na própria página: não depende de pop-up liberado
   const imprimir = () => {
-    const w = window.open("", "_blank");
-    if (!w) return setErro("O navegador bloqueou a janela de impressão. Permita pop-ups para este site.");
-    w.document.write(cruzadinhaParaHtml(cz));
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
+    setErro("");
+    const antigo = document.getElementById("edugera-impressao");
+    if (antigo) antigo.remove();
+    const q = document.createElement("iframe");
+    q.id = "edugera-impressao";
+    q.setAttribute("aria-hidden", "true");
+    q.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(q);
+    const doc = q.contentWindow.document;
+    doc.open();
+    doc.write(cruzadinhaParaHtml(cz));
+    doc.close();
+    setTimeout(() => {
+      try {
+        q.contentWindow.focus();
+        q.contentWindow.print();
+      } catch {
+        setErro("Não foi possível abrir a impressão. Use o botão Baixar página e imprima o arquivo.");
+      }
+    }, 400);
+  };
+  // reserva: baixa a folha (aluno + gabarito) como página para abrir e imprimir
+  const baixarPagina = () => {
+    const blob = new Blob([cruzadinhaParaHtml(cz)], { type: "text/html;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `cruzadinha-${String(cz.titulo || "edugera").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 50)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
 
   const n = cz ? cz.grade.horizontais.length + cz.grade.verticais.length : 0;
@@ -220,6 +246,7 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
           <div>
             <div className="mb-4 flex flex-wrap gap-2">
               <button type="button" onClick={imprimir} className="btn-prev"><Printer className="h-3.5 w-3.5" /> Imprimir / salvar PDF</button>
+              <button type="button" onClick={baixarPagina} className="btn-prev"><Download className="h-3.5 w-3.5" /> Baixar página</button>
               <button type="button" onClick={novaDisposicao} className="btn-prev" title="Mesmas palavras, outra grade (não gasta geração)"><Shuffle className="h-3.5 w-3.5" /> Nova disposição</button>
               <button type="button" onClick={() => setVerGabarito((v) => !v)} className="btn-prev">{verGabarito ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />} {verGabarito ? "Esconder gabarito" : "Ver gabarito"}</button>
             </div>
