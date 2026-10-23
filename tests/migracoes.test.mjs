@@ -24,9 +24,9 @@ test("toda migração tem o arquivo .down que desfaz o que o .up cria", () => {
 
 test("migrações não apagam nem alteram dados existentes (só criam)", () => {
   for (const m of listarMigracoes(PASTA)) {
-    // "ON DELETE CASCADE" é regra da chave estrangeira (não apaga nada na migração)
+    // "ON DELETE CASCADE / SET NULL" é regra da chave estrangeira (não apaga nada na migração)
     // "DROP CONSTRAINT ... IF EXISTS" seguido de "ADD CONSTRAINT" de mesmo nome só AMPLIA uma regra (não toca em dados)
-    let up = readFileSync(m.up, "utf8").replace(/^\s*--.*$/gm, "").replace(/\bON\s+(DELETE|UPDATE)\s+CASCADE\b/gi, "");
+    let up = readFileSync(m.up, "utf8").replace(/^\s*--.*$/gm, "").replace(/\bON\s+(DELETE|UPDATE)\s+(CASCADE|SET\s+NULL)\b/gi, "");
     for (const [, nome] of up.matchAll(/DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+(\w+)/gi)) {
       assert.match(up, new RegExp(`ADD\\s+CONSTRAINT\\s+${nome}\\b`, "i"), `${m.nome}: ${nome} removida sem ser recriada`);
       up = up.replace(new RegExp(`ALTER\\s+TABLE\\s+\\w+\\s+DROP\\s+CONSTRAINT\\s+IF\\s+EXISTS\\s+${nome}`, "gi"), "");

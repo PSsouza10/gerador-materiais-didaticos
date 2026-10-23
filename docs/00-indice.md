@@ -18,6 +18,7 @@ Para mudar o estado, troque a linha "Estado" no topo do arquivo e nesta tabela, 
 | [03-ambientes-e-deploy.md](03-ambientes-e-deploy.md) | produção × teste, publicar, variáveis | rascunho | 22/10/2026 |
 | [04-pagamentos-asaas.md](04-pagamentos-asaas.md) | regras, testes feitos, estorno parcial em produção | rascunho | 22/10/2026 |
 | [05-ia-e-qualidade.md](05-ia-e-qualidade.md) | provedores, conferência de gabarito, baterias, custo | rascunho | 22/10/2026 |
+| [06-ciclo-recomposicao.md](06-ciclo-recomposicao.md) | piloto: caderno da rede, painel, recomposição, mini-reavaliação | rascunho | 22/10/2026 |
 | **lgpd/** | | | |
 | [lgpd/01-inventario-de-dados.md](lgpd/01-inventario-de-dados.md) | todos os dados pessoais, onde ficam, retenção, lacunas | rascunho | 22/10/2026 |
 | [lgpd/02-operadores.md](lgpd/02-operadores.md) | Vercel, Neon, Google, OpenAI, Asaas | rascunho | 22/10/2026 |

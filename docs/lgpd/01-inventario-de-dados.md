@@ -33,6 +33,8 @@
 | 16 | Custo de IA por pedido: rota, modelo, tokens, custo | Nenhum (sem conta, sem conteúdo) | Neon `custos_ia` | Calcular preço | — (não pessoal) | Sem prazo **[definir, ex.: 12 meses]** | `lib/custoIA.js`, migração 0009 |
 | 17 | Contador de auditorias (só um total) | Nenhum | Blob privado `edugera-auditorias` (gru1) | Métrica | — (não pessoal) | — | `lib/contadorAuditorias.js` |
 | 18 | Preferências do formulário e rascunhos | Professor | `localStorage` do navegador | Conveniência | — | Até limpar o navegador | `lib/local.js` |
+| 19a | **Ciclo de Recomposição:** caderno (avaliação com gabarito, lista de escolas) e resultado por turma: escola, turma, nº de alunos e **contagem** de respostas por questão | Professor (pelo código da conta); **nenhum dado de aluno** | Neon `cadernos`, `resultados_turma` | Painel agregado da coordenação | Execução do serviço / contrato com a escola **[advogado]** | Até apagar o caderno **[definir prazo do piloto]** | `lib/cadernos.js`, `lib/ciclo.js`, migração 0010 |
+| 19b | Marca de coordenador | Professor | Neon `usuarios.coordenador` | Permitir criar cadernos | Execução do serviço | Enquanto a conta existir | `lib/cadernos.js` |
 | 19 | E-mails de administrador | Paulo | Variável `ADMIN_EMAILS` na Vercel | Acesso ao painel | — | — | `lib/uso.js` |
 
 ## O que o EduGera **não** coleta

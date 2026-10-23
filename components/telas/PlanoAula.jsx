@@ -71,7 +71,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
   const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", aulas: 2, periodo: "", observacoes: "" });
   // veio de uma página pública (/bncc): já abre com a habilidade e o ano
   useEffect(() => {
-    if (inicial) setF((x) => ({ ...x, ...(inicial.disciplina ? { disciplina: inicial.disciplina } : {}), nivel: inicial.nivel || x.nivel, ano: inicial.ano || x.ano, bncc: inicial.bncc || x.bncc }));
+    if (inicial) setF((x) => ({ ...x, ...(inicial.disciplina ? { disciplina: inicial.disciplina } : {}), nivel: inicial.nivel || x.nivel, ano: inicial.ano || x.ano, bncc: inicial.bncc || x.bncc, ...(inicial.tema ? { tema: inicial.tema } : {}) }));
   }, [inicial]);
   const [plano, setPlano] = useState(null);
   const [avisos, setAvisos] = useState([]);

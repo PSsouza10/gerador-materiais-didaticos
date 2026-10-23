@@ -177,11 +177,16 @@ function pedidoDoEndereco() {
   if (!aba) return null;
   const bncc = String(q.get("bncc") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
   const disciplina = DISCIPLINAS.includes(q.get("disciplina")) ? q.get("disciplina") : null;
-  const ano = /^[1-9]$/.test(q.get("ano") || "") ? q.get("ano") : "";
+  const ano = /^([1-9]|EM[1-3])$/.test(q.get("ano") || "") ? q.get("ano") : "";
+  // tema: vem da recomposição (descritor mais fraco da turma); abrir: avaliação salva neste navegador
+  const tema = String(q.get("tema") || "").replace(/\s+/g, " ").trim().slice(0, 200);
+  const abrir = /^av-[a-z0-9]{1,20}$/.test(q.get("abrir") || "") ? q.get("abrir") : "";
   const campos = {
+    ...(tema ? { tema } : {}),
+    ...(abrir ? { abrir } : {}),
     ...(disciplina ? { disciplina } : {}),
     ...(bncc ? { bncc, habilidade: "", bnccVerificada: false } : {}),
-    nivel: bncc.startsWith("EM") ? "Ensino Médio" : "Ensino Fundamental",
+    nivel: bncc.startsWith("EM") || ano.startsWith("EM") ? "Ensino Médio" : "Ensino Fundamental",
     ...(ano ? { ano } : {}),
   };
   return { aba, campos };
@@ -247,7 +252,7 @@ export default function GeradorApostilas() {
     try {
       const r = await fetch("/api/uso", { cache: "no-store" });
       const j = await r.json();
-      setConta({ authConfigurado: j.authConfigurado, uso: j.uso || null, zerarTeste: !!j.zerarTeste });
+      setConta({ authConfigurado: j.authConfigurado, uso: j.uso || null, zerarTeste: !!j.zerarTeste, coordenador: !!j.coordenador });
     } catch {
       /* sem rede: mantém o último estado */
     }
@@ -290,7 +295,8 @@ export default function GeradorApostilas() {
     const cfg = lerConfig();
     setConfig(cfg);
     const pre = pedidoDoEndereco();
-    setForm({ ...formDaConfig(cfg), ...(pre ? pre.campos : {}) });
+    const { abrir: _abrir, ...camposForm } = pre ? pre.campos : {};
+    setForm({ ...formDaConfig(cfg), ...camposForm });
     setMateriais(lerMateriais());
     if (pre) {
       setInicial(pre.campos);
@@ -729,7 +735,7 @@ export default function GeradorApostilas() {
         )}
         {active === "Avaliação" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <Avaliacao inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} />
+            <Avaliacao inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} coordenador={!!conta.coordenador} />
           </div>
         )}
         {active === "Configurações" && (

@@ -4,6 +4,8 @@ import { Lock, Camera, Loader2, Trash2, Download, FileSpreadsheet, UserPlus, Bar
 import { LETRAS_CARTAO, BRANCO, DUPLA, FAIXAS, faixaDe, lerRespostasTexto, respostasParaTexto, corrigirAluno, relatorioTurma, relatorioCsv } from "@/lib/correcao";
 import { exportarPdf } from "@/lib/pdf";
 import { slugify } from "@/lib/material";
+import Recomposicao from "@/components/ciclo/Recomposicao";
+import EnvioRede from "@/components/ciclo/EnvioRede";
 
 // Correção da turma: o professor lança as respostas de cada aluno (foto do cartão ou digitando)
 // e recebe a nota de cada um e o relatório por habilidade/descritor, com o que reforçar.
@@ -61,7 +63,7 @@ const AVISO_PRO = {
 
 const vazio = (n) => ({ id: null, numero: "", nome: "", respostas: Array(n).fill(BRANCO) });
 
-export default function CorrecaoTurma({ avaliacao, avId, pro = true }) {
+export default function CorrecaoTurma({ avaliacao, avId, pro = true, caderno = null }) {
   const n = avaliacao?.itens?.length || 0;
   const [alunos, setAlunos] = useState([]);
   const [atual, setAtual] = useState(vazio(n));
@@ -242,6 +244,8 @@ export default function CorrecaoTurma({ avaliacao, avId, pro = true }) {
               <Relatorio avaliacao={avaliacao} rel={rel} aoEditar={editar} aoRemover={remover} />
             </div>
           </div>
+          <Recomposicao avaliacao={avaliacao} rel={rel} />
+          {caderno && <EnvioRede avaliacao={avaliacao} caderno={caderno} alunos={alunos} />}
         </>
       )}
     </section>

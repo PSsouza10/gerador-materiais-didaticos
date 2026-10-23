@@ -20,6 +20,7 @@ import SeletorBNCC from "@/components/SeletorBNCC";
 import FolhaAvaliacao from "@/components/FolhaAvaliacao";
 import CorrecaoTurma from "@/components/CorrecaoTurma";
 import AjustarQuestoes from "@/components/AjustarQuestoes";
+import DistribuirCaderno from "@/components/ciclo/DistribuirCaderno";
 import PreviewEscalado from "@/components/PreviewEscalado";
 import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { DISCIPLINAS, NIVEIS } from "@/lib/opcoes";
@@ -81,6 +82,7 @@ export default function Avaliacao({
   correcaoPro = true,
   trocasPorProva = 3,
   inicial = null,
+  coordenador = false,
 }) {
   const [fonte, setFonte] = useState("tema");
   const [apostila, setApostila] = useState("");
@@ -112,6 +114,17 @@ export default function Avaliacao({
   const [avId, setAvId] = useState(null); // avaliação aberta (a correção da turma fica ligada a ela)
   const folhaRef = useRef(null);
   useEffect(() => setSalvas(lerSalvas()), []);
+  // veio de /caderno/<código> ("Adicionar às minhas avaliações"): abre a avaliação já salva
+  useEffect(() => {
+    if (!inicial?.abrir) return;
+    const item = lerSalvas().find((x) => x.id === inicial.abrir);
+    if (item) {
+      setAvaliacao(item.avaliacao);
+      setAvId(item.id);
+      setAvisos([]);
+      setVersao("aluno");
+    }
+  }, [inicial]);
   // nome e escola chegam depois (conta Google / Configurações): preenche se ainda vazio
   useEffect(() => {
     setF((x) => ({
@@ -287,6 +300,9 @@ export default function Avaliacao({
     (a) => a.tipo !== "corrigido" && a.tipo !== "erro",
   );
   const letras = avaliacao ? contarLetras(avaliacao.itens) : null;
+  // avaliação que veio de um caderno da rede (Ciclo de Recomposição)
+  const salvaAberta = salvas.find((x) => x.id === avId);
+  const caderno = salvaAberta?.origem?.tipo === "caderno" ? salvaAberta.origem : null;
 
   return (
     <div className="space-y-6">
@@ -675,7 +691,14 @@ export default function Avaliacao({
                   </ul>
                 </div>
               )}
-              <AjustarQuestoes avaliacao={avaliacao} aoMudar={mudarAvaliacao} trocasPorProva={trocasPorProva} />
+              {coordenador && !caderno && <DistribuirCaderno key={avId || "nova"} avaliacao={avaliacao} />}
+              {caderno && (
+                <p className="mb-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-[12.5px] text-violet-950">
+                  Caderno da rede <b>{caderno.titulo}</b> (código {caderno.codigo}). Aplique como está para o resultado ser comparável entre as escolas; depois de corrigir,
+                  envie o resultado da turma lá embaixo.
+                </p>
+              )}
+              {!caderno && <AjustarQuestoes avaliacao={avaliacao} aoMudar={mudarAvaliacao} trocasPorProva={trocasPorProva} />}
             <PreviewEscalado>
                 <FolhaAvaliacao
                   ref={folhaRef}
@@ -688,7 +711,7 @@ export default function Avaliacao({
         </section>
       </div>
 
-      {avaliacao && avId && <CorrecaoTurma avaliacao={avaliacao} avId={avId} pro={correcaoPro} />}
+      {avaliacao && avId && <CorrecaoTurma avaliacao={avaliacao} avId={avId} pro={correcaoPro} caderno={caderno} />}
 
       {salvas.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
@@ -720,10 +743,16 @@ export default function Avaliacao({
                       .join(" · ")}{" "}
                     · {new Date(s.criadoEm).toLocaleDateString("pt-BR")}
                   </span>
-                  {s.origem?.titulo && (
-                    <span className="block text-[12px] text-slate-500">
-                      A partir da apostila “{s.origem.titulo}”
+                  {s.origem?.tipo === "caderno" ? (
+                    <span className="block text-[12px] font-semibold text-violet-700">
+                      Caderno da rede · código {s.origem.codigo}
                     </span>
+                  ) : (
+                    s.origem?.titulo && (
+                      <span className="block text-[12px] text-slate-500">
+                        A partir da apostila “{s.origem.titulo}”
+                      </span>
+                    )
                   )}
                 </span>
                 <button
