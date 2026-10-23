@@ -641,8 +641,8 @@ export default function GeradorApostilas() {
         Pular para o conteúdo
       </a>
       {/* ===== MENU LATERAL (desktop) ===== */}
-      <aside className="nao-imprimir hidden md:flex w-64 flex-none flex-col bg-white border-r border-slate-100 shadow-sm">
-        <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-100">
+      <aside className="nao-imprimir hidden md:flex w-64 flex-none flex-col bg-[#EEEDF8] border-r border-slate-200 shadow-sm">
+        <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-300/70">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-400 shadow-lg shadow-indigo-200">
             <GraduationCap className="h-6 w-6 text-white" strokeWidth={2.2} />
           </div>
@@ -652,7 +652,7 @@ export default function GeradorApostilas() {
           </div>
         </div>
 
-        <nav aria-label="Seções" className="flex-1 px-3 py-5 space-y-1">
+        <nav aria-label="Seções" className="flex-1 px-3 py-5 space-y-2">
           {NAV.map(({ name, icon: Icon }) => {
             const on = active === name;
             return (
@@ -662,8 +662,8 @@ export default function GeradorApostilas() {
                 aria-current={on ? "page" : undefined}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
                   on
-                    ? "bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-600 shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-700"
+                    ? "border border-indigo-300 bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-600 shadow-sm"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-slate-700"
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] flex-none" strokeWidth={2.2} />
