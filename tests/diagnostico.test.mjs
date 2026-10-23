@@ -159,3 +159,14 @@ test("revisor do diagnóstico recebe o texto da habilidade de cada questão", as
   assert.match(p, /EF07MA32 — Resolver problemas de cálculo de medida de área/);
   assert.match(p, /avalia DE FATO a habilidade indicada/);
 });
+
+test("prova de uma habilidade só: vocabulário parecido não é repetição (bateria de 23/10, Área)", () => {
+  const av = {
+    itens: [
+      item("EF07MA32", "Ana quer colocar um tapete retangular com comprimento e largura medidos em metros na sala de leitura.", "Qual é a área do tapete?"),
+      item("EF07MA32", "Ana quer colocar um carpete retangular com comprimento e largura medidos em metros na sala de jogos.", "Qual é a área do carpete?"),
+    ],
+  };
+  assert.equal(D.conferirRepeticoes(av).itens[1].problemas.length, 0, "abaixo de 0,7 numa prova normal");
+  assert.match(D.conferirRepeticoes(av, { diagnostico: true }).itens[1].problemas[0], /repete a situação/, "no diagnóstico, 0,5 já conta");
+});
