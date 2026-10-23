@@ -35,6 +35,7 @@ import {
   UsersRound,
   ClipboardList,
   ClipboardCheck,
+  Grid3x3,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import ListaExerciciosUmaPagina from "@/components/ListaExerciciosUmaPagina";
@@ -47,6 +48,7 @@ import MinhasApostilas from "@/components/telas/MinhasApostilas";
 import Configuracoes from "@/components/telas/Configuracoes";
 import PlanoAula from "@/components/telas/PlanoAula";
 import Avaliacao from "@/components/telas/Avaliacao";
+import Cruzadinha from "@/components/telas/Cruzadinha";
 import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
@@ -164,12 +166,13 @@ const NAV = [
   { name: "Gerar Material", curto: "Gerar", icon: Sparkles, descricao: "Crie apostilas e fichas de estudo alinhadas à BNCC." },
   { name: "Plano de Aula", curto: "Plano", icon: ClipboardList, descricao: "Plano de aula na estrutura do Currículo Paulista." },
   { name: "Avaliação", curto: "Prova", icon: ClipboardCheck, descricao: "Prova de múltipla escolha no padrão Prova Paulista / SARESP." },
+  { name: "Cruzadinha", curto: "Cruzada", icon: Grid3x3, descricao: "Palavras cruzadas do tema ou da habilidade, com gabarito." },
   { name: "Minhas Apostilas", curto: "Apostilas", icon: BookMarked, descricao: "Materiais gerados neste navegador." },
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
 
-// Links das páginas públicas: /criar?aba=prova|plano|apostila&bncc=EF07MA32&disciplina=Matemática&ano=7
-const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material" };
+// Links das páginas públicas: /criar?aba=prova|plano|apostila|cruzadinha&bncc=EF07MA32&disciplina=Matemática&ano=7
+const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material", cruzadinha: "Cruzadinha" };
 function pedidoDoEndereco() {
   if (typeof window === "undefined") return null;
   const q = new URLSearchParams(window.location.search);
@@ -738,6 +741,11 @@ export default function GeradorApostilas() {
             <Avaliacao inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} materiais={materiais} aoGerar={atualizarUso} zerarTeste={conta.zerarTeste} correcaoPro={conta.uso ? !!conta.uso.correcaoPro : true} trocasPorProva={conta.uso ? conta.uso.trocasPorProva : 3} coordenador={!!conta.coordenador} />
           </div>
         )}
+        {active === "Cruzadinha" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <Cruzadinha inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} aoGerar={atualizarUso} />
+          </div>
+        )}
         {active === "Configurações" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
             <Configuracoes
@@ -1247,7 +1255,7 @@ export default function GeradorApostilas() {
       {/* ===== NAVEGAÇÃO INFERIOR (celular) ===== */}
       <nav
         aria-label="Seções"
-        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-slate-200 bg-white/95 md:hidden"
+        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-slate-200 bg-white/95 md:hidden"
       >
         {NAV.map(({ name, curto, icon: Icon }) => {
           const on = active === name;

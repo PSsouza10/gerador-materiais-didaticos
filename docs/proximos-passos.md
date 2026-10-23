@@ -10,9 +10,9 @@ Regra do Paulo: **um item por vez, e só avança com o OK dele.** Ele quer respo
 - Link de campanha `edugera.app/convite/<CÓDIGO>` (60 dias de Pro). A campanha é criada em `/admin/piloto`.
 
 ## Fila
-1. **Item 2 — sugestão do HTPC.** Esperando o Paulo responder:
-   - Cruzadinha: novo tipo de atividade (tema/habilidade → grade do aluno + gabarito). É isso?
-   - "Correção de provas": (a) corrigir prova feita fora do EduGera digitando só o gabarito, ou (b) corrigir questões abertas?
+1. **Item 2 — sugestão do HTPC.** Respostas do Paulo (23/10):
+   - Cruzadinha: sim, tema/habilidade → grade do aluno + gabarito. **Feita e no teste (`fase-0`), esperando o OK do Paulo para ir ao ar.** Aba "Cruzadinha" em `/criar` (`?aba=cruzadinha`); API `/api/gerar-cruzadinha`; lógica em `lib/cruzadinha.js` (a IA só escreve palavras e dicas; a grade é montada no código). Conta 1 geração. "Nova disposição" não gasta geração.
+   - Correção de provas: o professor envia a prova feita pelo aluno e a IA corrige. **Próxima parte deste item.**
 2. **Item 3:** incluir a disciplina **Espanhol** (hoje não existe).
 3. **Item 4 — Instagram:** "comente EDUGERA" → direct com o link de campanha (ManyChat, a partir de US$ 15/mês; conferir como ele verifica se a pessoa segue). Entregar o roteiro do Reel, a legenda e as mensagens do direct.
 
