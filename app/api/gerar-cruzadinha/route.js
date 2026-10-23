@@ -39,6 +39,7 @@ async function postRota(request, _contexto, requestId) {
     console.error("Erro ao registrar uso (cruzadinha):", e);
     return NextResponse.json({ error: "Não foi possível verificar seu limite agora. Tente de novo." }, { status: 503 });
   }
+  if (!uso.ok && uso.mensagem) return NextResponse.json({ error: uso.mensagem, motivo: uso.motivo, limiteAtingido: true }, { status: 429 });
   if (!uso.ok) {
     const n = uso.limite === 1 ? "a cruzadinha" : `as ${uso.limite} cruzadinhas`;
     return NextResponse.json({ error: `Você já usou ${n} deste mês do plano ${uso.plano}. O limite renova no dia 1º. Veja os planos em /planos.`, motivo: "mes", limiteAtingido: true }, { status: 429 });

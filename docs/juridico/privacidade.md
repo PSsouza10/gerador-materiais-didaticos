@@ -9,7 +9,7 @@
 4. Dados de estudantes: não são necessários para gerar material; a correção fica no navegador; a foto vai à IA (Gemini, OpenAI como reserva) e não é guardada
 5. Compartilhamento: Google, Vercel, Asaas, OpenAI, Gemini; transferência internacional (art. 33)
 6. Links de compartilhamento
-7. Cookies: só essenciais
+7. Cookies: só essenciais (sessão, segurança do login e identificador do navegador contra uso indevido do Grátis — guardado só como HMAC, junto do IP também em HMAC)
 8. Retenção
 9. Direitos (art. 18), resposta em 15 dias, ANPD
 10. Segurança

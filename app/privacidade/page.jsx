@@ -102,7 +102,7 @@ export default function PoliticaPrivacidade() {
 
       <H2>7. Cookies</H2>
       <p>
-        Usamos apenas cookies essenciais: o de sessão (mantém você conectado por até 30 dias) e os de segurança do login. Não
+        Usamos apenas cookies essenciais: o de sessão (mantém você conectado por até 30 dias), os de segurança do login e um identificador do navegador para evitar uso indevido do plano Grátis. Não
         usamos cookies de publicidade nem de rastreamento.
       </p>
 
