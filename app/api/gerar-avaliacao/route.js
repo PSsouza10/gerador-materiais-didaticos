@@ -9,6 +9,8 @@ import { habilidadesCandidatas, mensagemFalhaPlano } from "@/lib/planoAula";
 import { validarPedidoAvaliacao, montarPromptAvaliacao, normalizarAvaliacao, conferirAvaliacao, resumoParaAvaliacao, itensParaRefazer, montarPromptRefazer, montarPromptTrocar, aplicarRefeitos, retirarComProblema, finalizarAvaliacao, repararAvaliacao } from "@/lib/avaliacao";
 import { apostilaDaConta } from "@/lib/apostilaDaConta";
 import { questaoDoSistema } from "@/lib/questoesSistema";
+import { planoDiagnostico, resumirPlano, conferirCobertura, conferirRepeticoes } from "@/lib/diagnostico";
+import { tokenCompletar } from "@/lib/completar";
 import { conferirItem, montarPromptResolucaoCega, aplicarResolucaoCega, conferirTemaDaProva, montarPromptRevisaoItens, aplicarRevisaoItens, montarPromptRepor, candidatosDeReposicao, aceitarReposicao, figurasQueFaltam } from "@/lib/avaliacao";
 
 // Avaliação no padrão Prova Paulista / SARESP. Conta como UMA geração do plano do professor.
@@ -62,7 +64,14 @@ async function postRota(request, _contexto, requestId) {
   }
 
   const oficial = d.bncc ? resolverCodigo(BNCC, d.bncc) : null;
-  const candidatas = oficial || d.bncc ? [] : habilidadesCandidatas(bnccDados.habilidades, d, DISCIPLINA_PARA_COMPONENTE[d.disciplina] || [], cobreAno);
+  // Diagnóstico (tema amplo, sem habilidade): o sistema distribui uma habilidade diferente por questão
+  if (d.modo === "diagnostico" && !oficial && !fonte) {
+    const comps = DISCIPLINA_PARA_COMPONENTE[d.disciplina] || [];
+    const sigla = /m[eé]dio/i.test(d.nivel) ? "EM" : "EF";
+    const pool = bnccDados.habilidades.filter((h) => comps.includes(h.d) && h.e === sigla && (!d.ano || cobreAno(h, d.ano) === true));
+    d.plano = planoDiagnostico(pool, d, d.itens);
+  }
+  const candidatas = oficial || d.bncc || d.plano?.length ? [] : habilidadesCandidatas(bnccDados.habilidades, d, DISCIPLINA_PARA_COMPONENTE[d.disciplina] || [], cobreAno);
   const prompt = montarPromptAvaliacao(d, oficial ? `${oficial.c} — ${oficial.t} (texto oficial)` : "", base, candidatas);
   // Modelo por disciplina: Matemática pode usar um modelo de raciocínio (MODELO_MATEMATICA na Vercel);
   // o administrador escolhe outro na bateria para comparar.
@@ -130,7 +139,7 @@ async function postRota(request, _contexto, requestId) {
   // 2ª IA (Gemini), em paralelo: (1) resolve SEM ver o gabarito; (2) revisa com o gabarito se a questão
   // está no tema/habilidade, se o enunciado entrega a resposta e se cada explicação descreve a sua letra.
   // Qualquer problema → a questão é refeita (ou sai e é reposta).
-  const habilidadeTexto = oficial ? `${oficial.c} — ${oficial.t}` : d.bncc || "";
+  const habilidadeTexto = d.plano?.length ? "" : oficial ? `${oficial.c} — ${oficial.t}` : d.bncc || "";
   const revisarComGemini = async (av, indices, etapa) => {
     if (!temGemini() || !indices.length || Date.now() - t0 > 255_000) return av;
     const [rc, rv] = await Promise.all([
@@ -156,7 +165,9 @@ async function postRota(request, _contexto, requestId) {
     atual = await revisarComGemini(atual, indices, etapa);
   };
   const temaCodigo = oficial?.c || null;
-  atual = conferirTemaDaProva(atual, d, temaCodigo); // fora do tema/habilidade → refazer
+  // fora do tema/habilidade (ou, no diagnóstico, fora da distribuição/repetida) e situação repetida → refazer
+  const conferirProva = (av) => conferirRepeticoes(d.plano?.length ? conferirCobertura(av, d.plano) : conferirTemaDaProva(av, d, temaCodigo));
+  atual = conferirProva(atual);
   const semProblema = () => atual.itens.map((it, i) => (!it.problemas?.length && it.correta && !it.semGabarito && !it.doSistema ? i : -1)).filter((i) => i >= 0);
   reparar(); // primeiro o sistema conserta o que consegue sozinho (alternativas erradas típicas)
   await resolverAsCegas(semProblema(), "primeira");
@@ -176,7 +187,7 @@ async function postRota(request, _contexto, requestId) {
     }
     const ap = aplicarRefeitos(atual, rr.json, resolver, oficial);
     diagRodadas.push({ rodada: k + 1, pedidas: indices.map((i) => i + 1), devolvidas: (rr.json?.itensRefeitos || []).length, aceitas: ap.trocados, ms: Date.now() - t0 });
-    atual = conferirTemaDaProva(ap.avaliacao, d, temaCodigo);
+    atual = conferirProva(ap.avaliacao);
     ap.trocados.forEach((n) => refeitas.add(n));
   }
   reparar(); // e de novo depois da IA, antes de retirar alguma questão
@@ -211,7 +222,7 @@ async function postRota(request, _contexto, requestId) {
       continue;
     }
     const cands = candidatosDeReposicao(atual, rn.json, d, resolver, oficial);
-    let tmp = repararAvaliacao({ ...atual, itens: [...atual.itens, ...cands] }).avaliacao;
+    let tmp = conferirProva(repararAvaliacao({ ...atual, itens: [...atual.itens, ...cands] }).avaliacao);
     const base = atual.itens.length;
     const limpos = tmp.itens.map((it, i) => (i >= base && !it.problemas?.length && it.correta && !it.semGabarito ? i : -1)).filter((i) => i >= 0);
     tmp = await revisarComGemini(tmp, limpos, `reposição ${tentativa}`);
@@ -258,8 +269,10 @@ async function postRota(request, _contexto, requestId) {
   }
   avaliacao.geradaEm = new Date().toISOString();
   // o que foi pedido (para "trocar esta questão" gerar outra no mesmo tema, habilidade e cota de figuras)
-  avaliacao.pedido = { disciplina: d.disciplina, nivel: d.nivel, ano: d.ano, bncc: oficial?.c || d.bncc || "", tema: d.temaDoMaterial ? avaliacao.identificacao?.tema || d.tema : d.tema, itens: d.itens, figuras: d.figuras ?? 40 };
-  return NextResponse.json({ avaliacao, avisos, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { modelo, retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
+  avaliacao.pedido = { disciplina: d.disciplina, nivel: d.nivel, ano: d.ano, bncc: oficial?.c || d.bncc || "", tema: d.temaDoMaterial ? avaliacao.identificacao?.tema || d.tema : d.tema, itens: d.itens, figuras: d.figuras ?? 40, ...(d.plano?.length ? { modo: "diagnostico", plano: resumirPlano(d.plano) } : {}) };
+  // faltou questão por tempo: a tela completa uma a uma (/api/completar-avaliacao), sem nova geração
+  const completar = avaliacao.itens.length < d.itens ? { faltam: d.itens - avaliacao.itens.length, token: tokenCompletar(usuario.email, avaliacao.geradaEm) } : null;
+  return NextResponse.json({ avaliacao, avisos, completar, uso: { usados: uso.usados, limite: uso.limite, restantes: uso.restantes }, ...(uso.admin ? { diagnostico: { modelo, retiradas: ret.retiradas, rodadas: diagRodadas } } : {}) });
 }
 
 export const POST = comRequestId("/api/gerar-avaliacao", postRota);

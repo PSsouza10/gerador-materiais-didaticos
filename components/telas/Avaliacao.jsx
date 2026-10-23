@@ -35,7 +35,9 @@ import {
   minimoComFigura,
   adicionarAvaliacaoNaLista,
   contarLetras,
+  finalizarAvaliacao,
 } from "@/lib/avaliacao";
+import { completarAvaliacao } from "@/lib/completarCliente";
 
 // "Avaliação": prova de múltipla escolha no padrão Prova Paulista / SARESP (conta como 1 geração).
 // Fica salva NESTE navegador, como os planos de aula; o professor baixa o PDF do aluno e o do professor.
@@ -99,6 +101,7 @@ export default function Avaliacao({
     itens: 8,
     figuras: 40,
     observacoes: "",
+    modo: "",
   });
   // veio de uma página pública (/bncc, /prova-paulista): já abre com a habilidade e o ano
   useEffect(() => {
@@ -108,6 +111,7 @@ export default function Avaliacao({
   const [avisos, setAvisos] = useState([]);
   const [erro, setErro] = useState("");
   const [gerando, setGerando] = useState(false);
+  const [completando, setCompletando] = useState(null); // { atual, meta } enquanto completa as que faltaram
   const [versao, setVersao] = useState("aluno");
   const [baixando, setBaixando] = useState(null);
   const [salvas, setSalvas] = useState([]);
@@ -190,8 +194,23 @@ export default function Avaliacao({
               ? "A IA demorou demais para responder. Tente de novo."
               : `Não foi possível gerar a avaliação (erro ${r.status}).`),
         );
-      setAvaliacao(j.avaliacao);
-      setAvisos(j.avisos || []);
+      let av = j.avaliacao;
+      let avisosAv = j.avisos || [];
+      // faltou questão por tempo: completa uma a uma, sem gastar outra geração
+      if (j.completar?.faltam) {
+        setAvaliacao(av);
+        setAvisos(avisosAv);
+        const c = await completarAvaliacao(av, j.completar, { aoProgresso: setCompletando });
+        setCompletando(null);
+        if (c.avaliacao.itens.length > av.itens.length) {
+          const fim = finalizarAvaliacao(c.avaliacao);
+          av = { ...fim.avaliacao, itens: fim.avaliacao.itens.map(({ problemas, ...it }) => it) };
+          avisosAv = avisosAv.filter((a) => a.onde !== "Questões retiradas");
+          if (!c.completa) avisosAv.push({ onde: "Questões retiradas", motivo: `Não foi possível completar ${c.avaliacao.pedido?.itens} questões conferidas; a prova ficou com ${av.itens.length}. Gere de novo se precisar de mais.`, tipo: "conferir", trecho: "" });
+        }
+      }
+      setAvaliacao(av);
+      setAvisos(avisosAv);
       setVersao("aluno");
       const origem =
         fonte === "apostila"
@@ -201,7 +220,7 @@ export default function Avaliacao({
               titulo: materiais.find((m) => m.id === apostila)?.titulo || "",
             }
           : null;
-      const nova = adicionarAvaliacaoNaLista(lerSalvas(), j.avaliacao, origem);
+      const nova = adicionarAvaliacaoNaLista(lerSalvas(), av, origem);
       gravarSalvas(nova);
       setSalvas(nova);
       setAvId(nova[0]?.id || null);
@@ -482,6 +501,19 @@ export default function Avaliacao({
                 ))}
               </select>
             </Campo>
+            {!f.bncc && fonte === "tema" && (
+              <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 text-[13px] text-slate-700 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={f.modo === "diagnostico"}
+                  onChange={(e) => setF((x) => ({ ...x, modo: e.target.checked ? "diagnostico" : "" }))}
+                />
+                <span>
+                  <b>Avaliação diagnóstica</b>: uma habilidade diferente por questão, espalhada pelas unidades temáticas do ano (ex.: Números, Álgebra, Geometria, Grandezas e medidas, Estatística). Se o tema citar unidades (ex.: &ldquo;geometria e frações&rdquo;), só elas entram.
+                </span>
+              </label>
+            )}
             <div className="sm:col-span-2">
               <Campo rotulo="Orientações" opcional>
                 <textarea
@@ -543,7 +575,9 @@ export default function Avaliacao({
             ) : (
               <ClipboardCheck className="h-5 w-5" />
             )}
-            {gerando
+            {completando
+              ? `Completando: questão ${completando.atual} de ${completando.meta}…`
+              : gerando
               ? "Gerando e conferindo a avaliação…"
               : avaliacao
                 ? "Gerar outra avaliação"

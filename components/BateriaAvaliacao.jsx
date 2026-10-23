@@ -2,6 +2,7 @@
 import React, { useRef, useState } from "react";
 import { CASOS_AVALIACAO, auditarAvaliacao, resumirBateriaAvaliacao } from "@/lib/bateriaAvaliacao";
 import { rotuloAno } from "@/lib/bncc";
+import { completarAvaliacao } from "@/lib/completarCliente";
 
 // Bateria da Avaliação: gera as provas dos 7 casos, uma por vez, e confere cada uma.
 // Publicar só quando TODAS passam: zero questão sem gabarito e zero explicação com conta errada.
@@ -21,6 +22,8 @@ export default function BateriaAvaliacao({ admin }) {
       const r = await fetch("/api/gerar-avaliacao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(modelo ? { ...c, modelo } : c) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      // como na tela do professor: completa as que faltaram por tempo
+      if (j.completar?.faltam) j.avaliacao = (await completarAvaliacao(j.avaliacao, j.completar)).avaliacao;
       const pronto = { estado: "pronto", avaliacao: j.avaliacao, avisosServidor: j.avisos || [], diagnostico: j.diagnostico || null, auditoria: auditarAvaliacao(j.avaliacao, c.itens), segundos: Math.round((Date.now() - inicio) / 1000) };
       setRes((x) => ({ ...x, [i]: pronto }));
       return pronto;
@@ -55,7 +58,7 @@ export default function BateriaAvaliacao({ admin }) {
     <section className="mx-auto mt-10 max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-lg font-extrabold text-slate-800">Bateria da Avaliação (Prova Paulista)</h2>
       <p className="mt-1 text-sm text-slate-600">
-        {CASOS_AVALIACAO.length} provas de 5 questões (5 de Matemática com figura e 2 de outras disciplinas). Cada uma usa 1 geração. Critério para publicar: nenhuma questão sem gabarito e nenhuma explicação com conta errada.
+        {CASOS_AVALIACAO.length} provas: 7 de 5 questões (5 de Matemática com figura e 2 de outras disciplinas) e 1 diagnóstica de 10 questões do 7º ano (uma habilidade por questão). Cada uma usa 1 geração. Critério para publicar: nenhuma questão sem gabarito e nenhuma explicação com conta errada.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-slate-700">
@@ -170,6 +173,16 @@ export default function BateriaAvaliacao({ admin }) {
               {aberto === i && r.auditoria && (
                 <tr>
                   <td colSpan={8} className="bg-slate-50 px-3 py-2 text-[12.5px]">
+                    {(r.auditoria.diagnostico || r.auditoria.situacoesParecidas > 0) && (
+                      <p className="mb-2">
+                        {r.auditoria.diagnostico && (
+                          <>
+                            Habilidades repetidas: <b>{r.auditoria.habilidadesRepetidas}</b> · unidades cobertas: <b>{r.auditoria.unidades.join(", ") || "—"}</b> ·{" "}
+                          </>
+                        )}
+                        Situações parecidas: <b>{r.auditoria.situacoesParecidas}</b>
+                      </p>
+                    )}
                     {[...r.auditoria.contasErradas, ...r.auditoria.outros].length ? (
                       <ul className="list-disc pl-5">
                         {[...r.auditoria.contasErradas, ...r.auditoria.outros].map((a, k) => (
@@ -184,6 +197,7 @@ export default function BateriaAvaliacao({ admin }) {
                     <ol className="mt-2 list-decimal pl-5 text-slate-700">
                       {r.avaliacao.itens.map((it, k) => (
                         <li key={k}>
+                          {(it.habilidades?.[0] || it.habilidade)?.codigo ? `[${(it.habilidades?.[0] || it.habilidade).codigo}] ` : ""}
                           {it.comando} → <b>{it.correta || "SEM GABARITO"}</b> {it.correta ? `(${it.alternativas["ABCD".indexOf(it.correta)]})` : ""}
                           {it.figura ? ` · figura: ${it.figura.tipo}` : ""}
                         </li>

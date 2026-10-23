@@ -43,6 +43,19 @@
 8. **Reposição:** se alguma foi retirada, pede novas até completar o número pedido, respeitando a cota de figuras.
 9. O professor ainda pode **trocar** (IA) ou **editar à mão** cada questão. A edição passa por `conferirEdicao`.
 
+### Modo diagnóstico (desde 23/10/2026, após o primeiro uso real do caderno)
+Para tema amplo e sem habilidade escolhida, há a caixa **Avaliação diagnóstica** (`lib/diagnostico.js`):
+- O **sistema monta a distribuição antes**: uma habilidade diferente por questão, em rodízio pelas unidades temáticas (Números, Álgebra, Geometria, Grandezas e medidas, Estatística). Se o tema cita unidades (ex.: "geometria e frações"), só elas entram. A dificuldade vem em ordem crescente. A lista vai no pedido à IA como **DISTRIBUIÇÃO OBRIGATÓRIA**.
+- **Conferência de cobertura:** questão com habilidade fora da lista, ou já cobrada, é refeita com uma das que faltam. A reposição pede exatamente as que faltam.
+- A distribuição fica guardada em `avaliacao.pedido.plano` (código, unidade, dificuldade).
+
+### Conferências novas para toda prova (23/10/2026)
+- **Pergunta repetida no texto-base:** o sistema apaga a frase repetida, sem precisar refazer (`tirarPerguntaRepetida`, em `normalizarItem`).
+- **Mesma situação em duas questões** (Jaccard das palavras de conteúdo ≥ 0,5; palavras como "figura" e "tabela" não contam): a segunda é refeita (`conferirRepeticoes`).
+- **2ª IA revisora** aponta também: contexto sem sentido, figura ambígua e questão abaixo do nível do ano.
+- **Completar:** se o tempo do servidor (5 min) acaba antes de fechar o número pedido, a resposta traz um token, e a tela pede as que faltam uma a uma (`/api/completar-avaliacao`, até 2 min cada, sem gastar geração, token válido por 30 min).
+- A bateria `/qualidade` ganhou um 8º caso: diagnóstico de 10 questões do 7º ano. Ele só é aprovado com 10 questões, nenhuma habilidade repetida e nenhuma situação parecida.
+
 ## Apostila: conferências depois da IA
 | Conferência | Arquivo | O que faz |
 |---|---|---|

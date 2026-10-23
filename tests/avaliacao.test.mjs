@@ -283,10 +283,11 @@ test("figura sem nome ganha nome padrão; 'Figura 1 –' escrito pela IA é tira
   assert.equal(b.figura.legenda, "Chuva em março");
 });
 
-test("bateria da Avaliação: 7 casos e critério de publicação", async () => {
+test("bateria da Avaliação: 8 casos (1 diagnóstico) e critério de publicação", async () => {
   const { CASOS_AVALIACAO, auditarAvaliacao, resumirBateriaAvaliacao } = await import("../lib/bateriaAvaliacao.js");
-  assert.equal(CASOS_AVALIACAO.length, 7);
-  assert.equal(CASOS_AVALIACAO.filter((c) => c.disciplina === "Matemática").length, 5);
+  assert.equal(CASOS_AVALIACAO.length, 8);
+  assert.equal(CASOS_AVALIACAO.filter((c) => c.disciplina === "Matemática").length, 6);
+  assert.equal(CASOS_AVALIACAO.filter((c) => c.modo === "diagnostico" && c.itens === 10).length, 1);
   const d = validarPedidoAvaliacao({ ...base, tema: "Área", bncc: "", itens: 5 }).dados;
   const ruim = conferirAvaliacao(normalizarAvaliacao(AVALIACAO_AREA_SIMULADA, d, null, (c) => ({ c }))).avaliacao;
   const a = auditarAvaliacao(ruim);
