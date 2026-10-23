@@ -7,6 +7,7 @@ import { consumirImagem, devolverImagem, temPremium } from "@/lib/uso";
 import { normalizarEstilo } from "@/lib/opcoes";
 import { limparTexto, LIMITES } from "@/lib/validacao";
 import { promptImagemAcessibilidade } from "@/lib/apoiosAcessibilidade";
+import { anotarUso, PRECO_IMAGEM } from "@/lib/custoIA";
 
 export const runtime = "nodejs";
 // Task 1.1 — geração de imagem costuma levar 20–40 s, às vezes mais. Desde 15/10/2026 a
@@ -155,6 +156,9 @@ async function processar(request, ctx) {
         { status: 502 }
       );
     }
+
+    // capa História (1536×1024) custa cerca de 1,5× a quadrada
+    await anotarUso({ provedor: "openai", modelo: "gpt-image-2", imagens: 1, custo: PRECO_IMAGEM[QUALIDADE] * (historia ? 1.5 : 1) });
 
     const imagemBuffer = Buffer.from(b64, "base64");
 
