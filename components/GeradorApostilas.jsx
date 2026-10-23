@@ -8,7 +8,6 @@ import {
   Sparkles,
   BookMarked,
   Settings,
-  GraduationCap,
   User,
   BookOpen,
   Layers,
@@ -641,10 +640,11 @@ export default function GeradorApostilas() {
         Pular para o conteúdo
       </a>
       {/* ===== MENU LATERAL (desktop) ===== */}
-      <aside className="nao-imprimir hidden md:flex w-64 flex-none flex-col bg-[#EEEDF8] border-r border-slate-200 shadow-sm">
+      <aside className="nao-imprimir hidden md:flex md:sticky md:top-0 md:h-screen md:overflow-y-auto w-64 flex-none flex-col bg-[#EEEDF8] border-r border-slate-200 shadow-sm">
         <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-300/70">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-400 shadow-lg shadow-indigo-200">
-            <GraduationCap className="h-6 w-6 text-white" strokeWidth={2.2} />
+          <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-[#FAF6ED] shadow-md ring-1 ring-slate-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/marca/edugera-icone.png" alt="" className="h-8 w-8" />
           </div>
           <div className="leading-tight">
             <p className="text-base font-extrabold text-slate-800">EduGera</p>
@@ -682,6 +682,19 @@ export default function GeradorApostilas() {
             Busque a habilidade da BNCC pelo código ou por palavra-chave: a descrição oficial entra no material.
           </p>
         </div>
+        <a
+          href="https://instagram.com/edugera.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-pink-200 bg-gradient-to-br from-amber-50 via-rose-50 to-pink-50 p-3 hover:border-pink-300"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/marca/instagram-qr.png" alt="QR code do Instagram @edugera.app" className="h-16 w-16 flex-none rounded-lg" />
+          <span className="leading-tight">
+            <span className="block text-xs font-bold text-pink-600">Siga no Instagram</span>
+            <span className="block text-[11px] font-semibold text-slate-600">@edugera.app</span>
+          </span>
+        </a>
         <p className="px-5 pb-4 text-[11px] text-slate-500">
           <a href="/privacidade" className="hover:text-indigo-600 hover:underline">Privacidade</a> ·{" "}
           <a href="/termos" className="hover:text-indigo-600 hover:underline">Termos de Uso</a>
@@ -692,8 +705,9 @@ export default function GeradorApostilas() {
       <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 pb-20 outline-none md:pb-0">
         {/* Barra superior no celular */}
         <div className="nao-imprimir flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3 md:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-400">
-            <GraduationCap className="h-4 w-4 text-white" />
+          <div className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-[#FAF6ED] ring-1 ring-slate-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/marca/edugera-icone.png" alt="" className="h-6 w-6" />
           </div>
           <span className="text-sm font-extrabold text-slate-800">EduGera</span>
           <div className="ml-auto">
@@ -786,7 +800,12 @@ export default function GeradorApostilas() {
         )}
         <div className={`${active === "Gerar Material" ? "grid" : "hidden"} grid-cols-1 xl:grid-cols-2 gap-6 px-4 sm:px-6 md:px-8 pb-10`}>
           {/* ===== FORMULÁRIO ===== */}
-          <section className="nao-imprimir self-start rounded-3xl bg-white p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
+          <section className="nao-imprimir relative isolate self-start overflow-hidden rounded-3xl bg-white [&_input]:bg-white/60 [&_select]:bg-white/60 [&_textarea]:bg-white/60 p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
+            {/* Logo completa como marca d'água de fundo */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10 bg-[url('/marca/edugera-logo.png')] bg-[length:min(90%,520px)] bg-[center_top_5rem] bg-no-repeat opacity-[0.16]"
+            />
             <div className="mb-6 flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-violet-400" />
               <h2 className="text-lg font-bold text-slate-800">Configuração da criação</h2>
