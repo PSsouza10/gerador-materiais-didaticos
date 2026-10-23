@@ -751,7 +751,7 @@ export default function GeradorApostilas() {
         )}
         {active === "Corrigir Prova" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
-            <CorrecaoProva professorPadrao={form.professor || ""} aoGerar={atualizarUso} />
+            <CorrecaoProva professorPadrao={form.professor || ""} aoGerar={atualizarUso} pro={conta.uso ? !!conta.uso.correcaoPro : true} />
           </div>
         )}
         {active === "Configurações" && (
