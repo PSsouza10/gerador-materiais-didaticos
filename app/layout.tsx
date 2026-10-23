@@ -13,6 +13,7 @@ export const metadata = {
   description: DESCRICAO,
   applicationName: "EduGera",
   robots: { index: true, follow: true },
+  verification: { google: "6SVO3CKpg0QArMjEuQz58MlGSoUOBy6iJmbqWs8J8Xs" },
   keywords: ["apostilas BNCC", "atividades BNCC", "gerador de atividades", "fichas de estudo", "exercícios com gabarito", "BNCC por ano"],
   openGraph: {
     type: "website",
