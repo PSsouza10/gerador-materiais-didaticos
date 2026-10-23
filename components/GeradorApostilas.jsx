@@ -36,6 +36,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   Grid3x3,
+  FileCheck2,
 } from "lucide-react";
 import FolhaA4 from "@/components/FolhaA4";
 import ListaExerciciosUmaPagina from "@/components/ListaExerciciosUmaPagina";
@@ -49,6 +50,7 @@ import Configuracoes from "@/components/telas/Configuracoes";
 import PlanoAula from "@/components/telas/PlanoAula";
 import Avaliacao from "@/components/telas/Avaliacao";
 import Cruzadinha from "@/components/telas/Cruzadinha";
+import CorrecaoProva from "@/components/telas/CorrecaoProva";
 import ZerarUsoTeste from "@/components/planos/ZerarUsoTeste";
 import { NIVEIS_DIFICULDADE } from "@/lib/niveis";
 import { lerStreamMaterial } from "@/lib/sse";
@@ -167,12 +169,13 @@ const NAV = [
   { name: "Plano de Aula", curto: "Plano", icon: ClipboardList, descricao: "Plano de aula na estrutura do Currículo Paulista." },
   { name: "Avaliação", curto: "Prova", icon: ClipboardCheck, descricao: "Prova de múltipla escolha no padrão Prova Paulista / SARESP." },
   { name: "Cruzadinha", curto: "Cruzada", icon: Grid3x3, descricao: "Palavras cruzadas do tema ou da habilidade, com gabarito." },
+  { name: "Corrigir Prova", curto: "Corrigir", icon: FileCheck2, descricao: "Envie as fotos da prova respondida pelo aluno e a IA corrige." },
   { name: "Minhas Apostilas", curto: "Apostilas", icon: BookMarked, descricao: "Materiais gerados neste navegador." },
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
 
 // Links das páginas públicas: /criar?aba=prova|plano|apostila|cruzadinha&bncc=EF07MA32&disciplina=Matemática&ano=7
-const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material", cruzadinha: "Cruzadinha" };
+const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material", cruzadinha: "Cruzadinha", corrigir: "Corrigir Prova" };
 function pedidoDoEndereco() {
   if (typeof window === "undefined") return null;
   const q = new URLSearchParams(window.location.search);
@@ -746,6 +749,11 @@ export default function GeradorApostilas() {
             <Cruzadinha inicial={inicial} professorPadrao={form.professor || ""} escolaPadrao={form.escola || config.escola || ""} aoGerar={atualizarUso} />
           </div>
         )}
+        {active === "Corrigir Prova" && (
+          <div className="px-4 sm:px-6 md:px-8 pb-10">
+            <CorrecaoProva professorPadrao={form.professor || ""} aoGerar={atualizarUso} />
+          </div>
+        )}
         {active === "Configurações" && (
           <div className="px-4 sm:px-6 md:px-8 pb-10">
             <Configuracoes
@@ -1255,7 +1263,7 @@ export default function GeradorApostilas() {
       {/* ===== NAVEGAÇÃO INFERIOR (celular) ===== */}
       <nav
         aria-label="Seções"
-        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-slate-200 bg-white/95 md:hidden"
+        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-slate-200 bg-white/95 md:hidden"
       >
         {NAV.map(({ name, curto, icon: Icon }) => {
           const on = active === name;
@@ -1267,7 +1275,7 @@ export default function GeradorApostilas() {
                 window.scrollTo({ top: 0 });
               }}
               aria-current={on ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold ${on ? "text-indigo-600" : "text-slate-600"}`}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold ${on ? "text-indigo-600" : "text-slate-600"}`}
             >
               <Icon className="h-5 w-5" />
               {curto}

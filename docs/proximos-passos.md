@@ -12,7 +12,7 @@ Regra do Paulo: **um item por vez, e só avança com o OK dele.** Ele quer respo
 ## Fila
 1. **Item 2 — sugestão do HTPC.** Respostas do Paulo (23/10):
    - Cruzadinha: sim, tema/habilidade → grade do aluno + gabarito. **Feita e no teste (`fase-0`), esperando o OK do Paulo para ir ao ar.** Aba "Cruzadinha" em `/criar` (`?aba=cruzadinha`); API `/api/gerar-cruzadinha`; lógica em `lib/cruzadinha.js` (a IA só escreve palavras e dicas; a grade é montada no código). Limite próprio: Grátis 1 cruzadinha/mês e 1 correção de prova/mês (pedido do Paulo, 23/10); Pro 30 de cada (provisório). Não gasta geração de apostila. "Nova disposição" não gasta nada.
-   - Correção de provas: o professor envia a prova feita pelo aluno e a IA corrige. **Próxima parte deste item.**
+   - Correção de provas: o professor envia a prova feita pelo aluno e a IA corrige. **Feita e no teste (`fase-0`), esperando o OK.** Aba "Corrigir Prova" (`?aba=corrigir`); API `/api/corrigir-prova`; lógica em `lib/correcaoProva.js`. Fotos (até 6) viram um PDF no navegador; gabarito opcional; nota recalculada no código; professor ajusta situação/pontos. Nome do aluno fica só no navegador.
 2. **Item 3:** incluir a disciplina **Espanhol** (hoje não existe).
 3. **Item 4 — Instagram:** "comente EDUGERA" → direct com o link de campanha (ManyChat, a partir de US$ 15/mês; conferir como ele verifica se a pessoa segue). Entregar o roteiro do Reel, a legenda e as mensagens do direct.
 
