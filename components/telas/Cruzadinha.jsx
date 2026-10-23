@@ -70,7 +70,7 @@ const Dicas = ({ titulo, xs, comResposta }) =>
     </div>
   ) : null;
 
-// "Cruzadinha": palavras cruzadas a partir de tema/habilidade (1 geração).
+// "Cruzadinha": palavras cruzadas a partir de tema/habilidade (limite mensal próprio).
 // Folha do aluno + gabarito; "Nova disposição" remonta a grade sem IA.
 export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", aoGerar, inicial = null }) {
   const [f, setF] = useState({ professor: professorPadrao, escola: escolaPadrao, turma: "", disciplina: "Matemática", nivel: "Ensino Fundamental", ano: "", bncc: "", habilidade: "", tema: "", quantidade: 10, observacoes: "" });
@@ -153,7 +153,7 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
         <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-slate-800">
           <Grid3x3 className="h-5 w-5 text-violet-500" /> Cruzadinha
         </h2>
-        <p className="mb-5 text-sm text-slate-600">Palavras cruzadas do tema ou da habilidade: folha do aluno com dicas e gabarito do professor. Usa 1 geração do seu plano.</p>
+        <p className="mb-5 text-sm text-slate-600">Palavras cruzadas do tema ou da habilidade: folha do aluno com dicas e gabarito do professor. Não gasta geração de apostila: o Grátis tem 1 cruzadinha por mês.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo rotulo="Professor(a)" opcional>
             <input className="ipt" value={f.professor} onChange={set("professor")} maxLength={LIMITES_CRUZADINHA.professor} />

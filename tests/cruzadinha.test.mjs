@@ -91,3 +91,16 @@ test("impressão: folha do aluno sem letras e gabarito com as respostas", () => 
   assert.match(html, /EMEF &lt;Teste&gt;/);
   for (const p of grade.horizontais) assert.ok(aluno.includes(p.dica.replace(/"/g, "&quot;")));
 });
+
+test("limite próprio: Grátis 1 cruzadinha e 1 correção de prova por mês; não mexe nas gerações", async () => {
+  const { PLANOS, PLANO_ADMIN, limitesTransicao, resumoDoUso, contagensDoArquivo } = await import("../lib/planos.js");
+  assert.deepEqual([PLANOS.gratis.limites.cruzadinhasMes, PLANOS.gratis.limites.correcoesProvaMes], [1, 1]);
+  assert.deepEqual([limitesTransicao({}).cruzadinhasMes, limitesTransicao({}).correcoesProvaMes], [1, 1]);
+  assert.equal(PLANO_ADMIN.limites.cruzadinhasMes, null);
+  const agora = new Date();
+  const c = contagensDoArquivo({ geracoes: [], cruzadinhas: [agora.toISOString()] }, agora);
+  const r = resumoDoUso(c, { plano: PLANOS.gratis }, agora);
+  assert.deepEqual(r.cruzadinhas, { usados: 1, limite: 1 });
+  assert.deepEqual(r.correcoesProva, { usados: 0, limite: 1 });
+  assert.equal(r.usados, 0, "cruzadinha não conta como geração");
+});
