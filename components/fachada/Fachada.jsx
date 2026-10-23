@@ -33,6 +33,7 @@ import {
 import Cabecalho from "./Cabecalho";
 import Vitrine from "./Vitrine";
 import Marca from "./Marca";
+import DemoAnimada from "./DemoAnimada";
 import "./fachada.css";
 import { SUPORTE_EMAIL_PADRAO, suporteWhatsapp } from "@/lib/planos";
 
@@ -185,6 +186,24 @@ const DORES = [
   { icone: LayoutTemplate, titulo: "Diagramar para imprimir", texto: "Ajustar texto, figura e espaço de resposta até caber direito na folha A4." },
   { icone: ClipboardCheck, titulo: "Revisar cada resposta", texto: "Refazer as contas do gabarito e conferir se nenhuma alternativa ficou trocada." },
 ];
+
+function FuncionandoAoVivo() {
+  return (
+    <section aria-labelledby="titulo-ao-vivo" className="bg-white/60 py-16 sm:py-24">
+      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
+        <Titulo2 eyebrow="Na prática" id="titulo-ao-vivo">
+          Do tema à apostila, sem começar do zero
+        </Titulo2>
+        <p className="mt-5 max-w-[640px] text-lg leading-relaxed text-tinta">
+          Você informa o ano, o componente e o tema. O EduGera confere a habilidade da BNCC, monta o material e entrega o PDF do aluno e o do professor.
+        </p>
+        <div className="mt-10 sm:mt-12">
+          <DemoAnimada />
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function Problema() {
   return (
@@ -513,6 +532,7 @@ export default function Fachada() {
       <Cabecalho />
       <main id="conteudo">
         <Hero />
+        <FuncionandoAoVivo />
         <Problema />
         <Exemplos />
         <Beneficios />
