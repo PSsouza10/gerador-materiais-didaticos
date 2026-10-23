@@ -166,7 +166,7 @@ async function postRota(request, _contexto, requestId) {
   };
   const temaCodigo = oficial?.c || null;
   // fora do tema/habilidade (ou, no diagnóstico, fora da distribuição/repetida) e situação repetida → refazer
-  const conferirProva = (av) => conferirRepeticoes(d.plano?.length ? conferirCobertura(av, d.plano) : conferirTemaDaProva(av, d, temaCodigo));
+  const conferirProva = (av) => conferirRepeticoes(d.plano?.length ? conferirCobertura(av, d.plano) : conferirTemaDaProva(av, d, temaCodigo), { diagnostico: !!d.plano?.length });
   atual = conferirProva(atual);
   const semProblema = () => atual.itens.map((it, i) => (!it.problemas?.length && it.correta && !it.semGabarito && !it.doSistema ? i : -1)).filter((i) => i >= 0);
   reparar(); // primeiro o sistema conserta o que consegue sozinho (alternativas erradas típicas)

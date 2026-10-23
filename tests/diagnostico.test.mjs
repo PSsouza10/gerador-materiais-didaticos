@@ -82,7 +82,7 @@ test("duas receitas proporcionais parecidas: a segunda é refeita", () => {
   };
   const r = D.conferirRepeticoes(av);
   assert.equal(r.itens[1].problemas.length, 0);
-  assert.match(r.itens[2].problemas[0], /repete a situação ou o formato da questão 1/);
+  assert.match(r.itens[2].problemas[0], /(repete a situação ou o formato|mesma pergunta) da questão 1/);
 });
 
 test("texto-base que repete a pergunta: o sistema tira a frase repetida", () => {
@@ -130,4 +130,32 @@ test("completar no navegador: pede uma a uma até fechar o número pedido", asyn
   const r2 = await completarAvaliacao(av, { token: "t", faltam: 2 });
   assert.equal(r2.completa, false);
   assert.equal(r2.faltam, 2);
+});
+
+test("mesma pergunta em questões de habilidades diferentes (bateria de 23/10): a repetida é refeita", () => {
+  const graf = (cod, tb) => ({ ...item(cod, tb, "Qual é a diferença entre o maior e o menor valor mostrados no gráfico?"), figura: { tipo: "linhas" } });
+  const av = {
+    itens: [
+      graf("EF07MA32", "O gráfico mostra a área plantada em cada mês na horta da escola."),
+      graf("EF07MA05", "Uma sorveteria registrou as vendas de picolés durante a semana."),
+      item("EF07MA24", "Lia quer construir um triângulo com palitos de 3 cm, 4 cm e 9 cm.", "É possível construir esse triângulo?"),
+      graf("EF07MA29", "O gráfico mostra quantos alunos faltaram em cada dia da semana de provas."),
+    ],
+  };
+  const r = D.conferirRepeticoes(av, { diagnostico: true });
+  assert.equal(r.itens[0].problemas.length, 0);
+  assert.match(r.itens[1].problemas[0], /mesma pergunta da questão 1/);
+  assert.equal(r.itens[2].problemas.length, 0);
+  assert.match(r.itens[3].problemas[0], /mesma pergunta da questão 1/);
+  // fora do diagnóstico: mesma pergunta só conta com o mesmo tipo de figura
+  const area = { itens: [{ ...item("EF07MA32", "Terreno retangular da escola.", "Qual é a área do terreno?"), figura: { tipo: "poligono" } }, { ...item("EF07MA32", "Terreno em forma de L.", "Qual é a área do terreno?"), figura: { tipo: "contorno" } }] };
+  assert.equal(D.conferirRepeticoes(area).itens[1].problemas.length, 0);
+});
+
+test("revisor do diagnóstico recebe o texto da habilidade de cada questão", async () => {
+  const { montarPromptRevisaoItens } = await import("../lib/avaliacao.js");
+  const plano = [{ codigo: "EF07MA32", texto: "Resolver problemas de cálculo de medida de área de figuras planas" }];
+  const p = montarPromptRevisaoItens({ itens: [item("EF07MA32", "t", "c")] }, [0], { disciplina: "Matemática", ano: "7", tema: "Diag", plano });
+  assert.match(p, /EF07MA32 — Resolver problemas de cálculo de medida de área/);
+  assert.match(p, /avalia DE FATO a habilidade indicada/);
 });
