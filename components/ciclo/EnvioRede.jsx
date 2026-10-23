@@ -43,7 +43,7 @@ export default function EnvioRede({ avaliacao, caderno, alunos }) {
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-[13px] text-violet-950">
+    <div className="mt-4 rounded-2xl border border-roxo/25 bg-roxo-claro p-4 text-[13px] text-marinho">
       <p className="font-bold">Enviar o resultado para a coordenação · {caderno.titulo}</p>
       <p className="mt-1 text-[12px]">
         Vai só a contagem de respostas de cada questão ({alunos.length} aluno(s) lançado(s)). <b>Nenhum nome, número ou resposta individual sai deste aparelho.</b>{" "}
@@ -69,7 +69,7 @@ export default function EnvioRede({ avaliacao, caderno, alunos }) {
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Enviado: {e.escola} · {e.turma} · {e.alunos} aluno(s) · {new Date(e.atualizadoEm).toLocaleString("pt-BR")}
             </li>
           ))}
-          <li className="text-violet-800">Lançou mais alunos? Envie de novo a mesma turma: o envio anterior é substituído.</li>
+          <li className="text-roxo-escuro">Lançou mais alunos? Envie de novo a mesma turma: o envio anterior é substituído.</li>
         </ul>
       )}
     </div>

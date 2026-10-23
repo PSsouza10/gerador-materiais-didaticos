@@ -53,7 +53,7 @@ export default function AbrirCaderno({ codigo }) {
     return (
       <div>
         <p className="text-slate-700">Entre com a sua conta Google para abrir o caderno {codigo}.</p>
-        <button type="button" onClick={() => signIn("google", { callbackUrl: `/caderno/${codigo}` })} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700">
+        <button type="button" onClick={() => signIn("google", { callbackUrl: `/caderno/${codigo}` })} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-roxo px-4 py-2.5 font-semibold text-white hover:bg-roxo-escuro">
           <LogIn className="h-4 w-4" /> Entrar com Google
         </button>
       </div>
@@ -64,7 +64,7 @@ export default function AbrirCaderno({ codigo }) {
   const id = c.avaliacao?.identificacao || {};
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-violet-700">{c.tipo === "reavaliacao" ? "Mini-reavaliação da rede" : "Caderno diagnóstico da rede"}</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-roxo-escuro">{c.tipo === "reavaliacao" ? "Mini-reavaliação da rede" : "Caderno diagnóstico da rede"}</p>
       <h1 className="mt-1 text-2xl font-extrabold text-slate-900">{c.titulo}</h1>
       <p className="mt-1 text-slate-600">{[id.componente, id.etapa, `${c.avaliacao?.itens?.length || 0} questões`].filter(Boolean).join(" · ")}</p>
       {!c.ativo && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Este caderno foi encerrado pela coordenação: não recebe mais resultados.</p>}
@@ -78,11 +78,11 @@ export default function AbrirCaderno({ codigo }) {
       {estado.envios?.length > 0 && <p className="mt-2 text-sm text-emerald-700">Você já enviou {estado.envios.length} turma(s) deste caderno.</p>}
       {estado.error && <p className="mt-3 font-semibold text-rose-700">{estado.error}</p>}
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700">
+        <button type="button" onClick={adicionar} className="inline-flex items-center gap-2 rounded-xl bg-roxo px-4 py-2.5 font-semibold text-white hover:bg-roxo-escuro">
           <FolderPlus className="h-4 w-4" /> Adicionar às minhas avaliações
         </button>
         {estado.gerir && (
-          <a href={`/caderno/${c.codigo}/painel`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-semibold text-slate-800 hover:border-indigo-300">
+          <a href={`/caderno/${c.codigo}/painel`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-semibold text-slate-800 hover:border-roxo/40">
             <LayoutDashboard className="h-4 w-4" /> Painel da coordenação
           </a>
         )}

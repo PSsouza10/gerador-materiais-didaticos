@@ -177,7 +177,7 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <section className="self-start rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-slate-800">
-          <Grid3x3 className="h-5 w-5 text-violet-500" /> Cruzadinha
+          <Grid3x3 className="h-5 w-5 text-roxo" /> Cruzadinha
         </h2>
         <p className="mb-5 text-sm text-slate-600">Palavras cruzadas do tema ou da habilidade: folha do aluno com dicas e gabarito do professor. Não gasta geração de apostila: o Grátis tem 1 cruzadinha por mês.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -233,7 +233,7 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {erro}
           </p>
         )}
-        <button type="button" onClick={gerar} disabled={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75">
+        <button type="button" onClick={gerar} disabled={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo py-3.5 font-bold text-white shadow-lg shadow-roxo/20 disabled:opacity-75">
           {gerando ? <Loader2 className="h-5 w-5 animate-spin" /> : <Grid3x3 className="h-5 w-5" />}
           {gerando ? "Gerando a cruzadinha…" : cz ? "Gerar outra" : "Gerar cruzadinha"}
         </button>
@@ -268,7 +268,7 @@ export default function Cruzadinha({ professorPadrao = "", escolaPadrao = "", ao
 
       {salvas.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
-          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-violet-500" /> Minhas cruzadinhas ({salvas.length})</h2>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-roxo" /> Minhas cruzadinhas ({salvas.length})</h2>
           <p className="mb-3 text-[12.5px] text-slate-600">Ficam salvas neste navegador (as {MAX_SALVAS} mais recentes). Para guardar em outro lugar, salve em PDF.</p>
           <ul className="divide-y divide-slate-100">
             {salvas.map((s) => (

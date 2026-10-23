@@ -213,14 +213,14 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <section className="self-start rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-slate-800">
-          <ClipboardList className="h-5 w-5 text-violet-500" /> Plano de aula
+          <ClipboardList className="h-5 w-5 text-roxo" /> Plano de aula
         </h2>
         <p className="mb-5 text-sm text-slate-600">Na estrutura do Currículo Paulista: habilidade, objetivos, desenvolvimento aula a aula, recursos, avaliação e recuperação. Usa 1 geração do seu plano.</p>
         <fieldset className="mb-5">
           <legend className="mb-2 text-xs font-bold text-slate-600">O plano parte de:</legend>
           <div className="grid grid-cols-3 gap-2">
             {FONTES.map(({ id, rotulo, icone: Icone }) => (
-              <label key={id} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-700 hover:border-indigo-200"}`}>
+              <label key={id} className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-roxo bg-roxo-claro text-roxo-escuro" : "border-slate-200 text-slate-700 hover:border-roxo/25"}`}>
                 <input type="radio" name="fonte-plano" value={id} checked={fonte === id} onChange={() => setFonte(id)} className="sr-only" />
                 <Icone className="h-4 w-4" aria-hidden="true" /> {rotulo}
                 {id === "pdf" && !pdfLiberado && (
@@ -257,7 +257,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
           )}
           {fonte === "pdf" && pdfLiberado && (
             <div className="mt-3">
-              <input type="file" accept="application/pdf,.pdf" onChange={(e) => escolherPdf(e.target.files?.[0])} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700" aria-label="PDF do material" />
+              <input type="file" accept="application/pdf,.pdf" onChange={(e) => escolherPdf(e.target.files?.[0])} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-roxo-claro file:px-3 file:py-2 file:font-semibold file:text-roxo-escuro" aria-label="PDF do material" />
               {pdf && <p className="mt-1 text-[12px] text-slate-700">{pdf.nome} · {(pdf.tamanho / 1024 / 1024).toFixed(1)} MB</p>}
               <p className="mt-1 text-[11.5px] text-slate-600">Até 3 MB. O PDF é lido pela IA só para montar o plano e não fica guardado. Evite PDFs com nomes ou dados de alunos.</p>
             </div>
@@ -329,7 +329,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {erro}
           </p>
         )}
-        <button type="button" onClick={gerar} disabled={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75">
+        <button type="button" onClick={gerar} disabled={gerando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo py-3.5 font-bold text-white shadow-lg shadow-roxo/20 disabled:opacity-75">
           {gerando ? <Loader2 className="h-5 w-5 animate-spin" /> : <ClipboardList className="h-5 w-5" />}
           {ilustrando ? "Gerando a ilustração…" : gerando ? "Gerando e revisando o plano…" : plano ? "Gerar novamente" : "Gerar plano de aula"}
         </button>
@@ -386,7 +386,7 @@ export default function PlanoAula({ professorPadrao = "", escolaPadrao = "", mat
 
       {salvos.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
-          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-violet-500" /> Meus planos ({salvos.length})</h2>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-roxo" /> Meus planos ({salvos.length})</h2>
           <p className="mb-3 text-[12.5px] text-slate-600">Ficam salvos neste navegador. Para guardar em outro lugar, baixe em Word ou PDF.</p>
           <ul className="divide-y divide-slate-100">
             {salvos.map((s) => (

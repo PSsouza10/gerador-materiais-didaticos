@@ -14,7 +14,7 @@ export default function Recomposicao({ avaliacao, rel }) {
   const d = pedidoDaAvaliacao(avaliacao);
   if (!rel?.alunos) return null;
   return (
-    <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-[13px] text-indigo-950">
+    <div className="mt-4 rounded-2xl border border-roxo/25 bg-roxo-claro p-4 text-[13px] text-marinho">
       <p className="flex items-center gap-1.5 font-bold">
         <Wand2 className="h-4 w-4" /> Gerar recomposição
       </p>
@@ -45,7 +45,7 @@ export default function Recomposicao({ avaliacao, rel }) {
               );
             })}
           </ol>
-          <p className="mt-2 text-[11.5px] text-indigo-800">A lista A4 de 1 página sai pelo botão de PDF da apostila gerada.</p>
+          <p className="mt-2 text-[11.5px] text-roxo-escuro">A lista A4 de 1 página sai pelo botão de PDF da apostila gerada.</p>
         </>
       )}
     </div>

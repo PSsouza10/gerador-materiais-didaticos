@@ -654,10 +654,10 @@ export default function GeradorApostilas() {
   };
 
   return (
-    <div className="relative isolate flex min-h-screen w-full bg-creme font-sans text-slate-700">
+    <div className="app-casca relative isolate flex min-h-screen w-full bg-creme font-sans text-slate-700">
       <a
         href="#conteudo"
-        className="nao-imprimir sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+        className="nao-imprimir sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-roxo focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
       >
         Pular para o conteúdo
       </a>
@@ -708,18 +708,18 @@ export default function GeradorApostilas() {
           href="https://instagram.com/edugera.app"
           target="_blank"
           rel="noopener noreferrer"
-          className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-pink-200 bg-gradient-to-br from-amber-50 via-rose-50 to-pink-50 p-3 hover:border-pink-300"
+          className="mx-3 mb-3 flex items-center gap-3 rounded-2xl border border-[#e6dcc8] bg-white/80 p-3 hover:border-coral/40"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/marca/instagram-qr.png" alt="QR code do Instagram @edugera.app" className="h-16 w-16 flex-none rounded-lg" />
           <span className="leading-tight">
-            <span className="block text-xs font-bold text-pink-600">Siga no Instagram</span>
+            <span className="block text-xs font-bold text-coral-escuro">Siga no Instagram</span>
             <span className="block text-[11px] font-semibold text-slate-600">@edugera.app</span>
           </span>
         </a>
         <p className="px-5 pb-4 text-[11px] text-slate-500">
-          <a href="/privacidade" className="hover:text-indigo-600 hover:underline">Privacidade</a> ·{" "}
-          <a href="/termos" className="hover:text-indigo-600 hover:underline">Termos de Uso</a>
+          <a href="/privacidade" className="hover:text-roxo hover:underline">Privacidade</a> ·{" "}
+          <a href="/termos" className="hover:text-roxo hover:underline">Termos de Uso</a>
         </p>
       </aside>
 
@@ -744,7 +744,7 @@ export default function GeradorApostilas() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram @edugera.app"
-            className="ml-auto flex items-center gap-1 rounded-full border border-pink-200 bg-gradient-to-r from-amber-50 to-pink-50 px-2.5 py-1 text-[11px] font-bold text-pink-600"
+            className="ml-auto flex items-center gap-1 rounded-full border border-coral/25 bg-coral-claro/70 px-2.5 py-1 text-[11px] font-bold text-coral-escuro"
           >
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -1094,7 +1094,7 @@ export default function GeradorApostilas() {
               </p>
             )}
             {sessao?.user && conta.uso?.transicao && conta.uso?.restantes !== 0 && (
-              <p role="status" className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+              <p role="status" className="mt-5 rounded-xl border border-roxo/15 bg-roxo-claro px-4 py-3 text-sm text-marinho">
                 {avisoTransicao(conta.uso.transicao)}{" "}
                 <a href="/planos" className="font-semibold underline">Ver planos</a>
               </p>
@@ -1182,7 +1182,7 @@ export default function GeradorApostilas() {
                   <button type="button"
                     onClick={() => setMostrarGabarito((g) => !g)}
                     aria-pressed={mostrarGabarito}
-                    className={`btn-prev ${mostrarGabarito ? "!bg-indigo-50" : ""}`}
+                    className={`btn-prev ${mostrarGabarito ? "!bg-roxo-claro" : ""}`}
                   >
                     <KeyRound className="h-3.5 w-3.5" /> {mostrarGabarito ? "Ocultar gabarito" : "Ver gabarito"}
                   </button>
@@ -1215,11 +1215,11 @@ export default function GeradorApostilas() {
             </div>
 
             {gerado && !loading && auditoriaAtual && (
-              <div role="status" className="nao-imprimir mb-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-[12.5px] text-indigo-950">
+              <div role="status" className="nao-imprimir mb-3 rounded-xl border border-roxo/25 bg-roxo-claro px-3 py-2.5 text-[12.5px] text-marinho">
                 <p className="flex items-center gap-1.5 font-bold">
                   <ShieldCheck className="h-4 w-4" /> Auditoria automática: {auditoriaAtual.erros} erro(s) · {auditoriaAtual.avisos} aviso(s)
                 </p>
-                <p className="mt-1 text-indigo-900">Conferência determinística, sem chamada extra de IA. Não bloqueia o download e não substitui a revisão do professor.</p>
+                <p className="mt-1 text-marinho">Conferência determinística, sem chamada extra de IA. Não bloqueia o download e não substitui a revisão do professor.</p>
                 {achadosPedagogicos.length > 0 ? (
                   <ul className="mt-2 space-y-1.5">
                     {achadosPedagogicos.map((p, i) => (
@@ -1235,7 +1235,7 @@ export default function GeradorApostilas() {
                   <p className="mt-1">Nenhuma inconsistência dos tipos pedagógicos específicos foi identificada; confira também os alertas listados abaixo.</p>
                 )}
                 {apoiosGerados.length > 0 && (
-                  <div className="mt-2 border-t border-indigo-200 pt-2">
+                  <div className="mt-2 border-t border-roxo/25 pt-2">
                     <p><b>Apoios usados nesta geração:</b> {APOIOS_ACESSIBILIDADE.filter((a) => apoiosGerados.includes(a.id)).map((a) => a.titulo).join(" · ")}</p>
                     {apoiosMudaram && <p className="mt-1 font-semibold">A seleção mudou depois desta geração. Gere novamente para aplicar as novas escolhas; esta conferência se refere ao material atual.</p>}
                     {achadosApoios.length > 0 ? (
@@ -1245,7 +1245,7 @@ export default function GeradorApostilas() {
                     ) : apoiosGerados.includes("exemplo-guiado") ? (
                       <p className="mt-1">Conferência estrutural: o exemplo guiado tem título e pelo menos duas etapas. Revise a clareza e a adequação pedagógica.</p>
                     ) : null}
-                    <p className="mt-1 text-indigo-900">A conferência não avalia diagnóstico nem substitui a revisão do professor ou o planejamento com o AEE.</p>
+                    <p className="mt-1 text-marinho">A conferência não avalia diagnóstico nem substitui a revisão do professor ou o planejamento com o AEE.</p>
                   </div>
                 )}
               </div>
@@ -1291,7 +1291,7 @@ export default function GeradorApostilas() {
             {/* Task 4.1 — link de compartilhamento */}
             {gerado && (
               <div className="nao-imprimir mb-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
-                <Link2 className="h-4 w-4 flex-none text-indigo-400" />
+                <Link2 className="h-4 w-4 flex-none text-roxo" />
                 <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-600">
                   {compartilhar.url && !linkDesatualizado
                     ? compartilhar.url
@@ -1304,7 +1304,7 @@ export default function GeradorApostilas() {
                 <button type="button"
                   onClick={handleCopiarLink}
                   disabled={compartilhar.estado === "salvando" || loading}
-                  className="flex flex-none items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-60"
+                  className="flex flex-none items-center gap-1.5 rounded-lg bg-roxo px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-roxo-escuro active:scale-95 disabled:opacity-60"
                 >
                   {compartilhar.estado === "salvando" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1447,14 +1447,14 @@ export default function GeradorApostilas() {
         }
         .btn-prev {
           display: inline-flex; align-items: center; gap: .375rem;
-          border-radius: .5rem; background: #fff; padding: .375rem .75rem;
-          font-size: .75rem; font-weight: 700; color: #4f46e5;
-          box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 0 0 1px #e0e7ff;
+          border-radius: 999px; background: #fff; padding: .45rem .9rem; min-height: 36px;
+          font-size: .8rem; font-weight: 700; color: #4a36c4;
+          box-shadow: 0 1px 2px rgba(22,26,79,.05), 0 0 0 1px #e6dcc8;
           transition: all .15s;
         }
-        .btn-prev:hover { background: #eef2ff; }
+        .btn-prev:hover { background: #ece8fc; box-shadow: 0 0 0 1px rgba(91,69,214,.35); }
         .btn-prev:active { transform: scale(.95); }
-        .btn-prev:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
+        .btn-prev:focus-visible { outline: 2px solid #5b45d6; outline-offset: 2px; }
         .btn-prev:disabled { opacity: .6; cursor: not-allowed; }
       `}</style>
     </div>

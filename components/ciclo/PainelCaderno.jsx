@@ -20,7 +20,7 @@ function BotaoCopiar({ texto, rotulo = "Copiar link" }) {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] font-semibold text-slate-700 hover:border-indigo-300"
+      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] font-semibold text-slate-700 hover:border-roxo/40"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(texto);
@@ -36,7 +36,7 @@ function BotaoCopiar({ texto, rotulo = "Copiar link" }) {
   );
 }
 
-const botao = "inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60";
+const botao = "inline-flex items-center gap-2 rounded-xl bg-roxo px-4 py-2 text-sm font-semibold text-white hover:bg-roxo-escuro disabled:opacity-60";
 
 export default function PainelCaderno({ codigo }) {
   const [dados, setDados] = useState(null);
@@ -71,7 +71,7 @@ export default function PainelCaderno({ codigo }) {
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Painel da coordenação · {c.tipo === "reavaliacao" ? "mini-reavaliação" : "caderno diagnóstico"}</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-roxo-escuro">Painel da coordenação · {c.tipo === "reavaliacao" ? "mini-reavaliação" : "caderno diagnóstico"}</p>
         <h1 className="mt-1 text-2xl font-extrabold text-slate-900">{c.titulo}</h1>
         <p className="mt-1 text-slate-600">{[id.componente, id.etapa, `${c.avaliacao.itens.length} questões`, `código ${c.codigo}`].filter(Boolean).join(" · ")}</p>
         <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -107,7 +107,7 @@ export default function PainelCaderno({ codigo }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <tr className="bg-indigo-50/60 font-semibold">
+                  <tr className="bg-roxo-claro/60 font-semibold">
                     <td className="px-2 py-1.5">Rede (todas)</td>
                     <td className="px-2 py-1.5 text-right">{ag.rede.alunos}</td>
                     {ag.grupos.map((g) => (
@@ -270,7 +270,7 @@ function GerarReavaliacao({ caderno, agregado, aoCriar }) {
   }
 
   return (
-    <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-[13px] text-indigo-950">
+    <section className="rounded-2xl border border-roxo/25 bg-roxo-claro p-4 text-[13px] text-marinho">
       <h2 className="flex items-center gap-1.5 text-lg font-bold">
         <Sparkles className="h-5 w-5" /> Mini-reavaliação
       </h2>
@@ -279,7 +279,7 @@ function GerarReavaliacao({ caderno, agregado, aoCriar }) {
         {origensUnicas.join(", ")} do caderno (as dos grupos abaixo de 70%): mesma habilidade, descritor e nível, sem repetir nenhuma. Depois de aplicada, o painel compara antes e
         depois.
       </p>
-      <p className="mt-1 text-[12px] text-indigo-800">Cada questão nova passa pela mesma conferência da prova e leva cerca de 30 a 60 segundos. Deixe esta página aberta.</p>
+      <p className="mt-1 text-[12px] text-roxo-escuro">Cada questão nova passa pela mesma conferência da prova e leva cerca de 30 a 60 segundos. Deixe esta página aberta.</p>
       {validos.length > 0 && (
         <ol className="mt-3 space-y-1">
           {[...validos]

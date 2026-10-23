@@ -10,7 +10,7 @@ import MinhaConta from "@/components/MinhaConta";
 const Campo = ({ icone: Icone, rotulo, ajuda, children }) => (
   <label className="block">
     <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
-      <Icone className="h-3.5 w-3.5 text-violet-400" /> {rotulo}
+      <Icone className="h-3.5 w-3.5 text-roxo" /> {rotulo}
     </span>
     {children}
     {ajuda && <span className="mt-1 block text-[11px] text-slate-500">{ajuda}</span>}
@@ -95,7 +95,7 @@ export default function Configuracoes({ config, onSalvar, totalMateriais, onLimp
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200"
+          className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo px-5 py-3 text-sm font-bold text-white shadow-lg shadow-roxo/20"
         >
           {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {salvo ? "Salvo" : "Salvar configurações"}

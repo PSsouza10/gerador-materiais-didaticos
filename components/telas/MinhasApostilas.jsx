@@ -98,7 +98,7 @@ export default function MinhasApostilas({ materiais: todos, limite = null, ocult
           </p>
           <button type="button"
             onClick={() => irPara("Gerar Material")}
-            className="mx-auto mt-5 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-200"
+            className="mx-auto mt-5 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo px-5 py-3 text-sm font-bold text-white shadow-lg shadow-roxo/20"
           >
             <Sparkles className="h-4 w-4" /> Gerar o primeiro
           </button>
@@ -159,9 +159,9 @@ export default function MinhasApostilas({ materiais: todos, limite = null, ocult
         {lista.map((m) => (
           <li key={m.id} className={`flex flex-col rounded-2xl border bg-white p-5 shadow-sm ${m.revogado ? "border-slate-200 opacity-75" : "border-slate-100"}`}>
             <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700">{m.disciplina}</span>
+              <span className="rounded-full bg-roxo-claro px-2 py-0.5 text-roxo-escuro">{m.disciplina}</span>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{obterNivel(m.dificuldade).curto}</span>
-              {m.ano && <span className="rounded-full bg-violet-50 px-2 py-0.5 text-violet-700">{rotuloAno(m.ano)}</span>}
+              {m.ano && <span className="rounded-full bg-roxo-claro px-2 py-0.5 text-roxo-escuro">{rotuloAno(m.ano)}</span>}
               {m.bncc && <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-emerald-800">{m.bncc}</span>}
               {m.revogado && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">link revogado</span>}
             </div>

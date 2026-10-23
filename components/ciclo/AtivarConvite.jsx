@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2, Gift, LogIn, CheckCircle2 } from "lucide-react";
 
-const botao = "inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60";
+const botao = "inline-flex items-center gap-2 rounded-xl bg-roxo px-5 py-3 font-semibold text-white hover:bg-roxo-escuro disabled:opacity-60";
 const data = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
 
 // /convite/<CÓDIGO>: entra com o Google e ativa os dias de Pro da campanha
@@ -59,7 +59,7 @@ export default function AtivarConvite({ codigo }) {
 
   return (
     <div>
-      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-violet-700">
+      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-roxo-escuro">
         <Gift className="h-4 w-4" /> Convite EduGera
       </p>
       <h1 className="mt-2 text-2xl font-extrabold text-slate-900">{info.valida ? `${info.dias} dias de Pro grátis` : "Convite indisponível"}</h1>

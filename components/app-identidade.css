@@ -36,3 +36,20 @@
 @media (prefers-reduced-motion: reduce) {
   .app-barra-andando { animation: none; transform: none; width: 100% !important; opacity: 0.5; }
 }
+
+/* Títulos das telas internas (Avaliação, Plano, Cruzadinha...) na mesma voz da fachada.
+   Nada disso entra no material A4: folhas e capas ficam de fora. */
+.app-casca :is(h2, h3):not(:is(.folha-a4, .capa-a4, .moldura-impressao) *) {
+  color: #161a4f;
+}
+.app-casca h2:is(.text-lg, .text-xl, .text-2xl):not(:is(.folha-a4, .capa-a4) *) {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+/* cartões brancos das telas internas: borda quente, sombra suave */
+.app-casca main section.rounded-3xl.bg-white:not(:is(.folha-a4, .capa-a4) *),
+.app-casca main div.rounded-3xl.bg-white:not(:is(.folha-a4, .capa-a4) *) {
+  border-color: #ece2cf;
+  box-shadow: 0 1px 0 rgba(22, 26, 79, 0.03), 0 18px 40px -28px rgba(22, 26, 79, 0.35);
+}

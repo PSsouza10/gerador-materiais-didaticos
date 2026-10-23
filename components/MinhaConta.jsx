@@ -75,7 +75,7 @@ export default function MinhaConta() {
       {estado.banco && (
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <h2 className="flex items-center gap-1.5 text-base font-bold text-slate-800">
-            <UserCircle className="h-4 w-4 text-violet-400" /> Perfil da conta
+            <UserCircle className="h-4 w-4 text-roxo" /> Perfil da conta
           </h2>
           <p className="mb-5 text-xs text-slate-500">Fica na sua conta e vale em qualquer aparelho. Não guardamos seu e-mail aqui.</p>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -101,7 +101,7 @@ export default function MinhaConta() {
                 type="button"
                 onClick={() => alternar(d)}
                 aria-pressed={perfil.disciplinas.includes(d)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold ${perfil.disciplinas.includes(d) ? "border-violet-400 bg-violet-50 text-violet-700" : "border-slate-200 text-slate-600"}`}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold ${perfil.disciplinas.includes(d) ? "border-roxo/60 bg-roxo-claro text-roxo-escuro" : "border-slate-200 text-slate-600"}`}
               >
                 {d}
               </button>
