@@ -35,7 +35,12 @@ Para mudar o estado, troque a linha "Estado" no topo do arquivo e nesta tabela, 
 | [plano-parte-b.md](plano-parte-b.md) | plano para ligar o banco em produção (executado) | rascunho | 09/10/2026 |
 | [troca-dominio.md](troca-dominio.md) | edugera.vercel.app → edugera.app (executado) | rascunho | out/2026 |
 | [custo-ia-estimado.md](custo-ia-estimado.md) | estimativa de custo da OpenAI (antes da medição real) | rascunho | 15/10/2026 |
-| [divulgacao/](divulgacao/) | material de divulgação | rascunho | — |
+| [divulgacao/01-ficha-de-fatos-v2.md](divulgacao/01-ficha-de-fatos-v2.md) | fatos para divulgação (v2 aprovada pelo Paulo em 10/10; v3 aguarda OK) | rascunho (v3) | 15/10/2026 |
+| [divulgacao/02-pendencias-de-confirmacao.md](divulgacao/02-pendencias-de-confirmacao.md) | afirmações a confirmar | rascunho | 15/10/2026 |
+| [divulgacao/03-termos-de-uso-RASCUNHO.md](divulgacao/03-termos-de-uso-RASCUNHO.md) | rascunho antigo dos Termos; **superado** pelo texto publicado (`juridico/termos.md`) | rascunho | 10/10/2026 |
+| [divulgacao/04-politica-de-privacidade-RASCUNHO.md](divulgacao/04-politica-de-privacidade-RASCUNHO.md) | rascunho antigo da Política; **superado** (`juridico/privacidade.md`) | rascunho | 10/10/2026 |
+| [divulgacao/05-apresentacao-escolas.html](divulgacao/05-apresentacao-escolas.html), [06](divulgacao/06-modelos-email-whatsapp.md) | apresentação e modelos de mensagem | rascunho | out/2026 |
+| [divulgacao/07-faq-lgpd.md](divulgacao/07-faq-lgpd.md) | perguntas frequentes de LGPD para escolas. Conferir com `lgpd/` antes de entregar | rascunho | 15/10/2026 |
 
 ## O que resolver primeiro (achados desta documentação)
 1. **Política de Privacidade:** incluir o Neon; dizer que contas, uso e perfil ficam no banco; explicar a cópia pública de cada material no Blob (`juridico/privacidade.md`).
