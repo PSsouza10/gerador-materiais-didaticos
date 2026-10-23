@@ -703,6 +703,11 @@ export default function GeradorApostilas() {
 
       {/* ===== CONTEÚDO ===== */}
       <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 pb-20 outline-none md:pb-0">
+        {/* Logo completa como marca d'água em todas as telas (só na tela, não sai na impressão) */}
+        <div
+          aria-hidden="true"
+          className="nao-imprimir pointer-events-none fixed inset-y-0 right-0 left-0 z-30 bg-[url('/marca/edugera-logo.png')] bg-[length:min(80vw,560px)] bg-center bg-no-repeat opacity-[0.07] mix-blend-multiply md:left-64"
+        />
         {/* Barra superior no celular */}
         <div className="nao-imprimir flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3 md:hidden">
           <div className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-[#FAF6ED] ring-1 ring-slate-200">
@@ -814,12 +819,7 @@ export default function GeradorApostilas() {
         )}
         <div className={`${active === "Gerar Material" ? "grid" : "hidden"} grid-cols-1 xl:grid-cols-2 gap-6 px-4 sm:px-6 md:px-8 pb-10`}>
           {/* ===== FORMULÁRIO ===== */}
-          <section className="nao-imprimir relative isolate self-start overflow-hidden rounded-3xl bg-white [&_input]:bg-white/60 [&_select]:bg-white/60 [&_textarea]:bg-white/60 p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
-            {/* Logo completa como marca d'água de fundo */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 -z-10 bg-[url('/marca/edugera-logo.png')] bg-[length:min(90%,520px)] bg-[center_top_5rem] bg-no-repeat opacity-[0.16]"
-            />
+          <section className="nao-imprimir self-start rounded-3xl bg-white p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
             <div className="mb-6 flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-violet-400" />
               <h2 className="text-lg font-bold text-slate-800">Configuração da criação</h2>
