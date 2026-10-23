@@ -167,12 +167,12 @@ export default function CorrecaoProva({ professorPadrao = "", aoGerar, pro = fal
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <section className="self-start rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-slate-800">
-          <FileCheck2 className="h-5 w-5 text-violet-500" /> Corrigir prova
+          <FileCheck2 className="h-5 w-5 text-roxo" /> Corrigir prova
         </h2>
         <p className="mb-4 text-sm text-slate-600">Envie as fotos da prova ou da redação feita pelo aluno. A IA corrige e você confere. O Grátis tem 1 correção por mês.</p>
         <div className="mb-5 grid grid-cols-2 gap-2" role="radiogroup" aria-label="O que corrigir">
           {[{ id: "prova", rotulo: "Prova", icone: FileCheck2 }, { id: "redacao", rotulo: "Redação", icone: PenLine }].map(({ id, rotulo, icone: Icone }) => (
-            <label key={id} className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-2.5 text-[13px] font-semibold ${f.tipo === id ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-700 hover:border-indigo-200"}`}>
+            <label key={id} className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border p-2.5 text-[13px] font-semibold ${f.tipo === id ? "border-roxo bg-roxo-claro text-roxo-escuro" : "border-slate-200 text-slate-700 hover:border-roxo/25"}`}>
               <input type="radio" name="tipo-correcao" value={id} checked={f.tipo === id} onChange={() => setF((x) => ({ ...x, tipo: id, ...(id === "redacao" ? { disciplina: "Português", modelo: modeloPadrao(x.nivel) } : {}) }))} className="sr-only" />
               <Icone className="h-4 w-4" aria-hidden="true" /> {rotulo}
             </label>
@@ -246,7 +246,7 @@ export default function CorrecaoProva({ professorPadrao = "", aoGerar, pro = fal
           </div>
           <div className="sm:col-span-2">
             <span className="mb-1.5 block text-xs font-bold text-slate-600">{redacao ? "Redação do aluno" : "Prova respondida"}</span>
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 text-sm font-semibold text-indigo-700 hover:border-indigo-400">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-roxo/25 bg-roxo-claro/50 p-4 text-sm font-semibold text-roxo-escuro hover:border-roxo/60">
               <Camera className="h-5 w-5" aria-hidden="true" /> Tirar foto ou escolher arquivos
               <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" multiple capture="environment" className="sr-only" onChange={(e) => { escolher(e.target.files); e.target.value = ""; }} />
             </label>
@@ -268,7 +268,7 @@ export default function CorrecaoProva({ professorPadrao = "", aoGerar, pro = fal
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {erro}
           </p>
         )}
-        <button type="button" onClick={corrigir} disabled={enviando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75">
+        <button type="button" onClick={corrigir} disabled={enviando} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo py-3.5 font-bold text-white shadow-lg shadow-roxo/20 disabled:opacity-75">
           {enviando ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileCheck2 className="h-5 w-5" />}
           {enviando ? "Lendo e corrigindo…" : redacao ? "Corrigir redação" : "Corrigir prova"}
         </button>
@@ -359,7 +359,7 @@ export default function CorrecaoProva({ professorPadrao = "", aoGerar, pro = fal
                 {cp.aMelhorar.length > 0 && <div><b className="text-rose-800">A melhorar</b><ul className="ml-5 list-disc">{cp.aMelhorar.map((x, k) => <li key={k}>{x}</li>)}</ul></div>}
               </div>
             )}
-            {cp.devolutiva && <p className="mt-3 rounded-xl bg-indigo-50 px-3 py-2 text-[13.5px] text-indigo-950"><b>Devolutiva para o aluno:</b> {cp.devolutiva}</p>}
+            {cp.devolutiva && <p className="mt-3 rounded-xl bg-roxo-claro px-3 py-2 text-[13.5px] text-marinho"><b>Devolutiva para o aluno:</b> {cp.devolutiva}</p>}
             <p className="mt-4 text-[12px] text-slate-500">Correção feita com apoio de IA. Confira antes de lançar a nota.{cp.tipo === "redacao" ? " Você pode mudar a nota de cada critério." : ""}</p>
           </div>
         )}
@@ -367,7 +367,7 @@ export default function CorrecaoProva({ professorPadrao = "", aoGerar, pro = fal
 
       {salvas.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
-          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-violet-500" /> Provas corrigidas ({salvas.length})</h2>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800"><FolderOpen className="h-5 w-5 text-roxo" /> Provas corrigidas ({salvas.length})</h2>
           <p className="mb-3 text-[12.5px] text-slate-600">Ficam salvas neste navegador (as {MAX_SALVAS} mais recentes).</p>
           <ul className="divide-y divide-slate-100">
             {salvas.map((s) => (

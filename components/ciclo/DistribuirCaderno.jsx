@@ -47,7 +47,7 @@ export default function DistribuirCaderno({ avaliacao }) {
 
   if (!aberto)
     return (
-      <div className="mb-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-[12.5px] text-violet-950">
+      <div className="mb-3 rounded-xl border border-roxo/25 bg-roxo-claro px-3 py-2.5 text-[12.5px] text-marinho">
         <p className="font-semibold">Coordenação · Ciclo de Recomposição</p>
         <p className="mt-0.5">Distribua esta avaliação como caderno único para as escolas do piloto e acompanhe o resultado por habilidade.</p>
         <button type="button" onClick={() => setAberto(true)} className="btn-prev mt-2">
@@ -57,7 +57,7 @@ export default function DistribuirCaderno({ avaliacao }) {
     );
 
   return (
-    <div className="mb-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-3 text-[12.5px] text-violet-950">
+    <div className="mb-3 rounded-xl border border-roxo/25 bg-roxo-claro px-3 py-3 text-[12.5px] text-marinho">
       <p className="font-bold">Distribuir como caderno da rede</p>
       {codigo ? (
         <div className="mt-2 space-y-2">
@@ -74,7 +74,7 @@ export default function DistribuirCaderno({ avaliacao }) {
               <LayoutDashboard className="h-3.5 w-3.5" /> Abrir o painel
             </a>
           </p>
-          <p className="text-[11.5px] text-violet-800">Mudanças feitas depois nesta avaliação não vão para o caderno. Para mudar, distribua de novo.</p>
+          <p className="text-[11.5px] text-roxo-escuro">Mudanças feitas depois nesta avaliação não vão para o caderno. Para mudar, distribua de novo.</p>
         </div>
       ) : (
         <div className="mt-2 space-y-2">
@@ -86,7 +86,7 @@ export default function DistribuirCaderno({ avaliacao }) {
             <span className="mb-1 block text-xs font-bold">Escolas do piloto (uma por linha)</span>
             <textarea className="ipt min-h-[90px]" value={escolas} onChange={(e) => setEscolas(e.target.value)} placeholder={"EE Exemplo A\nEE Exemplo B"} />
           </label>
-          <p className="text-[11.5px] text-violet-800">
+          <p className="text-[11.5px] text-roxo-escuro">
             {lista.length} escola(s). O professor escolhe a escola desta lista ao enviar. O painel mostra só números por escola e habilidade, sem nome de aluno; escola com menos
             de 5 alunos não aparece.
           </p>

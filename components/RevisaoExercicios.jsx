@@ -206,10 +206,10 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
   }
 
   const status = (e, k) => (e.aprovado ? "aprovado" : (problemas[k + 1] || []).length ? "atencao" : "ok");
-  const cor = { aprovado: "bg-emerald-500", ok: "bg-indigo-300", atencao: "bg-amber-400" };
+  const cor = { aprovado: "bg-emerald-500", ok: "bg-roxo/60", atencao: "bg-amber-400" };
 
   return (
-    <section aria-labelledby="titulo-revisao" className="nao-imprimir mt-6 rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+    <section aria-labelledby="titulo-revisao" className="nao-imprimir mt-6 rounded-3xl border border-roxo/15 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="titulo-revisao" className="text-base font-extrabold text-slate-800">Revisar exercícios</h2>
         <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
             type="button"
             onClick={corrigirBateria}
             disabled={corrigindo || corrigindoBateria}
-            className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
+            className="flex items-center gap-1.5 rounded-xl bg-roxo px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
             title="Corrige em sequência os exercícios não aprovados ou com apontamentos"
           >
             {corrigindoBateria ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
@@ -231,7 +231,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
       {/* revisor de conteúdo: situação e apontamentos que não são de um exercício */}
       <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[12.5px]" aria-live="polite">
         {revisando ? (
-          <p className="flex items-center gap-2 font-semibold text-indigo-700">
+          <p className="flex items-center gap-2 font-semibold text-roxo-escuro">
             <Loader2 className="h-4 w-4 animate-spin" /> Revisor de conteúdo lendo a apostila como professor de {form.disciplina || "da disciplina"}…
           </p>
         ) : material?.revisaoConteudo ? (
@@ -256,7 +256,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-slate-600">{erroRevisor || "Uma segunda IA lê a apostila como professor da disciplina e aponta erros de conteúdo."}</span>
-            <button type="button" onClick={revisarConteudo} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-[12.5px] font-bold text-white">
+            <button type="button" onClick={revisarConteudo} className="flex items-center gap-1.5 rounded-xl bg-roxo px-3 py-1.5 text-[12.5px] font-bold text-white">
               <GraduationCap className="h-4 w-4" /> {erroRevisor ? "Tentar de novo" : "Revisar conteúdo"}
             </button>
           </div>
@@ -276,7 +276,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
               setAtual(k);
               setEditando(false);
             }}
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-black text-white ${cor[status(e, k)]} ${k === i ? "ring-2 ring-indigo-600 ring-offset-1" : ""}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-black text-white ${cor[status(e, k)]} ${k === i ? "ring-2 ring-roxo ring-offset-1" : ""}`}
           >
             {k + 1}
           </button>
@@ -285,7 +285,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-4">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-black text-indigo-700">Exercício {i + 1}</span>
+          <span className="text-sm font-black text-roxo-escuro">Exercício {i + 1}</span>
           {ex.aprovado ? (
             <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
               <ThumbsUp className="h-3.5 w-3.5" /> Aprovado
@@ -295,7 +295,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
               <AlertTriangle className="h-3.5 w-3.5" /> {meus.length} ponto(s) de atenção
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+            <span className="flex items-center gap-1 rounded-full bg-roxo-claro px-2 py-0.5 text-[11px] font-bold text-roxo-escuro">
               <CheckCircle2 className="h-3.5 w-3.5" /> Conferido automaticamente
             </span>
           )}
@@ -320,7 +320,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
               <textarea className="ipt mt-1 w-full" rows={2} value={rascunho.resposta} onChange={(e) => setRascunho({ ...rascunho, resposta: e.target.value })} />
             </label>
             <div className="flex gap-2">
-              <button type="button" onClick={salvarEdicao} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Salvar</button>
+              <button type="button" onClick={salvarEdicao} className="rounded-xl bg-roxo px-4 py-2 text-sm font-bold text-white">Salvar</button>
               <button type="button" onClick={() => setEditando(false)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold">Cancelar</button>
             </div>
           </div>
@@ -347,7 +347,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
         )}
 
         {(correcoes[i + 1] || []).length > 0 && !editando && (
-          <ul className="mt-3 space-y-1 text-[12px] text-indigo-800">
+          <ul className="mt-3 space-y-1 text-[12px] text-roxo-escuro">
             {correcoes[i + 1].map((a, k) => (
               <li key={k} className="flex gap-1.5">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-none" />
@@ -387,7 +387,7 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
               <button type="button" onClick={aprovar} className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${ex.aprovado ? "border border-slate-300" : "bg-emerald-600 text-white"}`}>
                 <ThumbsUp className="h-4 w-4" /> {ex.aprovado ? "Desfazer aprovação" : "Aprovar"}
               </button>
-              <button type="button" onClick={corrigir} disabled={corrigindo} aria-busy={corrigindo} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
+              <button type="button" onClick={corrigir} disabled={corrigindo} aria-busy={corrigindo} className="flex items-center gap-1.5 rounded-xl bg-roxo px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
                 {corrigindo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} {corrigindo ? "Corrigindo..." : "Corrigir com IA"}
               </button>
               <button type="button" onClick={abrirEdicao} className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold">
@@ -403,11 +403,11 @@ export default function RevisaoExercicios({ form, material, onMudar, autoRevisar
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <button type="button" onClick={() => { setAtual(Math.max(0, i - 1)); setEditando(false); }} disabled={i === 0} className="flex items-center gap-1 text-sm font-bold text-indigo-700 disabled:opacity-30">
+        <button type="button" onClick={() => { setAtual(Math.max(0, i - 1)); setEditando(false); }} disabled={i === 0} className="flex items-center gap-1 text-sm font-bold text-roxo-escuro disabled:opacity-30">
           <ChevronLeft className="h-4 w-4" /> Anterior
         </button>
         <span className="text-xs text-slate-500">{i + 1} de {exercicios.length}</span>
-        <button type="button" onClick={() => { setAtual(Math.min(exercicios.length - 1, i + 1)); setEditando(false); }} disabled={i === exercicios.length - 1} className="flex items-center gap-1 text-sm font-bold text-indigo-700 disabled:opacity-30">
+        <button type="button" onClick={() => { setAtual(Math.min(exercicios.length - 1, i + 1)); setEditando(false); }} disabled={i === exercicios.length - 1} className="flex items-center gap-1 text-sm font-bold text-roxo-escuro disabled:opacity-30">
           Próximo <ChevronRight className="h-4 w-4" />
         </button>
       </div>

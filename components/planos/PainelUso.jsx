@@ -16,7 +16,7 @@ function Barra({ icone: Icone, titulo, usados, limite, renova, legenda }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-        <Icone className="h-4 w-4 text-indigo-500" aria-hidden="true" /> {titulo}
+        <Icone className="h-4 w-4 text-roxo" aria-hidden="true" /> {titulo}
       </div>
       <p className="mt-2 text-2xl font-extrabold text-slate-900">
         {usados}
@@ -31,7 +31,7 @@ function Barra({ icone: Icone, titulo, usados, limite, renova, legenda }) {
           aria-valuemax={limite}
           aria-valuenow={Math.min(usados, limite)}
         >
-          <div className={`h-full ${esgotado ? "bg-rose-500" : "bg-indigo-500"}`} style={{ width: `${pct}%` }} />
+          <div className={`h-full ${esgotado ? "bg-rose-500" : "bg-roxo"}`} style={{ width: `${pct}%` }} />
         </div>
       )}
       {esgotado && <p className="mt-2 text-[12.5px] font-semibold text-rose-700">Limite atingido{renova ? ` · renova ${renova}` : ""}.</p>}
@@ -45,7 +45,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p className="text-slate-700">Não foi possível carregar seu uso agora. Tente de novo em instantes.</p>
-        <Link href="/criar" className="mt-4 inline-block font-semibold text-indigo-700 underline">
+        <Link href="/criar" className="mt-4 inline-block font-semibold text-roxo-escuro underline">
           Voltar ao EduGera
         </Link>
       </main>
@@ -56,7 +56,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <Link href="/criar" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline">
+        <Link href="/criar" className="inline-flex items-center gap-1.5 text-sm font-semibold text-roxo-escuro hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Voltar ao EduGera
         </Link>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
@@ -66,7 +66,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
           </div>
           <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-100">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Seu plano</p>
-            <p className="text-lg font-extrabold text-indigo-700">
+            <p className="text-lg font-extrabold text-roxo-escuro">
               {uso.plano.nome}
               {uso.assinatura?.origem === "simulada" ? " (simulado)" : uso.assinatura?.origem === "manual" ? " (liberado)" : ""}
             </p>
@@ -74,7 +74,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
         </div>
 
         {aviso && (
-          <p role="status" className="mt-6 flex items-start gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-[15px] text-indigo-900">
+          <p role="status" className="mt-6 flex items-start gap-2 rounded-2xl border border-roxo/15 bg-roxo-claro p-4 text-[15px] text-marinho">
             <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /> {aviso}
           </p>
         )}
@@ -115,7 +115,7 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
 
         <section className="mt-8 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Sparkles className="h-5 w-5 text-violet-500" aria-hidden="true" /> Últimos usos
+            <Sparkles className="h-5 w-5 text-roxo" aria-hidden="true" /> Últimos usos
           </h2>
           {recentes.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">Nenhum uso registrado neste mês.</p>
@@ -145,17 +145,17 @@ export default function PainelUso({ uso, materiais, recentes, suporte, suporteTe
         </section>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/planos" className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">
+          <Link href="/planos" className="rounded-full bg-roxo px-5 py-2.5 text-sm font-bold text-white hover:bg-roxo-escuro">
             Ver planos
           </Link>
-          <Link href="/assinatura" className="rounded-full border border-indigo-200 px-5 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50">
+          <Link href="/assinatura" className="rounded-full border border-roxo/25 px-5 py-2.5 text-sm font-bold text-roxo-escuro hover:bg-roxo-claro">
             Minha assinatura
           </Link>
           <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
             <Mail className="h-4 w-4" aria-hidden="true" /> {suporte ? `Suporte: ${suporte}` : suporteTexto}
           </span>
           {whatsapp && (
-            <a href={whatsapp.link} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-indigo-700 underline">
+            <a href={whatsapp.link} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-roxo-escuro underline">
               WhatsApp {whatsapp.rotulo}
             </a>
           )}

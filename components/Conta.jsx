@@ -17,7 +17,7 @@ export function MedidorUso({ uso, compacto = false }) {
     <span className="inline-flex items-center gap-2 text-[11.5px] font-semibold text-slate-700" title={`Gerações do plano ${uso.plano?.nome || "Grátis"} neste mês`}>
       {!compacto && (
         <span className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
-          <span className={`block h-full ${uso.restantes === 0 ? "bg-rose-500" : "bg-indigo-500"}`} style={{ width: `${pct}%` }} />
+          <span className={`block h-full ${uso.restantes === 0 ? "bg-rose-500" : "bg-roxo"}`} style={{ width: `${pct}%` }} />
         </span>
       )}
       {uso.usados} de {uso.limite} gerações este mês
@@ -45,7 +45,7 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
     return (
       <button type="button"
         onClick={() => signIn("google")}
-        className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-50"
+        className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-roxo-escuro shadow-sm ring-1 ring-roxo/25 hover:bg-roxo-claro"
       >
         <LogIn className="h-4 w-4 flex-none" />
         <span className="whitespace-nowrap sm:hidden">Entrar / criar conta</span>
@@ -61,13 +61,13 @@ export default function Conta({ sessao, status, uso, authConfigurado }) {
         onClick={() => setAberto((a) => !a)}
         aria-expanded={aberto}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 shadow-sm ring-1 ring-slate-200 hover:ring-indigo-200"
+        className="flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 shadow-sm ring-1 ring-slate-200 hover:ring-roxo/25"
       >
         {u.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={u.image} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full" />
         ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-roxo-claro text-sm font-bold text-roxo-escuro">
             {(u.name || u.email || "?")[0].toUpperCase()}
           </span>
         )}

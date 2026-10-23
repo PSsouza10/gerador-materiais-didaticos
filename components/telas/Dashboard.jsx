@@ -35,7 +35,7 @@ export default function Dashboard({ materiais, config, irPara }) {
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-violet-500 to-indigo-500 p-6 text-white shadow-lg shadow-indigo-200 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-roxo to-roxo p-6 text-white shadow-lg shadow-roxo/20 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-white/80">
             {primeiroNome(config.professor) ? `Olá, ${primeiroNome(config.professor)}!` : "Olá, professor(a)!"}
@@ -45,7 +45,7 @@ export default function Dashboard({ materiais, config, irPara }) {
         </div>
         <button type="button"
           onClick={() => irPara("Gerar Material")}
-          className="flex flex-none items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-indigo-600 shadow-sm transition-all hover:scale-[1.02]"
+          className="flex flex-none items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-roxo shadow-sm transition-all hover:scale-[1.02]"
         >
           <Sparkles className="h-4 w-4" /> Gerar novo material
         </button>
@@ -67,7 +67,7 @@ export default function Dashboard({ materiais, config, irPara }) {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-800">Recentes</h2>
             {materiais.length > 0 && (
-              <button type="button" onClick={() => irPara("Minhas Apostilas")} className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
+              <button type="button" onClick={() => irPara("Minhas Apostilas")} className="flex items-center gap-1 text-xs font-bold text-roxo hover:underline">
                 Ver todas <ArrowRight className="h-3.5 w-3.5" />
               </button>
             )}
@@ -100,7 +100,7 @@ export default function Dashboard({ materiais, config, irPara }) {
 
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
-            <Layers className="h-4 w-4 text-violet-400" /> Por disciplina
+            <Layers className="h-4 w-4 text-roxo" /> Por disciplina
           </h2>
           {porDisciplina.length === 0 ? (
             <p className="text-xs text-slate-500">Sem dados ainda.</p>
@@ -113,7 +113,7 @@ export default function Dashboard({ materiais, config, irPara }) {
                     <span>{n}</span>
                   </div>
                   <div className="mt-1 h-1.5 rounded-full bg-slate-100">
-                    <div className="h-1.5 rounded-full bg-indigo-400" style={{ width: `${(n / materiais.length) * 100}%` }} />
+                    <div className="h-1.5 rounded-full bg-roxo/60" style={{ width: `${(n / materiais.length) * 100}%` }} />
                   </div>
                 </li>
               ))}

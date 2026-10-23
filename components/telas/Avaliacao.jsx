@@ -328,7 +328,7 @@ export default function Avaliacao({
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <section className="self-start rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-slate-800">
-            <ClipboardCheck className="h-5 w-5 text-violet-500" /> Avaliação no
+            <ClipboardCheck className="h-5 w-5 text-roxo" /> Avaliação no
             padrão Prova Paulista
           </h2>
           <p className="mb-5 text-sm text-slate-600">
@@ -345,7 +345,7 @@ export default function Avaliacao({
               {FONTES.map(({ id, rotulo, icone: Icone }) => (
                 <label
                   key={id}
-                  className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-700 hover:border-indigo-200"}`}
+                  className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border p-2.5 text-center text-[12.5px] font-semibold ${fonte === id ? "border-roxo bg-roxo-claro text-roxo-escuro" : "border-slate-200 text-slate-700 hover:border-roxo/25"}`}
                 >
                   <input
                     type="radio"
@@ -502,7 +502,7 @@ export default function Avaliacao({
               </select>
             </Campo>
             {!f.bncc && fonte === "tema" && (
-              <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 text-[13px] text-slate-700 sm:col-span-2">
+              <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-roxo/15 bg-roxo-claro/60 p-3 text-[13px] text-slate-700 sm:col-span-2">
                 <input
                   type="checkbox"
                   className="mt-0.5"
@@ -568,7 +568,7 @@ export default function Avaliacao({
             onClick={gerar}
             disabled={gerando}
             aria-busy={gerando}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 disabled:opacity-75"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-roxo to-roxo py-3.5 font-bold text-white shadow-lg shadow-roxo/20 disabled:opacity-75"
           >
             {gerando ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -584,7 +584,7 @@ export default function Avaliacao({
                 : "Gerar avaliação"}
           </button>
           <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[12px] text-slate-600">
-            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-indigo-500" />
+            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-roxo" />
             O EduGera confere gabarito, alternativas e habilidades, mas revise
             cada questão antes de aplicar.
           </p>
@@ -623,7 +623,7 @@ export default function Avaliacao({
                       type="button"
                       onClick={() => setVersao(id)}
                       aria-pressed={versao === id}
-                      className={`rounded-md px-3 py-1.5 ${versao === id ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600"}`}
+                      className={`rounded-md px-3 py-1.5 ${versao === id ? "bg-white text-roxo-escuro shadow-sm" : "text-slate-600"}`}
                     >
                       <Eye
                         className="mr-1 inline h-3.5 w-3.5"
@@ -727,7 +727,7 @@ export default function Avaliacao({
               )}
               {coordenador && !caderno && <DistribuirCaderno key={avId || "nova"} avaliacao={avaliacao} />}
               {caderno && (
-                <p className="mb-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-[12.5px] text-violet-950">
+                <p className="mb-3 rounded-xl border border-roxo/25 bg-roxo-claro px-3 py-2 text-[12.5px] text-marinho">
                   Caderno da rede <b>{caderno.titulo}</b> (código {caderno.codigo}). Aplique como está para o resultado ser comparável entre as escolas; depois de corrigir,
                   envie o resultado da turma lá embaixo.
                 </p>
@@ -750,7 +750,7 @@ export default function Avaliacao({
       {salvas.length > 0 && (
         <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
           <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-slate-800">
-            <FolderOpen className="h-5 w-5 text-violet-500" /> Minhas avaliações
+            <FolderOpen className="h-5 w-5 text-roxo" /> Minhas avaliações
             ({salvas.length})
           </h2>
           <p className="mb-3 text-[12.5px] text-slate-600">
@@ -778,7 +778,7 @@ export default function Avaliacao({
                     · {new Date(s.criadoEm).toLocaleDateString("pt-BR")}
                   </span>
                   {s.origem?.tipo === "caderno" ? (
-                    <span className="block text-[12px] font-semibold text-violet-700">
+                    <span className="block text-[12px] font-semibold text-roxo-escuro">
                       Caderno da rede · código {s.origem.codigo}
                     </span>
                   ) : (

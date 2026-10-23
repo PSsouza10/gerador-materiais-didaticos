@@ -120,10 +120,10 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, ano
         escolher(h);
       }}
       onMouseEnter={() => setAtivo(i)}
-      className={`cursor-pointer rounded-lg px-3 py-2 ${i === ativo ? "bg-indigo-50" : ""}`}
+      className={`cursor-pointer rounded-lg px-3 py-2 ${i === ativo ? "bg-roxo-claro" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-x-2">
-        <span className="font-mono text-xs font-bold text-indigo-700">{h.c}</span>
+        <span className="font-mono text-xs font-bold text-roxo-escuro">{h.c}</span>
         <span className="text-[11px] font-semibold text-slate-600">
           {h.d}
           {anosDe(h) ? ` · ${anosDe(h)}` : ""}
@@ -136,7 +136,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, ano
   return (
     <div className="relative">
       <label id="rotulo-bncc" htmlFor="campo-bncc" className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
-        <Hash className="h-3.5 w-3.5 text-violet-400" />
+        <Hash className="h-3.5 w-3.5 text-roxo" />
         Habilidade da BNCC
         <span className="font-medium text-slate-500">(opcional)</span>
       </label>
@@ -225,7 +225,7 @@ export default function SeletorBNCC({ codigo, habilidade, disciplina, nivel, ano
                 {oficial.t}
               </p>
               {corrigido && (
-                <p role="status" className="mt-1 flex items-center gap-1 text-[11.5px] font-semibold text-indigo-700">
+                <p role="status" className="mt-1 flex items-center gap-1 text-[11.5px] font-semibold text-roxo-escuro">
                   <Info className="h-3.5 w-3.5" /> Código corrigido de {corrigido.de} para {corrigido.para}.
                 </p>
               )}

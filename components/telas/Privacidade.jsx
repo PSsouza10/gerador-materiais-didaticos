@@ -43,8 +43,8 @@ export default function Privacidade({ compacto = false }) {
         )}
       </ul>
       <p className="mt-4 text-xs text-slate-500">
-        Detalhes na <a href="/privacidade" className="font-semibold text-indigo-600 underline">Política de Privacidade</a> e nos{" "}
-        <a href="/termos" className="font-semibold text-indigo-600 underline">Termos de Uso</a>.
+        Detalhes na <a href="/privacidade" className="font-semibold text-roxo underline">Política de Privacidade</a> e nos{" "}
+        <a href="/termos" className="font-semibold text-roxo underline">Termos de Uso</a>.
       </p>
     </section>
   );
