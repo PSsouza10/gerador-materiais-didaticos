@@ -1,0 +1,38 @@
+/* Identidade da fachada aplicada à "casca" do app (/criar): menu, cabeçalho, formulário e navegação.
+   O material A4 (prévia, PDF, impressão) NÃO usa estas classes: continua com as fontes de sempre. */
+@import "@fontsource/fraunces/latin-600.css";
+@import "@fontsource/figtree/latin-400.css";
+@import "@fontsource/figtree/latin-500.css";
+@import "@fontsource/figtree/latin-600.css";
+@import "@fontsource/figtree/latin-700.css";
+
+.app-casca {
+  font-family: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.app-titulo {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.app-btn-principal {
+  background: linear-gradient(135deg, #4a36c4 0%, #5b45d6 55%, #6c53e0 100%);
+  box-shadow: 0 10px 24px -10px rgba(74, 54, 196, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.app-papel {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #ece2cf;
+  box-shadow: 0 1px 0 rgba(22, 26, 79, 0.03), 0 18px 40px -28px rgba(22, 26, 79, 0.35);
+}
+
+/* tela de geração: barra que anda sozinha enquanto a IA escreve */
+@keyframes app-barra {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.app-barra-andando {
+  animation: app-barra 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-barra-andando { animation: none; transform: none; width: 100% !important; opacity: 0.5; }
+}

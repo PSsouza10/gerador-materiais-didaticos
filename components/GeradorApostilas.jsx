@@ -36,7 +36,12 @@ import {
   ClipboardCheck,
   Grid3x3,
   FileCheck2,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
+import "@/components/app-identidade.css";
 import FolhaA4 from "@/components/FolhaA4";
 import ListaExerciciosUmaPagina from "@/components/ListaExerciciosUmaPagina";
 import RevisaoExercicios from "@/components/RevisaoExercicios";
@@ -173,6 +178,9 @@ const NAV = [
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
 
+// Celular: 4 seções fixas na barra de baixo + "Mais" (o resto abre numa folha).
+const NAV_CELULAR = ["Dashboard", "Gerar Material", "Avaliação", "Minhas Apostilas"];
+
 // Links das páginas públicas: /criar?aba=prova|plano|apostila|cruzadinha&bncc=EF07MA32&disciplina=Matemática&ano=7
 const ABAS_DO_LINK = { prova: "Avaliação", plano: "Plano de Aula", apostila: "Gerar Material", cruzadinha: "Cruzadinha", corrigir: "Corrigir Prova" };
 function pedidoDoEndereco() {
@@ -236,6 +244,8 @@ export default function GeradorApostilas() {
   const [paginacao, setPaginacao] = useState({ paginas: 1, paginasFolha: 1, capa: false });
   // Aviso da primeira visita: some depois do "Entendi" (lembrado neste navegador)
   const [avisoIaVisto, setAvisoIaVisto] = useState(true);
+  const [etapa, setEtapa] = useState(1); // formulário em 3 etapas: 1 Tema · 2 Estilo · 3 Gerar
+  const [menuMais, setMenuMais] = useState(false); // celular: "Mais" abre as outras seções
   useEffect(() => {
     try {
       setAvisoIaVisto(window.localStorage.getItem("edugera:aviso-ia") === "1");
@@ -402,6 +412,7 @@ export default function GeradorApostilas() {
     if (gerandoRef.current) return;
     if (!form.disciplina || !form.nivel || !form.tema.trim()) {
       setErro("Preencha Disciplina, Nível de Ensino e Tema Principal.");
+      flushSync(() => setEtapa(1));
       document.getElementById("campo-tema")?.focus();
       return;
     }
@@ -630,9 +641,20 @@ export default function GeradorApostilas() {
     ? "Gerando ilustração..."
     : "";
   const tela = NAV.find((n) => n.name === active) || NAV[1];
+  const irParaEtapa = (n) => {
+    if (n > 1 && !form.tema.trim()) {
+      setErro("Preencha o Tema Principal para continuar.");
+      flushSync(() => setEtapa(1));
+      document.getElementById("campo-tema")?.focus();
+      return;
+    }
+    if (erro === "Preencha o Tema Principal para continuar." || erro === "Preencha Disciplina, Nível de Ensino e Tema Principal.") setErro(null);
+    setEtapa(Math.min(3, Math.max(1, n)));
+    document.getElementById("formulario-topo")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
 
   return (
-    <div className="flex min-h-screen w-full bg-[#F6F5FB] font-sans text-slate-700">
+    <div className="relative isolate flex min-h-screen w-full bg-creme font-sans text-slate-700">
       <a
         href="#conteudo"
         className="nao-imprimir sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
@@ -640,15 +662,15 @@ export default function GeradorApostilas() {
         Pular para o conteúdo
       </a>
       {/* ===== MENU LATERAL (desktop) ===== */}
-      <aside className="nao-imprimir hidden md:flex md:sticky md:top-0 md:h-screen md:overflow-y-auto w-64 flex-none flex-col bg-[#EEEDF8] border-r border-slate-200 shadow-sm">
-        <div className="flex items-center gap-3 px-6 py-7 border-b border-slate-300/70">
+      <aside className="app-casca nao-imprimir hidden md:flex md:sticky md:top-0 md:h-screen md:overflow-y-auto w-64 flex-none flex-col bg-creme-escuro/70 border-r border-[#e6dcc8]">
+        <div className="flex items-center gap-3 px-6 py-7 border-b border-[#e6dcc8]">
           <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-[#FAF6ED] shadow-md ring-1 ring-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/marca/edugera-icone.png" alt="" className="h-8 w-8" />
           </div>
           <div className="leading-tight">
-            <p className="text-base font-extrabold text-slate-800">EduGera</p>
-            <p className="text-[11px] font-medium text-slate-500">Apostilas BNCC</p>
+            <p className="app-titulo text-[1.35rem] leading-none text-marinho">EduGera</p>
+            <p className="mt-1 text-[11px] font-semibold text-tinta">Apostilas BNCC</p>
           </div>
         </div>
 
@@ -660,25 +682,25 @@ export default function GeradorApostilas() {
                 key={name}
                 onClick={() => setActive(name)}
                 aria-current={on ? "page" : undefined}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
+                className={`relative flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-roxo ${
                   on
-                    ? "border border-indigo-300 bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-600 shadow-sm"
-                    : "border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-slate-700"
+                    ? "bg-white text-marinho shadow-sm ring-1 ring-[#e6dcc8] before:absolute before:inset-y-2.5 before:left-0 before:w-1 before:rounded-full before:bg-coral"
+                    : "text-tinta hover:bg-white/70 hover:text-marinho"
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] flex-none" strokeWidth={2.2} />
                 <span className="whitespace-nowrap">{name}</span>
                 {name === "Minhas Apostilas" && materiais.length > 0 && (
-                  <span className="ml-auto rounded-full bg-indigo-100 px-2 text-[11px] font-bold text-indigo-600">{materiais.length}</span>
+                  <span className="ml-auto rounded-full bg-roxo-claro px-2 text-[11px] font-bold text-roxo-escuro">{materiais.length}</span>
                 )}
               </button>
             );
           })}
         </nav>
 
-        <div className="m-3 rounded-2xl bg-gradient-to-br from-amber-50 to-rose-50 p-4 border border-amber-100">
-          <p className="text-xs font-bold text-amber-700">Dica pedagógica</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-amber-700/80">
+        <div className="m-3 rounded-2xl bg-coral-claro/70 p-4 border border-coral/20">
+          <p className="text-xs font-bold text-coral-escuro">Dica pedagógica</p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-coral-escuro/90">
             Busque a habilidade da BNCC pelo código ou por palavra-chave: a descrição oficial entra no material.
           </p>
         </div>
@@ -703,18 +725,20 @@ export default function GeradorApostilas() {
 
       {/* ===== CONTEÚDO ===== */}
       <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 pb-20 outline-none md:pb-0">
-        {/* Logo completa como marca d'água em todas as telas (só na tela, não sai na impressão) */}
+        {/* Logo completa como marca d'água em todas as telas (só na tela, não sai na impressão).
+            Fica ATRÁS do conteúdo (-z-10 dentro da casca "isolate"): aparece no fundo e através
+            dos cartões translúcidos, sem cobrir os campos. */}
         <div
           aria-hidden="true"
-          className="nao-imprimir pointer-events-none fixed inset-y-0 right-0 left-0 z-30 bg-[url('/marca/edugera-logo.png')] bg-[length:min(80vw,560px)] bg-center bg-no-repeat opacity-[0.07] mix-blend-multiply md:left-64"
+          className="nao-imprimir pointer-events-none fixed inset-y-0 right-0 left-0 -z-10 bg-[url('/marca/edugera-logo.png')] bg-[length:min(80vw,560px)] bg-center bg-no-repeat opacity-[0.09] mix-blend-multiply md:left-64"
         />
         {/* Barra superior no celular */}
-        <div className="nao-imprimir flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3 md:hidden">
+        <div className="app-casca nao-imprimir flex items-center gap-2 border-b border-[#e6dcc8] bg-creme/95 px-4 py-3 md:hidden">
           <div className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-[#FAF6ED] ring-1 ring-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/marca/edugera-icone.png" alt="" className="h-6 w-6" />
           </div>
-          <span className="text-sm font-extrabold text-slate-800">EduGera</span>
+          <span className="app-titulo text-lg leading-none text-marinho">EduGera</span>
           <a
             href="https://instagram.com/edugera.app"
             target="_blank"
@@ -734,10 +758,10 @@ export default function GeradorApostilas() {
           </div>
         </div>
 
-        <header className="nao-imprimir flex items-center justify-between px-4 sm:px-6 md:px-8 py-5">
+        <header className="app-casca nao-imprimir flex items-center justify-between px-4 sm:px-6 md:px-8 py-5 md:py-7">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-800">{active === "Gerar Material" ? "Gerar Material Visual" : active}</h1>
-            <p className="text-sm text-slate-700">{tela.descricao}</p>
+            <h1 className="app-titulo text-[1.85rem] leading-tight text-marinho sm:text-[2.2rem]">{active === "Gerar Material" ? "Gerar Material Visual" : active}</h1>
+            <p className="mt-1 text-[15px] text-tinta">{tela.descricao}</p>
           </div>
           <div className="hidden items-center gap-3 md:flex">
             {sessao?.user && <MedidorUso uso={conta.uso} />}
@@ -806,26 +830,31 @@ export default function GeradorApostilas() {
 
         {/* Task 2.1 — split-screen: controles à esquerda, live preview à direita */}
         {active === "Gerar Material" && !avisoIaVisto && (
-          <div role="note" className="nao-imprimir mx-4 mb-4 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950 sm:mx-6 sm:flex-row sm:items-center md:mx-8">
-            <ShieldCheck className="hidden h-6 w-6 flex-none text-indigo-500 sm:block" />
+          <div role="note" className="app-casca nao-imprimir mx-4 mb-4 flex flex-col gap-3 rounded-2xl border border-roxo/20 bg-roxo-claro/80 px-4 py-3 text-sm text-marinho sm:mx-6 sm:flex-row sm:items-center md:mx-8">
+            <ShieldCheck className="hidden h-6 w-6 flex-none text-roxo sm:block" />
             <p className="flex-1">
               <b>O EduGera usa inteligência artificial.</b> Ele confere contas, gabarito, figuras e BNCC automaticamente e avisa o que
               encontrar, mas a IA ainda pode errar. Revise o material antes de imprimir ou aplicar.
             </p>
-            <button type="button" onClick={fecharAvisoIa} className="self-start rounded-xl bg-indigo-600 px-4 py-2 font-bold text-white sm:self-auto">
+            <button type="button" onClick={fecharAvisoIa} className="app-btn-principal self-start rounded-full px-5 py-2 font-bold text-white sm:self-auto">
               Entendi
             </button>
           </div>
         )}
         <div className={`${active === "Gerar Material" ? "grid" : "hidden"} grid-cols-1 xl:grid-cols-2 gap-6 px-4 sm:px-6 md:px-8 pb-10`}>
           {/* ===== FORMULÁRIO ===== */}
-          <section className="nao-imprimir self-start rounded-3xl bg-white p-5 sm:p-6 md:p-7 shadow-sm border border-slate-100">
-            <div className="mb-6 flex items-center gap-2">
-              <Wand2 className="h-5 w-5 text-violet-400" />
-              <h2 className="text-lg font-bold text-slate-800">Configuração da criação</h2>
+          <section className="app-casca app-papel nao-imprimir self-start rounded-[22px] p-5 sm:p-6 md:p-7">
+            <div className="mb-5 flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-coral" />
+              <h2 className="app-titulo text-[1.35rem] text-marinho">Configuração da criação</h2>
             </div>
 
+            <span id="formulario-topo" className="block scroll-mt-4" aria-hidden="true" />
+            <EtapasFormulario etapa={etapa} irPara={irParaEtapa} />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* ===== ETAPA 1 · TEMA ===== */}
+              <div className={etapa === 1 ? "contents" : "hidden"}>
               <div className="sm:col-span-2">
                 <Field label="Identificação do Professor" icon={User} name="professor">
                   <input value={form.professor} onChange={set("professor")} maxLength={LIMITES.professor} autoComplete="name" className="ipt" placeholder="Nome do docente (salve em Configurações)" />
@@ -887,11 +916,15 @@ export default function GeradorApostilas() {
                   <input value={form.tema} onChange={set("tema")} maxLength={LIMITES.tema} className="ipt" placeholder='Ex.: "Volume: medida de capacidade"' />
                 </Field>
               </div>
+              </div>
+
+              {/* ===== ETAPA 2 · ESTILO ===== */}
+              <div className={etapa === 2 ? "contents" : "hidden"}>
 
               {/* Task 3.2 — nível de dificuldade / adaptação */}
               <fieldset className="sm:col-span-2">
-                <legend className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                  <Gauge className="h-3.5 w-3.5 text-violet-400" aria-hidden="true" />
+                <legend className="mb-1.5 flex items-center gap-1.5 text-[13px] font-bold text-marinho">
+                  <Gauge className="h-3.5 w-3.5 text-coral" aria-hidden="true" />
                   Nível de Dificuldade / Adaptação
                 </legend>
                 {/* rádios nativos: setas, Tab e leitores de tela funcionam sem ARIA extra */}
@@ -907,8 +940,8 @@ export default function GeradorApostilas() {
                         onChange={() => setForm((f) => ({ ...f, dificuldade: n.id }))}
                         className="peer sr-only"
                       />
-                      <span className="block h-full rounded-xl border-[1.5px] border-[#ECEAF4] bg-[#FAFAFE] px-3 py-2.5 text-left transition-all hover:border-indigo-200 peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-indigo-400 [&>b]:peer-checked:text-indigo-700">
-                        <b className="block text-[13px] font-bold text-slate-600">{n.rotulo}</b>
+                      <span className="block h-full rounded-xl border-[1.5px] border-[#E6DCC8] bg-[#FFFDF8] px-3 py-2.5 text-left transition-all hover:border-roxo/40 peer-checked:border-roxo peer-checked:bg-roxo-claro peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-roxo [&>b]:peer-checked:text-roxo-escuro">
+                        <b className="block text-[14px] font-bold text-marinho">{n.rotulo}</b>
                         <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-700">{n.descricao}</span>
                       </span>
                     </label>
@@ -916,8 +949,8 @@ export default function GeradorApostilas() {
                 </div>
               </fieldset>
 
-              <fieldset className="sm:col-span-2 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
-                <legend className="px-1 text-xs font-bold text-slate-700">Apoios de acessibilidade (opcionais)</legend>
+              <fieldset className="sm:col-span-2 rounded-2xl border border-[#E6DCC8] bg-creme/70 p-4">
+                <legend className="px-1 text-[13px] font-bold text-marinho">Apoios de acessibilidade (opcionais)</legend>
                 <p id="ajuda-apoios-acessibilidade" className="mb-3 text-[11.5px] leading-relaxed text-slate-600">
                   Podem apoiar estudantes com TEA e outras necessidades, mas escolha o que fizer sentido para esta atividade. Cada estudante é único; essas opções não indicam diagnóstico e não substituem o planejamento pedagógico individual.
                   Não informe nome, laudo ou dados pessoais de estudantes.
@@ -939,7 +972,7 @@ export default function GeradorApostilas() {
                         aria-describedby="ajuda-apoios-acessibilidade"
                         className="peer sr-only"
                       />
-                      <span className="block h-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-indigo-500">
+                      <span className="block h-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors peer-checked:border-roxo peer-checked:bg-roxo-claro peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-roxo">
                         <b className="block text-[12px] text-slate-700">{apoio.titulo}</b>
                         <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">{apoio.descricao}</span>
                       </span>
@@ -1018,6 +1051,14 @@ export default function GeradorApostilas() {
                   </p>
                 )}
               </div>
+              </div>
+
+              {/* ===== ETAPA 3 · GERAR (resumo do pedido) ===== */}
+              {etapa === 3 && (
+                <div className="sm:col-span-2">
+                  <ResumoPedido form={form} capas={CAPAS} irPara={irParaEtapa} />
+                </div>
+              )}
             </div>
 
             {erro && (
@@ -1069,10 +1110,25 @@ export default function GeradorApostilas() {
               </p>
             )}
 
+            {etapa < 3 && (
+              <div className="mt-7 flex items-center gap-3">
+                {etapa > 1 && (
+                  <button type="button" onClick={() => irParaEtapa(etapa - 1)} className="flex min-h-[48px] items-center gap-1.5 rounded-full border-[1.5px] border-marinho/80 px-5 font-semibold text-marinho hover:bg-white">
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Voltar
+                  </button>
+                )}
+                <button type="button" onClick={() => irParaEtapa(etapa + 1)} className="app-btn-principal flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full px-6 text-base font-bold text-white transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-roxo">
+                  Continuar: {etapa === 1 ? "Estilo" : "Gerar"} <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+            )}
+            {etapa === 3 && ocupado && <TelaGerando loading={loading} progresso={progresso} loadingImagem={loadingImagem} />}
+
+            <div className={etapa === 3 ? "" : "hidden"}>
             {conta.authConfigurado && statusSessao === "unauthenticated" ? (
               <button type="button"
                 onClick={() => signIn("google")}
-                className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                className="app-btn-principal mt-7 flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold text-white transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-roxo"
               >
                 <Sparkles className="h-5 w-5" /> Entrar ou criar conta com Google para gerar
               </button>
@@ -1086,7 +1142,7 @@ export default function GeradorApostilas() {
               onClick={handleGerarMaterial}
               disabled={ocupado || conta.authConfigurado === false || conta.uso?.restantes === 0}
               aria-busy={ocupado}
-              className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+              className="app-btn-principal mt-7 flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold text-white transition-transform hover:-translate-y-px active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-roxo"
             >
               <Sparkles className={`h-5 w-5 ${ocupado ? "animate-spin" : ""}`} />
               {statusGeracao || (gerado ? "Gerar novamente" : "Gerar Material Visual")}
@@ -1098,9 +1154,13 @@ export default function GeradorApostilas() {
               </p>
             )}
             <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[12px] text-slate-600">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-indigo-500" />
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-verde" />
               Material gerado por IA: o EduGera confere contas, gabarito e BNCC, mas revise conceitos, exercícios e gabarito antes de imprimir.
             </p>
+            <button type="button" onClick={() => irParaEtapa(2)} disabled={ocupado} className="mx-auto mt-3 flex items-center gap-1 text-sm font-semibold text-tinta underline-offset-4 hover:text-marinho hover:underline disabled:opacity-50">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Voltar ao estilo
+            </button>
+            </div>
             <p className="sr-only" aria-live="polite">
               {statusGeracao}
             </p>
@@ -1294,46 +1354,96 @@ export default function GeradorApostilas() {
       </main>
 
       {/* ===== NAVEGAÇÃO INFERIOR (celular) ===== */}
+      {menuMais && (
+        <div className="app-casca nao-imprimir fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Mais seções">
+          <button type="button" aria-label="Fechar" onClick={() => setMenuMais(false)} className="absolute inset-0 bg-marinho/30" />
+          <div className="absolute inset-x-0 bottom-0 rounded-t-[22px] bg-creme px-4 pb-24 pt-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="app-titulo text-lg text-marinho">Mais</p>
+              <button type="button" onClick={() => setMenuMais(false)} aria-label="Fechar" className="flex h-11 w-11 items-center justify-center rounded-full text-marinho hover:bg-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <ul className="grid grid-cols-2 gap-2.5">
+              {NAV.filter((n) => !NAV_CELULAR.includes(n.name)).map(({ name, icon: Icon }) => (
+                <li key={name}>
+                  <button
+                    type="button"
+                    autoFocus={name === NAV.find((n) => !NAV_CELULAR.includes(n.name))?.name}
+                    onClick={() => {
+                      setActive(name);
+                      setMenuMais(false);
+                      window.scrollTo({ top: 0 });
+                    }}
+                    aria-current={active === name ? "page" : undefined}
+                    className={`flex min-h-[56px] w-full items-center gap-2.5 rounded-2xl px-4 text-left text-[15px] font-semibold ring-1 ${
+                      active === name ? "bg-white text-marinho ring-coral" : "bg-white/70 text-tinta ring-[#e6dcc8]"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 flex-none text-coral" aria-hidden="true" /> {name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
       <nav
         aria-label="Seções"
-        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-slate-200 bg-white/95 md:hidden"
+        className="app-casca nao-imprimir fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-[#e6dcc8] bg-creme/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        {NAV.map(({ name, curto, icon: Icon }) => {
-          const on = active === name;
+        {NAV.filter((n) => NAV_CELULAR.includes(n.name)).map(({ name, curto, icon: Icon }) => {
+          const on = active === name && !menuMais;
           return (
             <button type="button"
               key={name}
               onClick={() => {
                 setActive(name);
+                setMenuMais(false);
                 window.scrollTo({ top: 0 });
               }}
               aria-current={on ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold ${on ? "text-indigo-600" : "text-slate-600"}`}
+              className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[11.5px] font-bold ${on ? "text-roxo-escuro" : "text-tinta"}`}
             >
-              <Icon className="h-5 w-5" />
+              <span className={`flex h-7 w-12 items-center justify-center rounded-full ${on ? "bg-roxo-claro" : ""}`}>
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
               {curto}
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setMenuMais((v) => !v)}
+          aria-expanded={menuMais}
+          className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[11.5px] font-bold ${
+            menuMais || !NAV_CELULAR.includes(active) ? "text-roxo-escuro" : "text-tinta"
+          }`}
+        >
+          <span className={`flex h-7 w-12 items-center justify-center rounded-full ${menuMais || !NAV_CELULAR.includes(active) ? "bg-roxo-claro" : ""}`}>
+            <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+          </span>
+          Mais
+        </button>
       </nav>
 
       <style>{`
         .ipt {
           width: 100%;
           border-radius: 0.85rem;
-          border: 1.5px solid #E2E0EE;
-          background: #FAFAFE;
+          border: 1.5px solid #E6DCC8;
+          background: #FFFDF8;
           padding: 0.65rem 0.85rem;
           font-size: 0.875rem;
-          color: #334155;
+          color: #161a4f;
           outline: none;
           transition: all .15s;
         }
         .ipt::placeholder { color: #94a3b8; }
         .ipt:focus {
-          border-color: #818CF8;
+          border-color: #5b45d6;
           background: #fff;
-          box-shadow: 0 0 0 3px rgba(129,140,248,.3);
+          box-shadow: 0 0 0 3px rgba(91,69,214,.18);
         }
         .btn-prev {
           display: inline-flex; align-items: center; gap: .375rem;
@@ -1360,8 +1470,8 @@ function Field({ label, icon: Icon, required, optional, name, children }) {
       : children;
   return (
     <label className="block" htmlFor={id}>
-      <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-600">
-        {Icon && <Icon className="h-3.5 w-3.5 text-violet-400" />}
+      <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-bold text-marinho">
+        {Icon && <Icon className="h-3.5 w-3.5 text-coral" />}
         {label}
         {required && (
           <span className="text-rose-500" aria-hidden="true">
@@ -1372,5 +1482,121 @@ function Field({ label, icon: Icon, required, optional, name, children }) {
       </span>
       {campo}
     </label>
+  );
+}
+
+// ===== Formulário em 3 etapas =====
+const ETAPAS = [
+  { n: 1, rotulo: "Tema", dica: "Turma, BNCC e tema" },
+  { n: 2, rotulo: "Estilo", dica: "Nível, capa e ilustrações" },
+  { n: 3, rotulo: "Gerar", dica: "Conferir e gerar" },
+];
+
+function EtapasFormulario({ etapa, irPara }) {
+  return (
+    <nav aria-label="Etapas do formulário" className="mb-6">
+      <ol className="grid grid-cols-3 gap-2">
+        {ETAPAS.map(({ n, rotulo, dica }) => {
+          const atual = n === etapa;
+          const feita = n < etapa;
+          return (
+            <li key={n}>
+              <button
+                type="button"
+                onClick={() => irPara(n)}
+                aria-current={atual ? "step" : undefined}
+                className={`flex w-full items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-left transition-colors sm:px-3 ${
+                  atual ? "bg-white ring-[1.5px] ring-roxo/40 shadow-sm" : "hover:bg-white/70"
+                }`}
+              >
+                <span
+                  className={`flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-bold ${
+                    atual ? "bg-marinho text-white" : feita ? "bg-verde text-white" : "bg-creme-escuro text-tinta"
+                  }`}
+                >
+                  {feita ? <Check className="h-4 w-4" aria-hidden="true" /> : n}
+                </span>
+                <span className="min-w-0 leading-tight">
+                  <span className={`block text-[14px] font-bold ${atual ? "text-marinho" : "text-tinta"}`}>
+                    {rotulo}
+                    {feita && <span className="sr-only"> (concluída)</span>}
+                  </span>
+                  <span className="hidden truncate text-[11.5px] text-tinta/80 sm:block">{dica}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+function ResumoPedido({ form, capas, irPara }) {
+  const ano = ANOS_POR_NIVEL[form.nivel]?.find((a) => String(a.valor) === String(form.ano))?.rotulo;
+  const dificuldade = NIVEIS_DIFICULDADE.find((n) => n.id === form.dificuldade)?.rotulo;
+  const capa = capas.find((c) => c.id === form.capa)?.rotulo;
+  const linhas = [
+    { rotulo: "Tema", valor: form.tema || "—", etapa: 1 },
+    { rotulo: "Turma", valor: [form.disciplina, form.nivel, ano, form.turma].filter(Boolean).join(" · "), etapa: 1 },
+    { rotulo: "BNCC", valor: form.bncc || "Sem habilidade escolhida", etapa: 1 },
+    { rotulo: "Estilo", valor: [dificuldade, `${form.questoes} exercícios`, capa].filter(Boolean).join(" · "), etapa: 2 },
+  ];
+  return (
+    <div className="rounded-2xl bg-creme/80 p-4 ring-1 ring-[#e6dcc8] sm:p-5">
+      <p className="text-[13px] font-bold uppercase tracking-wide text-coral-escuro">Seu pedido</p>
+      <dl className="mt-3 divide-y divide-[#e6dcc8]">
+        {linhas.map((l) => (
+          <div key={l.rotulo} className="flex items-start gap-3 py-2.5">
+            <dt className="w-16 flex-none text-[13px] font-semibold text-tinta">{l.rotulo}</dt>
+            <dd className="min-w-0 flex-1 text-[15px] font-semibold text-marinho">{l.valor}</dd>
+            <button type="button" onClick={() => irPara(l.etapa)} className="flex-none text-[13px] font-semibold text-roxo underline-offset-4 hover:underline">
+              Alterar<span className="sr-only"> {l.rotulo.toLowerCase()}</span>
+            </button>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+// Tela de "gerando": mostra em que parte a geração está, com o que o app realmente faz.
+function TelaGerando({ loading, progresso, loadingImagem }) {
+  const passos = [
+    { rotulo: "Conectando à IA", feito: loading ? progresso > 0 : true, ativo: loading && progresso === 0 },
+    {
+      rotulo:
+        loading && progresso > 0
+          ? `Escrevendo conteúdo e exercícios · ${(progresso / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil caracteres`
+          : "Escrevendo conteúdo e exercícios",
+      feito: !loading,
+      ativo: loading && progresso > 0,
+    },
+    { rotulo: "Conferindo contas, gabarito, unidades e BNCC", feito: !loading, ativo: false },
+    { rotulo: "Desenhando a ilustração", feito: false, ativo: !loading && loadingImagem },
+  ];
+  return (
+    <div className="mt-6 rounded-2xl bg-white p-4 ring-1 ring-roxo/20 sm:p-5" aria-hidden="true">
+      <p className="flex items-center gap-2 text-[15px] font-bold text-marinho">
+        <Loader2 className="h-4 w-4 animate-spin text-roxo motion-reduce:animate-none" /> Montando o seu material
+      </p>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-roxo-claro">
+        <div className="app-barra-andando h-full w-2/5 rounded-full bg-roxo" />
+      </div>
+      <ul className="mt-4 space-y-2.5">
+        {passos.map((p) => (
+          <li key={p.rotulo.slice(0, 20)} className={`flex items-center gap-2.5 text-[14px] ${p.feito || p.ativo ? "text-marinho" : "text-tinta/60"}`}>
+            <span
+              className={`flex h-6 w-6 flex-none items-center justify-center rounded-full ${
+                p.feito ? "bg-verde text-white" : p.ativo ? "bg-roxo-claro text-roxo" : "bg-creme-escuro"
+              }`}
+            >
+              {p.feito ? <Check className="h-3.5 w-3.5" /> : p.ativo ? <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" /> : null}
+            </span>
+            <span className={p.ativo ? "font-semibold" : ""}>{p.rotulo}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
