@@ -43,3 +43,8 @@ Rota só de teste: `/api/pagamentos/zerar-teste` (administrador, fora da produç
 - Decidir se estorno **parcial** deve cortar o Pro. Hoje não corta, porque o Asaas mantém "Recebida".
 - Termos: reembolso em 7 dias (CDC, art. 49) e o que acontece com o estorno parcial **[advogado]**.
 - CNPJ/MEI: Paulo decidiu não abrir agora. Os Termos usam o CPF. Venda a prefeituras exige CNPJ **[contador]**.
+
+## Dias de Pro grátis (sem Asaas)
+- **Por e-mail:** `/admin/piloto` → "Professores do piloto", N dias (padrão 60).
+- **Por link de campanha:** `/admin/piloto` → "Campanhas" cria `edugera.app/convite/<CÓDIGO>` com dias, limite de contas e data de fim (`lib/campanhas.js`, migração 0011). Cada conta usa uma campanha só; quem já paga o Pro não usa. A campanha pode ser encerrada e reaberta. Termos, seção 4 (23/10/2026).
+- As duas formas criam uma assinatura `manual`. Ao fim do prazo, a conta volta sozinha ao Grátis.

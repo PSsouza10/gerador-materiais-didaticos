@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { ehAdmin } from "@/lib/uso";
 import FormPiloto from "@/components/ciclo/FormPiloto";
+import Campanhas from "@/components/ciclo/Campanhas";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -21,12 +22,13 @@ export default async function PaginaPiloto() {
         </a>
         <section className="mt-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wide text-indigo-600">Painel administrativo</p>
-          <h1 className="mt-2 text-2xl font-extrabold text-slate-900">Piloto do Ciclo de Recomposição</h1>
+          <h1 className="mt-2 text-2xl font-extrabold text-slate-900">Piloto e campanhas</h1>
           <p className="mt-2 text-sm text-slate-600">
             Marque quem pode criar cadernos (coordenação) e libere o Pro, sem cobrança, para os professores do piloto: a correção pela foto é do Pro. Os e-mails não são
             guardados; o banco recebe só o código da conta.
           </p>
           <FormPiloto />
+          <Campanhas />
         </section>
       </div>
     </main>

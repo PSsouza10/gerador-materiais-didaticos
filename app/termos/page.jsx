@@ -83,6 +83,12 @@ export default function TermosDeUso() {
         <li>
           Mudanças de preço são avisadas antes de valer e não alteram o período que você já pagou.
         </li>
+        <li>
+          <b>Dias de Pro grátis (campanhas e pilotos):</b> o EduGera pode oferecer dias de Pro sem cobrança por um link de
+          campanha ou por liberação da nossa equipe. Não pedimos cartão; ao fim do prazo a conta volta sozinha para o plano
+          gratuito, sem nenhuma cobrança. Cada conta Google ativa uma campanha só; cada campanha tem data de fim e número de vagas
+          informados no próprio link e pode ser encerrada antes, sem afetar quem já ativou. Quem já tem o Pro pago continua com ele.
+        </li>
       </Lista>
 
       <H2>5. Conteúdo gerado por IA</H2>
