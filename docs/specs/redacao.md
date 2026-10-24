@@ -1,6 +1,8 @@
 > **Decisões do Paulo (24/10/2026):** o construtor guiado é **só do Pro** (substitui "Construtor: ilimitado no Grátis" das seções 3 e 5). Implementação da Fase 1: `lib/redacao.js`, `lib/redacaoEtapas.js`, `lib/redacoesBanco.js`, `app/redacao/*`, `app/api/redacao/*`, migração 0013. Grátis: 1 correção/mês até 2 laudas (60 linhas estimadas); Pro: 100/mês (uso justo).
 >
 > **Ampliação pedida pelo Paulo (24/10/2026), no mesmo PR:** gêneros com etapas e rubrica próprias (dissertação, artigo de opinião, conto, relato pessoal, carta, notícia — `lib/redacaoEtapas.js`; no perfil Escola); ENEM com as 5 competências de 0 a 200 (total 1000); e a correção na **foto da folha** (item 10.1 antecipado): a IA lê linha a linha (`/api/redacao/ler-foto`, `lib/redacaoFoto.js`), a pessoa confere a transcrição, e a folha volta marcada em vermelho, com a correção escrita em letra cursiva acima do erro, nota circulada e bilhete do professor (`components/redacao/FolhaCorrigida.jsx`, PDF). A foto não é guardada. Migração 0014 (coluna `genero`).
+>
+> **Letra do professor (24/10/2026):** em `/redacao/minha-letra` o professor imprime a folha-modelo (108 caracteres, 4 quadrados pretos nos cantos), preenche à caneta e fotografa. O navegador acha os cantos, corrige a perspectiva e recorta cada letra (`lib/visaoModelo.js`, sem IA); só as letras recortadas vão para a conta (tabela `letras_professor`, migração 0015), e só ela usa. As correções, a nota e o bilhete passam a sair com essa letra. Também dá para escrever cada correção ou um recado com o dedo/caneta na tela (`PadMao`).
 
 # SPEC — Módulo de Redação do EduGera
 

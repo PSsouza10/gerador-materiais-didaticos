@@ -45,6 +45,14 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
   const [paginas, setPaginas] = useState([]);
   const [leitura, setLeitura] = useState(null); // { lidaEm, token }
   const [lendo, setLendo] = useState("");
+  const [glifos, setGlifos] = useState(null); // "Minha letra" do professor, se cadastrada
+
+  useEffect(() => {
+    fetch("/api/redacao/letra")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setGlifos(j?.glifos || null))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (idSalvo) {
@@ -250,7 +258,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
           )}
         </div>
       )}
-      {resultado && modo === "foto" && fotos.length > 0 && <FolhaCorrigida fotos={fotos} paginas={paginas} resultado={resultado} />}
+      {resultado && modo === "foto" && fotos.length > 0 && <FolhaCorrigida fotos={fotos} paginas={paginas} resultado={resultado} glifos={glifos} />}
       {resultado && <Resultado r={resultado} />}
     </div>
   );

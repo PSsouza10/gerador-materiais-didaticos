@@ -1,22 +1,30 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, PenLine } from "lucide-react";
 import { localizarErros } from "@/lib/redacaoFoto";
+import { escreverComLetra } from "@/lib/letraProfessor";
 import { desenhoDaMarca, notaDaMarca, TINTA, FONTE_MAO } from "./desenho";
+import { EscritaSvg, desenharEscrita } from "./escrita";
+import PadMao from "./PadMao";
 
 // A redação do aluno, na própria foto, corrigida "à mão": erro circulado ou sublinhado em
-// vermelho, a correção escrita acima em letra cursiva, a nota circulada no alto e um bilhete
-// do professor no fim. As marcas podem ser arrastadas se caírem fora do lugar.
+// vermelho, a correção escrita acima, a nota circulada no alto e um bilhete do professor no fim.
+// A escrita usa, nesta ordem: o que o professor escreveu na tela (PadMao), a letra cadastrada
+// dele ("Minha letra") ou a letra cursiva padrão. As marcas podem ser arrastadas.
 // Nada aqui vai para o servidor: a foto fica só no aparelho.
 const virgula = (n) => String(n).replace(".", ",");
 const MAO = `'${FONTE_MAO}', 'Segoe Print', 'Bradley Hand', cursive`;
+const BILHETE = { W: 1000, margem: 50, entre: 54, tamanho: 17 };
 
-export default function FolhaCorrigida({ fotos, paginas, resultado }) {
+export default function FolhaCorrigida({ fotos, paginas, resultado, glifos = null }) {
   const marcas = useMemo(() => localizarErros(paginas, resultado.errosPortugues), [paginas, resultado]);
   const [desloc, setDesloc] = useState({});
+  const [mao, setMao] = useState({}); // { [erro]: {src,w,h}, recado: {src,w,h} }
+  const [pad, setPad] = useState(null);
   const [baixando, setBaixando] = useState(false);
   const arraste = useRef(null);
   const semLugar = resultado.errosPortugues.filter((_, k) => !marcas.some((m) => m.erro === k));
+  const escrita = { glifos, mao };
 
   function iniciar(e, k, svg, W) {
     e.preventDefault();
@@ -39,12 +47,12 @@ export default function FolhaCorrigida({ fotos, paginas, resultado }) {
       const { jsPDF } = await import("jspdf");
       const pdf = new jsPDF({ unit: "mm", format: "a4" });
       for (let p = 0; p < fotos.length; p++) {
-        const c = await paginaEmCanvas(fotos[p], p, marcas, desloc, resultado);
+        const c = await paginaEmCanvas(fotos[p], p, marcas, desloc, resultado, escrita);
         if (p) pdf.addPage();
         colocar(pdf, c);
       }
       pdf.addPage();
-      colocar(pdf, bilheteEmCanvas(resultado, semLugar));
+      colocar(pdf, await bilheteEmCanvas(resultado, semLugar, escrita));
       pdf.save("redacao-corrigida.pdf");
     } finally {
       setBaixando(false);
@@ -61,16 +69,75 @@ export default function FolhaCorrigida({ fotos, paginas, resultado }) {
           {baixando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Baixar PDF
         </button>
       </div>
-      <p className="mt-1 text-xs text-slate-500">Marca fora do lugar? Arraste com o dedo ou o mouse.</p>
+      <p className="mt-1 text-xs text-slate-500">
+        Marca fora do lugar? Arraste. {glifos ? "As correções saem com a sua letra." : <a href="/redacao/minha-letra" className="font-semibold text-indigo-600 hover:underline">Quer que saiam com a sua letra?</a>}
+      </p>
       {fotos.map((f, p) => (
-        <Pagina key={p} foto={f} p={p} marcas={marcas.filter((m) => m.pagina === p)} resultado={resultado} desloc={desloc} iniciar={iniciar} mover={mover} soltar={soltar} />
+        <Pagina key={p} foto={f} p={p} marcas={marcas.filter((m) => m.pagina === p)} resultado={resultado} desloc={desloc} escrita={escrita} iniciar={iniciar} mover={mover} soltar={soltar} />
       ))}
-      <Bilhete resultado={resultado} semLugar={semLugar} />
+
+      {marcas.length > 0 && (
+        <details className="mt-3 rounded-xl border border-slate-200 p-3 text-sm">
+          <summary className="cursor-pointer font-semibold text-slate-800">Escrever as correções com o dedo ou a caneta</summary>
+          <ul className="mt-2 space-y-1">
+            {marcas.map((m) => {
+              const e = resultado.errosPortugues[m.erro];
+              return (
+                <li key={m.erro} className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 text-slate-700">
+                    “{e.trecho}” → <b>{notaDaMarca(e)}</b>
+                  </span>
+                  <button type="button" onClick={() => setPad({ chave: m.erro, titulo: `Escreva a correção de “${e.trecho}”` })} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-800">
+                    <PenLine className="h-3.5 w-3.5" /> {mao[m.erro] ? "Reescrever" : "Escrever à mão"}
+                  </button>
+                  {mao[m.erro] && (
+                    <button type="button" onClick={() => setMao(({ [m.erro]: _, ...resto }) => resto)} className="text-xs text-slate-500 hover:underline">
+                      desfazer
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      )}
+
+      <Bilhete resultado={resultado} semLugar={semLugar} escrita={escrita} />
+      <button type="button" onClick={() => setPad({ chave: "recado", titulo: "Recado à mão para o aluno (vai no fim do bilhete)" })} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:underline">
+        <PenLine className="h-4 w-4" /> {mao.recado ? "Reescrever o recado à mão" : "Escrever um recado à mão"}
+      </button>
+
+      {pad && (
+        <PadMao
+          titulo={pad.titulo}
+          aoFechar={() => setPad(null)}
+          aoUsar={(img) => {
+            setMao((m) => ({ ...m, [pad.chave]: img }));
+            setPad(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function Pagina({ foto, p, marcas, resultado, desloc, iniciar, mover, soltar }) {
+// Correção escrita acima do erro: mão livre > letra do professor > fonte cursiva
+function EscritaDaMarca({ erro, k, g, escrita }) {
+  const livre = escrita.mao[k];
+  if (livre) {
+    const h = g.fonte * 1.5;
+    const w = (livre.w / livre.h) * h;
+    return <image href={livre.src} x={g.textoX} y={g.textoY - h * 0.85} width={w} height={h} />;
+  }
+  if (escrita.glifos) return <EscritaSvg texto={notaDaMarca(erro)} glifos={escrita.glifos} tamanho={g.fonte * 0.55} x={g.textoX} base={g.textoY} />;
+  return (
+    <text x={g.textoX} y={g.textoY} fill={TINTA} fontFamily={MAO} fontSize={g.fonte} fontWeight={700}>
+      {notaDaMarca(erro)}
+    </text>
+  );
+}
+
+function Pagina({ foto, p, marcas, resultado, desloc, escrita, iniciar, mover, soltar }) {
   const ref = useRef(null);
   const { w: W, h: H } = foto;
   return (
@@ -90,31 +157,39 @@ function Pagina({ foto, p, marcas, resultado, desloc, iniciar, mover, soltar }) 
                 <path d={g.d} fill="none" stroke={TINTA} strokeWidth={g.traco} strokeLinecap="round" />
               )}
               <rect x={g.x1} y={g.y1 - g.fonte * 1.1} width={Math.max(g.x2 - g.x1, g.fonte * 3)} height={g.fonte * 2.2} fill="transparent" />
-              <text x={g.textoX} y={g.textoY} fill={TINTA} fontFamily={MAO} fontSize={g.fonte} fontWeight={700}>
-                {notaDaMarca(erro)}
-              </text>
+              <EscritaDaMarca erro={erro} k={m.erro} g={g} escrita={escrita} />
             </g>
           );
         })}
-        {p === 0 && <NotaCirculada W={W} H={H} resultado={resultado} />}
+        {p === 0 && <NotaCirculada W={W} H={H} resultado={resultado} glifos={escrita.glifos} />}
       </svg>
     </div>
   );
 }
 
-function NotaCirculada({ W, H, resultado }) {
+const geometriaNota = (W, H) => {
   const f = Math.min(W, H) / 15;
-  const cx = W - f * 2.2;
-  const cy = f * 1.5;
+  return { f, cx: W - f * 2.2, cy: f * 1.5 };
+};
+
+function NotaCirculada({ W, H, resultado, glifos }) {
+  const { f, cx, cy } = geometriaNota(W, H);
+  const nota = virgula(resultado.notaTotal);
   return (
     <g>
       <ellipse cx={cx} cy={cy} rx={f * 1.9} ry={f * 1.05} transform={`rotate(-6 ${cx} ${cy})`} fill="rgba(255,255,255,0.55)" stroke={TINTA} strokeWidth={Math.max(3, f / 14)} />
-      <text x={cx} y={cy + f * 0.32} textAnchor="middle" fill={TINTA} fontFamily={MAO} fontSize={f} fontWeight={700}>
-        {virgula(resultado.notaTotal)}
-      </text>
-      <text x={cx + f * 1.45} y={cy + f * 0.95} textAnchor="middle" fill={TINTA} fontFamily={MAO} fontSize={f * 0.4} fontWeight={700}>
-        /{resultado.notaMaxima}
-      </text>
+      {glifos ? (
+        <EscritaSvg texto={`${nota}/${resultado.notaMaxima}`} glifos={glifos} tamanho={f * 0.36} x={cx - f * 1.45} base={cy + f * 0.3} />
+      ) : (
+        <>
+          <text x={cx} y={cy + f * 0.32} textAnchor="middle" fill={TINTA} fontFamily={MAO} fontSize={f} fontWeight={700}>
+            {nota}
+          </text>
+          <text x={cx + f * 1.45} y={cy + f * 0.95} textAnchor="middle" fill={TINTA} fontFamily={MAO} fontSize={f * 0.4} fontWeight={700}>
+            /{resultado.notaMaxima}
+          </text>
+        </>
+      )}
     </g>
   );
 }
@@ -122,26 +197,63 @@ function NotaCirculada({ W, H, resultado }) {
 function linhasDoBilhete(r, semLugar) {
   const faltam = r.elementos?.faltam || [];
   return [
+    `Nota: ${virgula(r.notaTotal)} / ${r.notaMaxima}`,
     ...(r.bilhete ? [r.bilhete] : []),
     ...r.criterios.map((c) => `${c.nome.split(/[(:]/)[0].trim()}: ${virgula(c.nota)} de ${virgula(c.max)}`),
     ...(faltam.length ? [`${r.elementos.titulo}: faltou ${faltam.join(", ")}.`] : []),
-    ...semLugar.slice(0, 6).map((e) => `"${e.trecho}" → ${e.correcao}`),
+    ...semLugar.slice(0, 6).map((e) => `"${e.trecho}": ${e.correcao}`),
     ...(r.proximoPasso ? [`Para a próxima: ${r.proximoPasso}`] : []),
   ];
 }
 
-function Bilhete({ resultado: r, semLugar }) {
+// Bilhete com a letra do professor: cada linha do texto é quebrada na largura da folha
+function layoutBilhete(r, semLugar, glifos) {
+  const { W, margem, entre, tamanho } = BILHETE;
+  let y = margem + entre;
+  const blocos = [];
+  for (const linha of linhasDoBilhete(r, semLugar)) {
+    const l = escreverComLetra(linha, glifos, { tamanho, x0: margem, base: y, larguraMax: W - 2 * margem, entreLinhas: entre });
+    blocos.push({ texto: linha, base: y });
+    y += l.altura;
+  }
+  return { blocos, altura: y + margem };
+}
+
+function Bilhete({ resultado: r, semLugar, escrita }) {
+  const recado = escrita.mao.recado;
+  if (escrita.glifos) {
+    const { W, margem, entre, tamanho } = BILHETE;
+    const { blocos, altura } = layoutBilhete(r, semLugar, escrita.glifos);
+    const hRecado = recado ? Math.min(220, (recado.h / recado.w) * (W - 2 * margem)) : 0;
+    const H = altura + hRecado;
+    return (
+      <div className="mt-4 overflow-hidden rounded-xl border border-amber-200 shadow-sm">
+        <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
+          <rect width={W} height={H} fill="#fffbea" />
+          {Array.from({ length: Math.floor(H / entre) }, (_, i) => (
+            <line key={i} x1={20} x2={W - 20} y1={margem + (i + 1) * entre + 6} y2={margem + (i + 1) * entre + 6} stroke="#e8dcc0" />
+          ))}
+          {blocos.map((b, i) => (
+            <EscritaSvg key={i} texto={b.texto} glifos={escrita.glifos} tamanho={tamanho} x={margem} base={b.base} larguraMax={W - 2 * margem} entreLinhas={entre} />
+          ))}
+          {recado && <image href={recado.src} x={margem} y={altura - margem} width={(recado.w / recado.h) * hRecado} height={hRecado} />}
+        </svg>
+        <p className="bg-[#fffbea] px-5 pb-3 text-[11px] text-slate-500">{r.aviso}</p>
+      </div>
+    );
+  }
   return (
     <div
       className="mt-4 rounded-xl border border-amber-200 p-5 shadow-sm"
       style={{ background: "repeating-linear-gradient(#fffbea, #fffbea 33px, #e8dcc0 34px)", fontFamily: MAO, color: TINTA, fontSize: 24, lineHeight: "34px" }}
     >
-      <p style={{ fontSize: 30, fontWeight: 700 }}>
-        Nota: {virgula(r.notaTotal)} / {r.notaMaxima}
-      </p>
       {linhasDoBilhete(r, semLugar).map((l, i) => (
-        <p key={i}>{l}</p>
+        <p key={i} style={i === 0 ? { fontSize: 30, fontWeight: 700 } : undefined}>
+          {l}
+        </p>
       ))}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {recado && <img src={recado.src} alt="Recado do professor" className="mt-2 max-h-40 w-auto" />}
       <p className="mt-2 font-sans text-[11px] leading-4 text-slate-500">{r.aviso}</p>
     </div>
   );
@@ -157,7 +269,18 @@ function carregar(url) {
   });
 }
 
-async function paginaEmCanvas(foto, p, marcas, desloc, r) {
+async function escreverNoCanvas(x, texto, escrita, livre, { tamanhoFonte, tamanhoLetra, px, base }) {
+  if (livre) {
+    const h = tamanhoFonte * 1.5;
+    x.drawImage(await carregar(livre.src), px, base - h * 0.85, (livre.w / livre.h) * h, h);
+  } else if (escrita.glifos) await desenharEscrita(x, texto, escrita.glifos, { tamanho: tamanhoLetra, x0: px, base });
+  else {
+    x.font = `700 ${tamanhoFonte}px ${MAO}`;
+    x.fillText(texto, px, base);
+  }
+}
+
+async function paginaEmCanvas(foto, p, marcas, desloc, r, escrita) {
   const img = await carregar(foto.url);
   const { w: W, h: H } = foto;
   const c = document.createElement("canvas");
@@ -171,30 +294,32 @@ async function paginaEmCanvas(foto, p, marcas, desloc, r) {
     const g = desenhoDaMarca(m, erro.tipo, W, H, m.erro, desloc[m.erro]);
     x.lineWidth = g.traco;
     x.beginPath();
-    if (g.forma === "circulo") x.ellipse(g.cx, g.cy, g.rx, g.ry, (g.rot * Math.PI) / 180, 0, 2 * Math.PI);
-    else x.stroke(new Path2D(g.d));
-    x.stroke();
-    x.font = `700 ${g.fonte}px ${MAO}`;
-    x.fillText(notaDaMarca(erro), g.textoX, g.textoY);
+    if (g.forma === "circulo") {
+      x.ellipse(g.cx, g.cy, g.rx, g.ry, (g.rot * Math.PI) / 180, 0, 2 * Math.PI);
+      x.stroke();
+    } else x.stroke(new Path2D(g.d));
+    await escreverNoCanvas(x, notaDaMarca(erro), escrita, escrita.mao[m.erro], { tamanhoFonte: g.fonte, tamanhoLetra: g.fonte * 0.55, px: g.textoX, base: g.textoY });
   }
   if (p === 0) {
-    const f = Math.min(W, H) / 15;
-    const cx = W - f * 2.2;
-    const cy = f * 1.5;
+    const { f, cx, cy } = geometriaNota(W, H);
     x.lineWidth = Math.max(3, f / 14);
     x.beginPath();
     x.ellipse(cx, cy, f * 1.9, f * 1.05, (-6 * Math.PI) / 180, 0, 2 * Math.PI);
     x.stroke();
-    x.textAlign = "center";
-    x.font = `700 ${f}px ${MAO}`;
-    x.fillText(virgula(r.notaTotal), cx, cy + f * 0.32);
-    x.font = `700 ${f * 0.4}px ${MAO}`;
-    x.fillText(`/${r.notaMaxima}`, cx + f * 1.45, cy + f * 0.95);
+    if (escrita.glifos) await desenharEscrita(x, `${virgula(r.notaTotal)}/${r.notaMaxima}`, escrita.glifos, { tamanho: f * 0.36, x0: cx - f * 1.45, base: cy + f * 0.3 });
+    else {
+      x.textAlign = "center";
+      x.font = `700 ${f}px ${MAO}`;
+      x.fillText(virgula(r.notaTotal), cx, cy + f * 0.32);
+      x.font = `700 ${f * 0.4}px ${MAO}`;
+      x.fillText(`/${r.notaMaxima}`, cx + f * 1.45, cy + f * 0.95);
+      x.textAlign = "start";
+    }
   }
   return c;
 }
 
-function bilheteEmCanvas(r, semLugar) {
+async function bilheteEmCanvas(r, semLugar, escrita) {
   const W = 1240;
   const H = 1754; // A4 em 150 dpi
   const c = document.createElement("canvas");
@@ -211,16 +336,30 @@ function bilheteEmCanvas(r, semLugar) {
     x.stroke();
   }
   x.fillStyle = TINTA;
-  x.font = `700 60px ${MAO}`;
-  x.fillText(`Nota: ${virgula(r.notaTotal)} / ${r.notaMaxima}`, 80, 120);
-  x.font = `500 40px ${MAO}`;
-  let y = 188;
-  for (const linha of linhasDoBilhete(r, semLugar))
-    for (const parte of quebrar(x, linha, W - 160)) {
-      if (y > H - 120) break;
-      x.fillText(parte, 80, y);
-      y += 56;
+  let y = 120;
+  if (escrita.glifos) {
+    for (const linha of linhasDoBilhete(r, semLugar)) {
+      const opc = { tamanho: 25, x0: 80, base: y, larguraMax: W - 160, entreLinhas: 56 };
+      const l = escreverComLetra(linha, escrita.glifos, opc);
+      if (y + l.altura > H - 300) break;
+      await desenharEscrita(x, linha, escrita.glifos, opc);
+      y += l.altura;
     }
+  } else {
+    linhasDoBilhete(r, semLugar).forEach((linha, i) => {
+      x.font = i === 0 ? `700 60px ${MAO}` : `500 40px ${MAO}`;
+      for (const parte of quebrar(x, linha, W - 160)) {
+        if (y > H - 300) return;
+        x.fillText(parte, 80, y);
+        y += 56;
+      }
+    });
+  }
+  const recado = escrita.mao.recado;
+  if (recado) {
+    const h = Math.min(260, (recado.h / recado.w) * (W - 160));
+    x.drawImage(await carregar(recado.src), 80, Math.min(y, H - 120 - h), (recado.w / recado.h) * h, h);
+  }
   x.fillStyle = "#64748b";
   x.font = "22px sans-serif";
   x.fillText(r.aviso, 80, H - 60);

@@ -31,6 +31,9 @@ export default async function PaginaRedacao() {
           <span className="mt-1 block text-sm text-slate-600">Fotografe a redação escrita à mão. Ela volta corrigida em vermelho, como se o professor tivesse corrigido.</span>
         </a>
       </div>
+      <p className="mt-3 text-sm text-slate-600">
+        Professor: <a href="/redacao/minha-letra" className="font-semibold text-indigo-600 hover:underline">cadastre a sua letra</a> e as correções na foto saem escritas com ela.
+      </p>
       {!usuario && authConfigurado && <Entrar voltarPara="/redacao" />}
       {historico && (
         <div className="mt-8">
