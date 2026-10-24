@@ -1344,6 +1344,40 @@ export default function GeradorApostilas() {
                 imagemNaCapa={capaEfetiva !== "nenhuma"}
               />
             </PreviewEscalado>
+
+            {/* Fim da revisão: as ações ficam onde a leitura termina */}
+            {gerado && !loading && (
+              <div className="app-casca nao-imprimir mt-5 rounded-[22px] bg-white p-5 ring-1 ring-[#e6dcc8] shadow-sm sm:p-6">
+                <p className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-verde-escuro">
+                  <Check className="h-4 w-4" aria-hidden="true" /> Revisou tudo?
+                </p>
+                <h2 className="app-titulo mt-1 text-[1.4rem] text-marinho">Material pronto para a turma</h2>
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                  <button type="button" onClick={() => handleBaixarPdf("aluno")} disabled={!!baixandoPdf} className="app-btn-principal flex min-h-[52px] items-center justify-center gap-2 rounded-full px-5 font-bold text-white disabled:opacity-60">
+                    {baixandoPdf === "aluno" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />} PDF do aluno
+                  </button>
+                  {temExercicios && (
+                    <button type="button" onClick={() => handleBaixarPdf("professor")} disabled={!!baixandoPdf} className="flex min-h-[52px] items-center justify-center gap-2 rounded-full border-[1.5px] border-marinho/80 bg-white px-5 font-bold text-marinho hover:bg-creme disabled:opacity-60">
+                      {baixandoPdf === "professor" ? <Loader2 className="h-5 w-5 animate-spin" /> : <KeyRound className="h-5 w-5" />} PDF do professor (com gabarito)
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <button type="button" onClick={() => window.print()} className="btn-prev">
+                    <Printer className="h-3.5 w-3.5" /> Imprimir
+                  </button>
+                  {listaEconomica && temExercicios && (
+                    <button type="button" onClick={() => handleBaixarPdf("lista")} disabled={!!baixandoPdf} className="btn-prev">
+                      {baixandoPdf === "lista" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />} Lista · 1 página
+                    </button>
+                  )}
+                  <button type="button" onClick={handleCopiarLink} disabled={compartilhar.estado === "salvando"} className="btn-prev">
+                    {compartilhar.estado === "copiado" ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                    {compartilhar.estado === "copiado" ? "Link copiado!" : "Copiar link para a turma"}
+                  </button>
+                </div>
+              </div>
+            )}
             {gerado && listaEconomica && temExercicios && (
               <div aria-hidden="true" style={{ position: "fixed", left: "-10000px", top: 0, zIndex: -1 }}>
                 <ListaExerciciosUmaPagina ref={listaRef} form={formPreview} material={materialPreview} />
