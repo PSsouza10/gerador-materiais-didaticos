@@ -4,9 +4,9 @@ import { PROVA_PAULISTA } from "@/lib/provaPaulistaDados";
 import { SITE, slugDisciplina } from "@/lib/atividades";
 import { nomeDisciplina, linkGerador } from "@/lib/provaPaulistaSeo";
 
-const TITULO = "Simulados no padrão da Prova Paulista e do SARESP · EduGera";
+const TITULO = "Avaliação Prova Paulista e SARESP: simulados por ano e componente · EduGera";
 const DESCRICAO =
-  "Monte simulados no formato da Prova Paulista e do SARESP para cada componente e ano, alinhados à BNCC e ao Currículo Paulista, com gabarito conferido e correção da turma por habilidade.";
+  "Monte avaliações e simulados no formato da Prova Paulista e do SARESP para cada componente e ano, alinhados à BNCC e ao Currículo Paulista, com gabarito conferido e correção da turma por habilidade.";
 
 export const metadata = {
   title: TITULO,
@@ -33,7 +33,7 @@ export default function HubProvaPaulista() {
       <section className="pt-6">
         <p className="eyebrow">Prova Paulista · SARESP · BNCC</p>
         <h1 className="font-titulo mt-3 text-[2.2rem] font-semibold leading-[1.1] text-marinho sm:text-[2.8rem]">
-          Simulados no padrão da Prova Paulista para cada turma
+          Avaliação no padrão da Prova Paulista para cada turma
         </h1>
         <p className="mt-4 max-w-[64ch] text-[17px] leading-relaxed text-tinta">
           Escolha o componente e o ano para ver as habilidades da BNCC e montar uma avaliação de múltipla escolha no formato
