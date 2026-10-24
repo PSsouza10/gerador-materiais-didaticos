@@ -236,7 +236,7 @@ function Exemplos() {
     <section id="exemplos" aria-labelledby="titulo-exemplos" className="grao bg-creme-escuro py-20 sm:py-28">
       <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
         <Titulo2 eyebrow="Exemplo real" id="titulo-exemplos">
-          Capa ilustrada e conteúdo prontos para a primeira página
+          A capa que combina com a sua turma e o conteúdo pronto para ensinar
         </Titulo2>
         <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-tinta">
           Uma ficha de Matemática do 7º ano sobre volume e capacidade, do jeito que o EduGera monta.
@@ -316,49 +316,6 @@ function Bncc() {
                 <h3 className="text-lg font-bold">{titulo}</h3>
               </div>
               <p className="mt-3 leading-relaxed text-white/75">{texto}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-const CAPAS = [
-  { img: "/vitrine/capa-infografico.webp", nome: "Infográfico", texto: "Colorida, com fórmulas e personagens." },
-  { img: "/vitrine/capa-escolar.webp", nome: "Escolar", texto: "Clara, com ilustração e espaço para o nome." },
-  { img: "/vitrine/capa-escura.webp", nome: "Escura", texto: "Visual de projeto, com o resumo do pedido." },
-];
-
-function Demonstracao() {
-  return (
-    <section aria-labelledby="titulo-demo" className="py-20 sm:py-28">
-      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
-        <Titulo2 eyebrow="Demonstração" id="titulo-demo" centro>
-          O mesmo conteúdo, a capa que combina com a sua turma
-        </Titulo2>
-        <p className="mx-auto mt-5 max-w-[640px] text-center text-lg leading-relaxed text-tinta">
-          Três estilos de capa para a mesma ficha de exemplo — ou nenhuma capa, para economizar papel.
-        </p>
-        <ul className="mt-14 grid gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-10">
-          {CAPAS.map((c, i) => (
-            <li key={c.nome} className={i === 1 ? "sm:-translate-y-6" : ""}>
-              <figure>
-                <div className="folha-sombra overflow-hidden bg-white transition-transform duration-300 hover:-translate-y-1">
-                  <Image
-                    src={c.img}
-                    width={760}
-                    height={1076}
-                    sizes="(min-width: 640px) 33vw, 90vw"
-                    alt={`Capa estilo ${c.nome} da ficha “Volume e Capacidade no Dia a Dia”.`}
-                    className="h-auto w-full"
-                  />
-                </div>
-                <figcaption className="mt-5 text-center">
-                  <span className="block text-lg font-bold text-marinho">Capa {c.nome}</span>
-                  <span className="mt-1 block text-[15px] text-tinta">{c.texto}</span>
-                </figcaption>
-              </figure>
             </li>
           ))}
         </ul>
@@ -534,7 +491,6 @@ export default function Fachada() {
         <Exemplos />
         <Beneficios />
         <Bncc />
-        <Demonstracao />
         <Faq />
         <ChamadaFinal />
       </main>
