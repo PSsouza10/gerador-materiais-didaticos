@@ -27,18 +27,24 @@ function useMenosMovimento() {
   return menos;
 }
 
-export default function DemoAnimada() {
+export default function DemoAnimada({ aoTerminar }) {
   const caixa = useRef(null);
   const menos = useMenosMovimento();
   const [visivel, setVisivel] = useState(false);
   const [pausado, setPausado] = useState(false);
   const [fase, setFase] = useState(0);
+  // ao fechar um ciclo completo (última fase → primeira), avisa quem controla as abas
+  const faseAnterior = useRef(0);
+  useEffect(() => {
+    if (faseAnterior.current === DURACAO.length - 1 && fase === 0) aoTerminar?.();
+    faseAnterior.current = fase;
+  }, [fase, aoTerminar]);
   const [t, setT] = useState(0); // ms dentro da fase
 
   useEffect(() => {
     const el = caixa.current;
     if (!el || typeof IntersectionObserver === "undefined") return setVisivel(true);
-    const obs = new IntersectionObserver(([e]) => setVisivel(e.isIntersecting), { threshold: 0.3 });
+    const obs = new IntersectionObserver(([e]) => setVisivel(e.isIntersecting), { threshold: 0.1 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
