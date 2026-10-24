@@ -146,13 +146,13 @@ test("validação Zod: aceita números em texto, recusa resposta sem os 5 crité
   assert.equal(lista.resultado.criterios[0].nota, 1.5);
 });
 
-test("planos: correção Grátis 1/mês; construtor só no Pro", () => {
-  assert.equal(PLANOS.gratis.limites.redacoesMes, 1);
+test("planos: a Redação inteira é só do Pro (Grátis sem correções)", () => {
+  assert.equal(PLANOS.gratis.limites.redacoesMes, 0);
   assert.equal(PLANOS.gratis.construtorRedacao, false);
   assert.equal(PLANOS.pro_mensal.construtorRedacao, true);
   assert.equal(PLANO_ADMIN.construtorRedacao, true);
   const r = resumoDoUso({ mes: { redacao: 1 }, dia: {} }, { plano: PLANOS.gratis });
-  assert.deepEqual(r.redacoes, { usados: 1, limite: 1 });
+  assert.deepEqual(r.redacoes, { usados: 1, limite: 0 });
   assert.equal(r.construtorRedacao, false);
 });
 

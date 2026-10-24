@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
-import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin } from "@/lib/uso";
+import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin, temConstrutorRedacao } from "@/lib/uso";
 import { geminiJson, openaiJson, temGemini, temOpenAI, iaRealRedacao } from "@/lib/provedoresIA";
 import { bancoLigado } from "@/lib/banco";
 import { ehProducao } from "@/lib/ambiente";
@@ -31,6 +31,7 @@ async function postRota(request, _contexto, requestId) {
   if (!authConfigurado) return NextResponse.json({ error: "Login não configurado." }, { status: 503 });
   const usuario = await usuarioAtual();
   if (!usuario) return NextResponse.json({ error: "Entre com sua conta para corrigir redações." }, { status: 401 });
+  if (!(await temConstrutorRedacao(usuario.email))) return NextResponse.json({ error: "A Redação é do plano Pro. Veja em /planos.", motivo: "recurso_pro" }, { status: 403 });
 
   let body;
   try {

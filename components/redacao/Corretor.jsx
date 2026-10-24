@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Loader2, Camera, Keyboard } from "lucide-react";
-import { contarPalavras, linhasEstimadas, avisoLinhas, linhasPadrao, generoDoPerfil, PERFIS_REDACAO, GENEROS, LAUDAS_GRATIS, LINHAS_POR_LAUDA, AVISO_IA, MIN_PALAVRAS } from "@/lib/redacao";
+import { contarPalavras, linhasEstimadas, avisoLinhas, linhasPadrao, generoDoPerfil, PERFIS_REDACAO, GENEROS, AVISO_IA, MIN_PALAVRAS } from "@/lib/redacao";
 import { textoDasLinhas } from "@/lib/redacaoFoto";
 import FolhaCorrigida from "./FolhaCorrigida";
 
@@ -211,7 +211,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
             <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => lerFotos(e.target.files)} disabled={!!lendo} />
           </label>
           <p className="mt-2 text-xs text-slate-500">
-            Folha de frente, inteira, com boa luz e sem sombra. Até {LAUDAS_GRATIS} páginas no Grátis (4 no Pro). A foto não é guardada: fica só neste aparelho.
+            Folha de frente, inteira, com boa luz e sem sombra. Até 4 páginas por redação. A foto não é guardada: fica só neste aparelho.
           </p>
           {lendo && (
             <p className="mt-2 inline-flex items-center gap-2 font-semibold text-indigo-800">
@@ -238,11 +238,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
             <input type="number" min={1} max={120} value={limites.maxLinhas} onChange={(e) => setLimites((l) => ({ ...l, maxLinhas: Number(e.target.value) || 1 }))} className="w-16 rounded-lg border border-slate-300 px-2 py-1" aria-label="Máximo de linhas" />
           </div>
           {aviso && <p className="mt-2 text-sm font-semibold text-amber-800">{aviso}</p>}
-          {modo === "texto" && (
-            <p className="mt-2 text-xs text-slate-500">
-              Grátis: 1 correção por mês, até {LAUDAS_GRATIS} laudas (cerca de {LAUDAS_GRATIS * LINHAS_POR_LAUDA} linhas). O texto fica só no seu histórico e pode ser apagado.
-            </p>
-          )}
+          {modo === "texto" && <p className="mt-2 text-xs text-slate-500">O texto fica só no seu histórico e pode ser apagado.</p>}
           <button type="button" onClick={corrigir} disabled={enviando || palavras < MIN_PALAVRAS} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />} {enviando ? "Corrigindo..." : "Corrigir com IA"}
           </button>

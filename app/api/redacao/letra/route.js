@@ -4,6 +4,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { bancoLigado } from "@/lib/banco";
 import { validarGlifos } from "@/lib/letraProfessor";
 import { lerLetra, salvarLetra, apagarLetra } from "@/lib/letraBanco";
+import { temConstrutorRedacao } from "@/lib/uso";
 
 // "Minha letra" da conta: ler (GET), salvar (PUT) e apagar (DELETE). Só a própria conta.
 export const runtime = "nodejs";
@@ -32,6 +33,7 @@ async function putRota(request) {
   } catch {
     return NextResponse.json({ error: "Pedido inválido." }, { status: 400, headers: semCache });
   }
+  if (!(await temConstrutorRedacao(usuario.email))) return NextResponse.json({ error: "Minha letra é do plano Pro.", motivo: "recurso_pro" }, { status: 403, headers: semCache });
   const v = validarGlifos(body?.glifos);
   if (!v.ok) return NextResponse.json({ error: v.erro }, { status: 400, headers: semCache });
   await salvarLetra(usuario.email, v.glifos);
