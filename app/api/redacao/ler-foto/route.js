@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin } from "@/lib/uso";
-import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
+import { geminiJson, openaiJson, temGemini, temOpenAI, iaRealRedacao } from "@/lib/provedoresIA";
 import { SISTEMA_TRANSCRICAO, montarPromptTranscricao, normalizarTranscricao, MAX_FOTOS, MAX_BYTES_FOTO } from "@/lib/redacaoFoto";
 import { tokenFoto, tokenFotoConfere } from "@/lib/redacaoFotoToken";
 
@@ -53,7 +53,7 @@ async function postRota(request, _contexto, requestId) {
     token = tokenFoto(usuario.email, lidaEm);
   }
 
-  const pedido = { sistema: SISTEMA_TRANSCRICAO, prompt: montarPromptTranscricao(), temperatura: 0, arquivo: { base64, mime } };
+  const pedido = { sistema: SISTEMA_TRANSCRICAO, prompt: montarPromptTranscricao(), temperatura: 0, arquivo: { base64, mime }, forcarReal: iaRealRedacao() };
   let r = temGemini() ? await geminiJson(pedido) : { ok: false };
   if (!r.ok && temOpenAI()) r = await openaiJson({ ...pedido, modelo: process.env.MODELO_TEXTO || "gpt-4o" });
   const t = r.ok ? normalizarTranscricao(r.json) : { ok: false, erro: "A leitura da foto falhou. Tente de novo em instantes." };
