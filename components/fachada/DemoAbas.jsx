@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { BookOpenCheck, FileCheck2 } from "lucide-react";
 import DemoAnimada from "./DemoAnimada";
 import DemoCorrecao from "./DemoCorrecao";
@@ -32,6 +32,8 @@ export default function DemoAbas() {
     setAtiva(n);
     botoes.current[n]?.focus();
   };
+  // terminou uma demonstração: passa sozinho para a outra (apostila → correção → apostila)
+  const proxima = useCallback(() => setAtiva((n) => (n + 1) % ABAS.length), []);
   const aba = ABAS[ativa];
   return (
     <div>
@@ -58,7 +60,7 @@ export default function DemoAbas() {
       </div>
       <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-tinta">{aba.texto}</p>
       <div role="tabpanel" id={`painel-demo-${aba.id}`} aria-labelledby={`aba-demo-${aba.id}`} className="mt-8 sm:mt-10">
-        {aba.id === "apostila" ? <DemoAnimada /> : <DemoCorrecao />}
+        {aba.id === "apostila" ? <DemoAnimada aoTerminar={proxima} /> : <DemoCorrecao aoTerminar={proxima} />}
       </div>
     </div>
   );
