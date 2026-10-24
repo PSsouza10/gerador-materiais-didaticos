@@ -4,6 +4,7 @@ import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin } from "@/lib/uso";
 import { geminiJson, openaiJson, temGemini, temOpenAI, iaRealRedacao } from "@/lib/provedoresIA";
 import { bancoLigado } from "@/lib/banco";
+import { ehProducao } from "@/lib/ambiente";
 import { salvarRedacao } from "@/lib/redacoesBanco";
 import { tokenFotoConfere } from "@/lib/redacaoFotoToken";
 import { validarPedidoRedacao, passaDoLimiteGratis, MENSAGEM_LAUDAS, sistemaRedacao, montarPromptRedacao, normalizarRespostaRedacao } from "@/lib/redacao";
@@ -59,19 +60,26 @@ async function postRota(request, _contexto, requestId) {
   const sistema = sistemaRedacao(d.perfil, d.genero);
   const prompt = montarPromptRedacao(d);
   let final = null;
+  let motivo = "";
   for (let tentativa = 0; tentativa < 2 && !final; tentativa++) {
     const r = await pedirIA(sistema, prompt);
     if (!r.ok) {
-      console.error("Redação: IA falhou", { tentativa, status: r.status });
+      motivo = `IA ${r.status || "sem resposta"}${r.modelo ? ` (${r.modelo})` : ""}: ${String(r.erro || "").slice(0, 160)}`;
+      console.error("Redação: IA falhou", { tentativa, status: r.status, modelo: r.modelo });
       continue;
     }
     const n = normalizarRespostaRedacao(r.json, d);
     if (n.ok) final = n.resultado;
-    else console.error("Redação: resposta fora do esquema", { tentativa, erro: n.erro.slice(0, 200) });
+    else {
+      motivo = `esquema: ${n.erro.slice(0, 200)}`;
+      console.error("Redação: resposta fora do esquema", { tentativa, erro: n.erro.slice(0, 200) });
+    }
   }
   if (!final) {
     if (!daFoto) await devolverRedacao(usuario.email, requestId);
-    return NextResponse.json({ error: "A correção não saiu desta vez. Tente de novo em instantes (não contou no seu limite)." }, { status: 502 });
+    // no site de teste, mostra o motivo técnico (sem o texto do aluno) para achar o problema
+    const detalhe = ehProducao() ? "" : ` [teste: ${motivo}]`;
+    return NextResponse.json({ error: `A correção não saiu desta vez. Tente de novo em instantes (não contou no seu limite).${detalhe}` }, { status: 502 });
   }
 
   let id = null;
