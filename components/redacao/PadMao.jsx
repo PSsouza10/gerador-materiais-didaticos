@@ -72,13 +72,13 @@ export default function PadMao({ titulo, aoUsar, aoFechar }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3" role="dialog" aria-modal="true" aria-label={titulo}>
       <div className="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-xl">
-        <p className="text-sm font-bold text-slate-900">{titulo}</p>
+        <p className="text-sm font-bold text-marinho">{titulo}</p>
         <p className="text-xs text-slate-500">Escreva com o dedo ou a caneta, do tamanho que quiser.</p>
         <canvas
           ref={ref}
           width={1000}
           height={340}
-          className="mt-2 w-full touch-none rounded-xl border border-slate-300"
+          className="mt-2 w-full touch-none rounded-xl border border-[#ddd2bd]"
           style={{ background: "repeating-linear-gradient(#fffdf6, #fffdf6 38px, #eadfc8 39px)" }}
           onPointerDown={inicio}
           onPointerMove={move}
@@ -87,10 +87,10 @@ export default function PadMao({ titulo, aoUsar, aoFechar }) {
           onPointerLeave={fim}
         />
         <div className="mt-3 flex gap-2">
-          <button type="button" onClick={usar} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="button" onClick={usar} className="rounded-full app-btn-principal px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
             Usar
           </button>
-          <button type="button" onClick={limpar} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
+          <button type="button" onClick={limpar} className="rounded-full border border-[#e6dcc8] bg-white px-4 py-2 text-sm font-semibold text-slate-800">
             Limpar
           </button>
           <button type="button" onClick={aoFechar} className="ml-auto text-sm font-semibold text-slate-500 hover:underline">

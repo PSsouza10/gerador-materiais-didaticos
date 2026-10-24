@@ -64,13 +64,13 @@ export default function FolhaCorrigida({ fotos, paginas, resultado, glifos = nul
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-bold text-slate-900">Folha corrigida</h2>
-        <button type="button" onClick={baixar} disabled={baixando} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:border-indigo-300">
+        <h2 className="font-bold text-marinho">Folha corrigida</h2>
+        <button type="button" onClick={baixar} disabled={baixando} className="inline-flex items-center gap-2 rounded-full border border-[#e6dcc8] bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 hover:border-roxo">
           {baixando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Baixar PDF
         </button>
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        Marca fora do lugar? Arraste. {glifos ? "As correções saem com a sua letra." : <a href="/redacao/minha-letra" className="font-semibold text-indigo-600 hover:underline">Quer que saiam com a sua letra?</a>}
+        Marca fora do lugar? Arraste. {glifos ? "As correções saem com a sua letra." : <a href="/redacao/minha-letra" className="font-semibold text-roxo hover:underline">Quer que saiam com a sua letra?</a>}
       </p>
       {fotos.map((f, p) => (
         <Pagina key={p} foto={f} p={p} marcas={marcas.filter((m) => m.pagina === p)} resultado={resultado} desloc={desloc} escrita={escrita} iniciar={iniciar} mover={mover} soltar={soltar} />
@@ -87,7 +87,7 @@ export default function FolhaCorrigida({ fotos, paginas, resultado, glifos = nul
                   <span className="min-w-0 flex-1 text-slate-700">
                     “{e.trecho}” → <b>{notaDaMarca(e)}</b>
                   </span>
-                  <button type="button" onClick={() => setPad({ chave: m.erro, titulo: `Escreva a correção de “${e.trecho}”` })} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-800">
+                  <button type="button" onClick={() => setPad({ chave: m.erro, titulo: `Escreva a correção de “${e.trecho}”` })} className="inline-flex items-center gap-1 rounded-full border border-[#e6dcc8] bg-white px-2 py-1 text-xs font-semibold text-slate-800">
                     <PenLine className="h-3.5 w-3.5" /> {mao[m.erro] ? "Reescrever" : "Escrever à mão"}
                   </button>
                   {mao[m.erro] && (
@@ -103,7 +103,7 @@ export default function FolhaCorrigida({ fotos, paginas, resultado, glifos = nul
       )}
 
       <Bilhete resultado={resultado} semLugar={semLugar} escrita={escrita} />
-      <button type="button" onClick={() => setPad({ chave: "recado", titulo: "Recado à mão para o aluno (vai no fim do bilhete)" })} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:underline">
+      <button type="button" onClick={() => setPad({ chave: "recado", titulo: "Recado à mão para o aluno (vai no fim do bilhete)" })} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-roxo hover:underline">
         <PenLine className="h-4 w-4" /> {mao.recado ? "Reescrever o recado à mão" : "Escrever um recado à mão"}
       </button>
 

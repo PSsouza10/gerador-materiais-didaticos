@@ -103,14 +103,14 @@ export default function MinhaLetra() {
 
       <ol className="mt-5 space-y-4">
         <li>
-          <b className="text-slate-900">1. Imprima a folha-modelo</b> e escreva cada letra no quadro, com caneta escura, sobre a linha pontilhada.
-          <button type="button" onClick={() => window.print()} className="mt-2 flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:border-indigo-300">
+          <b className="text-marinho">1. Imprima a folha-modelo</b> e escreva cada letra no quadro, com caneta escura, sobre a linha pontilhada.
+          <button type="button" onClick={() => window.print()} className="mt-2 flex items-center gap-2 rounded-full border border-[#e6dcc8] bg-white px-4 py-2 font-semibold text-slate-800 hover:border-roxo">
             <Printer className="h-4 w-4" /> Imprimir folha-modelo
           </button>
         </li>
         <li>
-          <b className="text-slate-900">2. Fotografe a folha inteira</b>, de frente, com boa luz e os 4 quadrados pretos aparecendo.
-          <label className="mt-2 flex w-fit cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
+          <b className="text-marinho">2. Fotografe a folha inteira</b>, de frente, com boa luz e os 4 quadrados pretos aparecendo.
+          <label className="mt-2 flex w-fit cursor-pointer items-center gap-2 rounded-full app-btn-principal px-4 py-2 font-semibold text-white hover:brightness-110">
             <Camera className="h-4 w-4" /> Enviar a foto da folha
             <input type="file" accept="image/*" className="hidden" onChange={(e) => ler(e.target.files?.[0])} />
           </label>
@@ -119,15 +119,15 @@ export default function MinhaLetra() {
       </ol>
 
       {estado && (
-        <p className="mt-3 inline-flex items-center gap-2 font-semibold text-indigo-800">
+        <p className="mt-3 inline-flex items-center gap-2 font-semibold text-roxo-escuro">
           <Loader2 className="h-4 w-4 animate-spin" /> {estado}
         </p>
       )}
       {erro && <p className="mt-3 rounded-xl bg-rose-50 p-3 font-semibold text-rose-800">{erro}</p>}
 
       {nova && (
-        <div className="mt-5 rounded-2xl border border-indigo-200 p-4">
-          <p className="font-bold text-slate-900">Assim vão ficar as correções com a sua letra:</p>
+        <div className="mt-5 rounded-2xl border border-roxo/30 p-4">
+          <p className="font-bold text-marinho">Assim vão ficar as correções com a sua letra:</p>
           <Amostra glifos={nova} />
           {faltam.length > 0 && <p className="mt-2 text-xs text-amber-800">Não encontrei: {faltam.join(" ")}. Essas vão usar a letra mais parecida (ex.: á → a).</p>}
           <div className="mt-3 grid grid-cols-8 gap-1 sm:grid-cols-12">
@@ -137,10 +137,10 @@ export default function MinhaLetra() {
             ))}
           </div>
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={salvar} className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
+            <button type="button" onClick={salvar} className="rounded-full app-btn-principal px-4 py-2 font-semibold text-white hover:brightness-110">
               Salvar minha letra
             </button>
-            <button type="button" onClick={() => setNova(null)} className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800">
+            <button type="button" onClick={() => setNova(null)} className="rounded-full border border-[#e6dcc8] bg-white px-4 py-2 font-semibold text-slate-800">
               Descartar
             </button>
           </div>
