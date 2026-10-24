@@ -40,6 +40,7 @@ import {
   ChevronRight,
   MoreHorizontal,
   X,
+  PenLine,
 } from "lucide-react";
 import "@/components/app-identidade.css";
 import FolhaA4 from "@/components/FolhaA4";
@@ -174,6 +175,7 @@ const NAV = [
   { name: "Avaliação", curto: "Prova", icon: ClipboardCheck, descricao: "Prova de múltipla escolha no padrão Prova Paulista / SARESP." },
   { name: "Cruzadinha", curto: "Cruzada", icon: Grid3x3, descricao: "Palavras cruzadas do tema ou da habilidade, com gabarito." },
   { name: "Corrigir Prova", curto: "Corrigir", icon: FileCheck2, descricao: "Envie as fotos da prova respondida pelo aluno e a IA corrige." },
+  { name: "Redação", curto: "Redação", icon: PenLine, href: "/redacao", descricao: "Construir e corrigir redações (página própria)." },
   { name: "Minhas Apostilas", curto: "Apostilas", icon: BookMarked, descricao: "Materiais gerados neste navegador." },
   { name: "Configurações", curto: "Ajustes", icon: Settings, descricao: "Seus dados e as escolhas padrão do formulário." },
 ];
@@ -675,12 +677,12 @@ export default function GeradorApostilas() {
         </div>
 
         <nav aria-label="Seções" className="flex-1 px-3 py-5 space-y-2">
-          {NAV.map(({ name, icon: Icon }) => {
+          {NAV.map(({ name, icon: Icon, href }) => {
             const on = active === name;
             return (
               <button type="button"
                 key={name}
-                onClick={() => setActive(name)}
+                onClick={() => (href ? window.location.assign(href) : setActive(name))}
                 aria-current={on ? "page" : undefined}
                 className={`relative flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-roxo ${
                   on
@@ -1399,12 +1401,13 @@ export default function GeradorApostilas() {
               </button>
             </div>
             <ul className="grid grid-cols-2 gap-2.5">
-              {NAV.filter((n) => !NAV_CELULAR.includes(n.name)).map(({ name, icon: Icon }) => (
+              {NAV.filter((n) => !NAV_CELULAR.includes(n.name)).map(({ name, icon: Icon, href }) => (
                 <li key={name}>
                   <button
                     type="button"
                     autoFocus={name === NAV.find((n) => !NAV_CELULAR.includes(n.name))?.name}
                     onClick={() => {
+                      if (href) return window.location.assign(href);
                       setActive(name);
                       setMenuMais(false);
                       window.scrollTo({ top: 0 });
