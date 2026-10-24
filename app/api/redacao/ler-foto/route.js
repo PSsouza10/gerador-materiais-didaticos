@@ -55,7 +55,7 @@ async function postRota(request, _contexto, requestId) {
 
   const pedido = { sistema: SISTEMA_TRANSCRICAO, prompt: montarPromptTranscricao(), temperatura: 0, arquivo: { base64, mime }, forcarReal: iaRealRedacao() };
   let r = temGemini() ? await geminiJson(pedido) : { ok: false };
-  if (!r.ok && temOpenAI()) r = await openaiJson({ ...pedido, modelo: process.env.MODELO_TEXTO || "gpt-4o" });
+  if (!r.ok && temOpenAI()) r = await openaiJson({ ...pedido, modelo: process.env.MODELO_TEXTO || "gpt-4o" }); // forcarReal vai junto no pedido
   const t = r.ok ? normalizarTranscricao(r.json) : { ok: false, erro: "A leitura da foto falhou. Tente de novo em instantes." };
   if (!t.ok) {
     if (!continuacao) await devolverRedacao(usuario.email, requestId);

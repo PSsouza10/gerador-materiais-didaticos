@@ -17,9 +17,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+// Gemini primeiro; se ele falhar (sem crédito, fora do ar), tenta a OpenAI
 async function pedirIA(sistema, prompt) {
-  if (temGemini()) return geminiJson({ sistema, prompt, temperatura: 0.2, forcarReal: iaRealRedacao() });
-  return openaiJson({ sistema, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.2 });
+  const forcarReal = iaRealRedacao();
+  const g = temGemini() ? await geminiJson({ sistema, prompt, temperatura: 0.2, forcarReal }) : { ok: false, status: 0, erro: "Gemini ausente" };
+  if (g.ok || !temOpenAI()) return g;
+  const o = await openaiJson({ sistema, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.2, forcarReal });
+  return o.ok ? o : { ...o, erro: `Gemini ${g.status}; OpenAI ${o.status}: ${String(o.erro || "").slice(0, 120)}` };
 }
 
 async function postRota(request, _contexto, requestId) {
