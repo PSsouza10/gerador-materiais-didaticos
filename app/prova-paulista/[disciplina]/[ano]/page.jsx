@@ -16,7 +16,7 @@ export function generateMetadata({ params }) {
   const combo = PROVA_PAULISTA.resolverCombo(params.disciplina, params.ano);
   if (!combo) return {};
   const nome = nomeDisciplina(combo.disciplina);
-  const titulo = `Simulado Prova Paulista de ${nome} do ${combo.ano.rotulo} · EduGera`;
+  const titulo = `Avaliação Prova Paulista de ${nome} do ${combo.ano.rotulo}: simulado com gabarito · EduGera`;
   const descricao = `Monte um simulado no padrão da Prova Paulista e do SARESP de ${nome} do ${combo.ano.rotulo}: ${combo.habilidades.length} habilidades da BNCC, gabarito conferido, cartão-resposta e correção da turma por habilidade.`;
   const url = `/prova-paulista/${params.disciplina}/${params.ano}`;
   return { title: titulo, description: descricao, alternates: { canonical: url }, openGraph: { url, title: titulo, description: descricao } };
@@ -59,7 +59,7 @@ export default function PaginaProvaPaulista({ params }) {
       <section className="pt-6">
         <p className="eyebrow">Simulado · Prova Paulista e SARESP</p>
         <h1 className="font-titulo mt-3 text-[2.1rem] font-semibold leading-[1.1] text-marinho sm:text-[2.7rem]">
-          Simulado Prova Paulista de {nome} do {ano.rotulo}
+          Avaliação Prova Paulista de {nome} do {ano.rotulo}
         </h1>
         <p className="mt-4 max-w-[64ch] text-[17px] leading-relaxed text-tinta">
           Monte uma avaliação de {nome} do {ano.rotulo} no formato usado na Prova Paulista e no SARESP, escolhendo entre as{" "}
