@@ -236,10 +236,10 @@ function Exemplos() {
     <section id="exemplos" aria-labelledby="titulo-exemplos" className="grao bg-creme-escuro py-20 sm:py-28">
       <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
         <Titulo2 eyebrow="Exemplo real" id="titulo-exemplos">
-          Veja o que sai do EduGera
+          Capa ilustrada e conteúdo prontos para a primeira página
         </Titulo2>
         <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-tinta">
-          Uma ficha de Matemática do 7º ano sobre volume e capacidade, do jeito que o EduGera monta: capa, conteúdo, exercícios, gabarito e os dois PDFs.
+          Uma ficha de Matemática do 7º ano sobre volume e capacidade, do jeito que o EduGera monta.
         </p>
         <Vitrine />
       </div>

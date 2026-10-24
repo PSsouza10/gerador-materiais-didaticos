@@ -76,12 +76,15 @@ const ABAS = [
   },
 ];
 
+// Só Capa e Conteúdo: exercícios, gabarito e PDFs aparecem na demonstração "Na prática".
+const ABAS_VISIVEIS = ABAS.filter((x) => ["capa", "conteudo"].includes(x.id));
+
 export default function Vitrine() {
   const [ativa, setAtiva] = useState(0);
   const refs = useRef([]);
 
   const aoTeclar = (e) => {
-    const n = ABAS.length;
+    const n = ABAS_VISIVEIS.length;
     const prox = { ArrowRight: (ativa + 1) % n, ArrowLeft: (ativa - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
     if (prox === undefined) return;
     e.preventDefault();
@@ -89,12 +92,12 @@ export default function Vitrine() {
     refs.current[prox]?.focus();
   };
 
-  const a = ABAS[ativa];
+  const a = ABAS_VISIVEIS[ativa];
   return (
     <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
       <div>
         <div role="tablist" aria-label="Partes do material" aria-orientation="horizontal" className="-mx-1 flex flex-wrap gap-2" onKeyDown={aoTeclar}>
-          {ABAS.map((x, i) => {
+          {ABAS_VISIVEIS.map((x, i) => {
             const Icone = x.icone;
             const sel = i === ativa;
             return (
@@ -121,15 +124,14 @@ export default function Vitrine() {
           })}
         </div>
         <div className="mt-8" aria-live="polite">
-          <h3 className="font-titulo text-[1.75rem] font-semibold leading-tight text-marinho">{a.titulo}</h3>
-          <p className="mt-3 text-[17px] leading-relaxed text-tinta">{a.texto}</p>
+          <p className="text-[17px] leading-relaxed text-tinta">{a.texto}</p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-verde-claro px-3 py-1.5 text-[13px] font-semibold text-verde-escuro">
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Prévia real do EduGera, com o material de exemplo
           </p>
         </div>
       </div>
 
-      {ABAS.map((x, i) => (
+      {ABAS_VISIVEIS.map((x, i) => (
         <div
           key={x.id}
           role="tabpanel"
