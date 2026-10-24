@@ -168,7 +168,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
         setResultado(null);
         setErro(null);
       }}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold ${modo === m ? "bg-indigo-600 text-white" : "border border-slate-300 text-slate-700"}`}
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${modo === m ? "app-btn-principal text-white" : "border border-[#e6dcc8] bg-white text-marinho"}`}
     >
       <Icone className="h-4 w-4" /> {rotulo}
     </button>
@@ -183,7 +183,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <select value={perfil} onChange={(e) => trocarPerfil(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" aria-label="Para quem é a redação">
+        <select value={perfil} onChange={(e) => trocarPerfil(e.target.value)} className="rounded-full border border-[#e6dcc8] bg-white px-3 py-2 text-sm" aria-label="Para quem é a redação">
           {Object.entries(PERFIS_REDACAO).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -191,7 +191,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
           ))}
         </select>
         {perfil === "escolar" ? (
-          <select value={generoValido} onChange={(e) => trocarGenero(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" aria-label="Gênero do texto">
+          <select value={generoValido} onChange={(e) => trocarGenero(e.target.value)} className="rounded-full border border-[#e6dcc8] bg-white px-3 py-2 text-sm" aria-label="Gênero do texto">
             {Object.entries(GENEROS).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
@@ -201,12 +201,12 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
         ) : (
           <p className="self-center text-sm text-slate-600">Dissertação argumentativa{perfil === "enem" ? " · nota de 0 a 1000" : " · nota de 0 a 10"}</p>
         )}
-        <input value={tema} onChange={(e) => setTema(e.target.value)} maxLength={300} placeholder="Tema ou proposta (opcional)" className="rounded-xl border border-slate-300 px-3 py-2 text-sm sm:col-span-2" aria-label="Tema" />
+        <input value={tema} onChange={(e) => setTema(e.target.value)} maxLength={300} placeholder="Tema ou proposta (opcional)" className="rounded-full border border-[#e6dcc8] bg-white px-3 py-2 text-sm sm:col-span-2" aria-label="Tema" />
       </div>
 
       {modo === "foto" && (
-        <div className="mt-3 rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4 text-sm text-slate-700">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
+        <div className="mt-3 rounded-2xl border border-dashed border-roxo/40 bg-roxo-claro/50 p-4 text-sm text-slate-700">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full app-btn-principal px-4 py-2 font-semibold text-white hover:brightness-110">
             <Camera className="h-4 w-4" /> Fotografar ou escolher a folha
             <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => lerFotos(e.target.files)} disabled={!!lendo} />
           </label>
@@ -214,7 +214,7 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
             Folha de frente, inteira, com boa luz e sem sombra. Até 4 páginas por redação. A foto não é guardada: fica só neste aparelho.
           </p>
           {lendo && (
-            <p className="mt-2 inline-flex items-center gap-2 font-semibold text-indigo-800">
+            <p className="mt-2 inline-flex items-center gap-2 font-semibold text-roxo-escuro">
               <Loader2 className="h-4 w-4 animate-spin" /> {lendo}
             </p>
           )}
@@ -228,18 +228,18 @@ export default function Corretor({ idSalvo = null, modoInicial = "texto" }) {
 
       {(modo === "texto" || fotos.length > 0) && (
         <>
-          <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={14} placeholder="Cole ou digite a redação aqui." className="mt-3 w-full rounded-xl border border-slate-300 p-3 text-[15px] leading-relaxed" aria-label="Texto da redação" />
+          <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={14} placeholder="Cole ou digite a redação aqui." className="mt-3 w-full rounded-xl border border-[#ddd2bd] p-3 text-[15px] leading-relaxed" aria-label="Texto da redação" />
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-700">
             <span>
               {palavras} palavras · cerca de {linhas} linhas · limite
             </span>
-            <input type="number" min={1} max={120} value={limites.minLinhas} onChange={(e) => setLimites((l) => ({ ...l, minLinhas: Number(e.target.value) || 1 }))} className="w-16 rounded-lg border border-slate-300 px-2 py-1" aria-label="Mínimo de linhas" />
+            <input type="number" min={1} max={120} value={limites.minLinhas} onChange={(e) => setLimites((l) => ({ ...l, minLinhas: Number(e.target.value) || 1 }))} className="w-16 rounded-full border border-[#e6dcc8] bg-white px-2 py-1" aria-label="Mínimo de linhas" />
             <span>a</span>
-            <input type="number" min={1} max={120} value={limites.maxLinhas} onChange={(e) => setLimites((l) => ({ ...l, maxLinhas: Number(e.target.value) || 1 }))} className="w-16 rounded-lg border border-slate-300 px-2 py-1" aria-label="Máximo de linhas" />
+            <input type="number" min={1} max={120} value={limites.maxLinhas} onChange={(e) => setLimites((l) => ({ ...l, maxLinhas: Number(e.target.value) || 1 }))} className="w-16 rounded-full border border-[#e6dcc8] bg-white px-2 py-1" aria-label="Máximo de linhas" />
           </div>
           {aviso && <p className="mt-2 text-sm font-semibold text-amber-800">{aviso}</p>}
           {modo === "texto" && <p className="mt-2 text-xs text-slate-500">O texto fica só no seu histórico e pode ser apagado.</p>}
-          <button type="button" onClick={corrigir} disabled={enviando || palavras < MIN_PALAVRAS} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+          <button type="button" onClick={corrigir} disabled={enviando || palavras < MIN_PALAVRAS} className="mt-3 inline-flex items-center gap-2 rounded-full app-btn-principal px-5 py-2.5 font-semibold text-white hover:brightness-110 disabled:opacity-50">
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />} {enviando ? "Corrigindo..." : "Corrigir com IA"}
           </button>
         </>
@@ -264,7 +264,7 @@ function Resultado({ r }) {
   const el = r.elementos || (r.propostaIntervencao && { titulo: "Proposta de intervenção", itens: ["agente", "acao", "meio", "finalidade"].map((id) => ({ id, nome: id === "acao" ? "Ação" : id[0].toUpperCase() + id.slice(1), presente: !!r.propostaIntervencao[id] })), comentario: r.propostaIntervencao.comentario });
   return (
     <div className="mt-8 border-t border-slate-100 pt-6" data-testid="resultado-redacao">
-      <p className="text-3xl font-extrabold text-slate-900">
+      <p className="text-3xl font-extrabold text-marinho">
         {virgula(r.notaTotal)} <span className="text-lg font-semibold text-slate-500">/ {r.notaMaxima}</span>
       </p>
       <p className="mt-1 text-sm font-semibold text-amber-800">{r.aviso || AVISO_IA}</p>
@@ -273,13 +273,13 @@ function Resultado({ r }) {
       </p>
       {r.bilhete && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-[15px] text-slate-800">{r.bilhete}</p>}
 
-      <h2 className="mt-6 font-bold text-slate-900">Nota por critério</h2>
+      <h2 className="mt-6 font-bold text-marinho">Nota por critério</h2>
       <ul className="mt-2 space-y-2">
         {r.criterios.map((c) => (
           <li key={c.id} className="rounded-xl border border-slate-200 p-3 text-sm">
             <div className="flex items-start justify-between gap-3">
-              <b className="text-slate-900">{c.nome}</b>
-              <span className={`shrink-0 font-bold ${c.nota === 0 ? "text-rose-700" : "text-slate-900"}`}>
+              <b className="text-marinho">{c.nome}</b>
+              <span className={`shrink-0 font-bold ${c.nota === 0 ? "text-rose-700" : "text-marinho"}`}>
                 {virgula(c.nota)} / {virgula(c.max)}
               </span>
             </div>
@@ -290,7 +290,7 @@ function Resultado({ r }) {
 
       {el && (
         <>
-          <h2 className="mt-6 font-bold text-slate-900">{el.titulo}</h2>
+          <h2 className="mt-6 font-bold text-marinho">{el.titulo}</h2>
           <div className="mt-2 flex flex-wrap gap-2 text-sm">
             {el.itens.map((i) => (
               <span key={i.id} className={`rounded-full px-3 py-1 font-semibold ${i.presente ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
@@ -304,7 +304,7 @@ function Resultado({ r }) {
 
       {r.errosPortugues.length > 0 && (
         <>
-          <h2 className="mt-6 font-bold text-slate-900">Erros de português</h2>
+          <h2 className="mt-6 font-bold text-marinho">Erros de português</h2>
           <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[480px] text-left text-sm">
               <thead className="bg-slate-50 text-slate-700">
@@ -330,12 +330,12 @@ function Resultado({ r }) {
 
       {r.trechosReescritos.length > 0 && (
         <>
-          <h2 className="mt-6 font-bold text-slate-900">Trechos reescritos</h2>
+          <h2 className="mt-6 font-bold text-marinho">Trechos reescritos</h2>
           <ul className="mt-2 space-y-2 text-sm">
             {r.trechosReescritos.map((t, i) => (
               <li key={i} className="rounded-xl border border-slate-200 p-3">
                 <p className="text-slate-500 line-through">{t.original}</p>
-                <p className="mt-1 font-semibold text-slate-900">{t.reescrito}</p>
+                <p className="mt-1 font-semibold text-marinho">{t.reescrito}</p>
                 <p className="mt-1 text-slate-600">{t.porque}</p>
               </li>
             ))}
@@ -344,11 +344,11 @@ function Resultado({ r }) {
       )}
 
       {r.proximoPasso && (
-        <p className="mt-6 rounded-xl bg-indigo-50 p-3 text-sm text-indigo-950">
+        <p className="mt-6 rounded-xl bg-roxo-claro p-3 text-sm text-marinho">
           <b>Próximo passo:</b> {r.proximoPasso}
         </p>
       )}
-      <a href="/redacao" className="mt-4 inline-block text-sm font-semibold text-indigo-600 hover:underline">
+      <a href="/redacao" className="mt-4 inline-block text-sm font-semibold text-roxo hover:underline">
         Minhas redações
       </a>
     </div>

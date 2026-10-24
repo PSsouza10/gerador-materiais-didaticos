@@ -20,13 +20,13 @@ export default function Historico({ itens: iniciais }) {
         {itens.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
             <span className="min-w-0 flex-1">
-              <b className="text-slate-900">{r.tema || "Sem tema"}</b>
+              <b className="text-marinho">{r.tema || "Sem tema"}</b>
               <span className="block text-slate-500">
                 {PERFIS_REDACAO[r.perfil]}{r.genero && r.genero !== "dissertacao" ? ` · ${GENEROS[r.genero]}` : ""} · {new Date(r.criadoEm).toLocaleDateString("pt-BR")}
                 {r.nota !== null && ` · nota ${String(r.nota).replace(".", ",")}`}
               </span>
             </span>
-            <a href={`/redacao/corrigir?id=${r.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-800 hover:border-indigo-300">
+            <a href={`/redacao/corrigir?id=${r.id}`} className="rounded-full border border-[#e6dcc8] bg-white px-3 py-1.5 font-semibold text-slate-800 hover:border-roxo">
               Ver
             </a>
             <button type="button" onClick={() => apagar(r.id)} className="rounded-lg border border-rose-200 px-3 py-1.5 font-semibold text-rose-700 hover:bg-rose-50">
