@@ -1,3 +1,4 @@
+import { regraLinguaEstrangeira } from "@/lib/linguas";
 import { conferirCoerencia } from "@/lib/coerencia";
 import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
@@ -195,7 +196,7 @@ Regras:
 - Todo termo de "conceitos" precisa ser usado em pelo menos uma fórmula, exemplo ou exercício. Não defina termo decorativo.
 - Adequação ao ano: use só conteúdos que a BNCC prevê até o ano escolhido e números do tamanho que a turma conhece. Nunca antecipe conteúdo de anos seguintes (ex.: no 1º e 2º ano não há frações, decimais nem reta com partes entre 0 e 1; no 1º ano, números até 100 e contagens com objetos). Vale para a cena, as figuras e os exercícios.
 - A habilidade BNCC é da etapa do nível escolhido (EF = Ensino Fundamental, EM = Ensino Médio). Nunca adapte o conteúdo a um código de outra etapa.
-- Português do Brasil revisado: confira a grafia de títulos e enunciados (ex.: "Exemplos", "Explique") antes de terminar.
+- Português do Brasil revisado: confira a grafia de títulos e enunciados (ex.: "Exemplos", "Explique") antes de terminar.${regraLinguaEstrangeira(disciplina)}
 - Conteúdo tecnicamente correto e adequado ao nível ${nivel}${oficial ? ` e à habilidade ${oficial.c}` : ""}.`;
 
   // Aborta se passar do limite OU se o professor fechar a página

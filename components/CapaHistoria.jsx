@@ -284,6 +284,26 @@ function Desenho({ tipo, cor, claro }) {
           <path d="M560 70 l8 16 18 2 -13 12 4 18 -17 -9 -16 9 3 -18 -13 -12 18 -2 z" fill="#ffd36b" stroke={T} strokeWidth="2.5" />
         </g>
       );
+    case "espanhol":
+      return (
+        <g>
+          <g transform="translate(130 60)">
+            <rect width="190" height="100" rx="26" {...comum} fill="#fff" />
+            <path d="M40 98 L30 132 L74 100" {...comum} fill="#fff" />
+            <text x="95" y="64" textAnchor="middle" fontFamily="Fredoka, system-ui, sans-serif" fontWeight="700" fontSize="40" fill={cor}>
+              ¡Hola!
+            </text>
+          </g>
+          <g transform="translate(350 110)">
+            <rect width="190" height="96" rx="26" {...comum} fill={claro} />
+            <path d="M150 94 L160 128 L118 96" {...comum} fill={claro} />
+            <text x="95" y="62" textAnchor="middle" fontFamily="Fredoka, system-ui, sans-serif" fontWeight="700" fontSize="34" fill={T}>
+              ¿Qué tal?
+            </text>
+          </g>
+          <path d="M570 70 l8 16 18 2 -13 12 4 18 -17 -9 -16 9 3 -18 -13 -12 18 -2 z" fill="#ffd36b" stroke={T} strokeWidth="2.5" />
+        </g>
+      );
     case "informatica":
       return (
         <g>
