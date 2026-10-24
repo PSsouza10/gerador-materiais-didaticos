@@ -183,3 +183,94 @@ test("histórico: salvar, listar sem o texto, ler e apagar só a própria", asyn
   assert.equal(await H.apagarRedacao("aluno@x.br", id), true);
   assert.equal((await H.listarRedacoes("aluno@x.br")).length, 0);
 });
+
+// ---------- gêneros e ENEM ----------
+import { GENEROS_REDACAO } from "../lib/redacaoEtapas.js";
+import * as F from "../lib/redacaoFoto.js";
+import { TRANSCRICAO_SIMULADA, respostaSimulada } from "../lib/iaSimulada.js";
+import { tokenFoto, tokenFotoConfere } from "../lib/redacaoFotoToken.js";
+
+test("gêneros: cada um com etapas, checklist de 5, 5 critérios e elementos ligados a um critério", () => {
+  for (const [id, g] of Object.entries(GENEROS_REDACAO)) {
+    assert.ok(g.etapas.length >= 6 && g.etapas[0].parte === 0, id);
+    assert.equal(g.checklist.length, 5, id);
+    assert.equal(g.criterios.length, 5, id);
+    assert.ok(g.criterios.some((c) => c.id === g.criterioDosElementos), id);
+  }
+});
+
+test("perfil: concurso e ENEM são sempre dissertação; escola escolhe o gênero", () => {
+  const t = palavras(60);
+  assert.equal(R.validarPedidoRedacao({ texto: t, bancaPerfil: "enem", genero: "carta" }).dados.genero, "dissertacao");
+  const d = R.validarPedidoRedacao({ texto: t, bancaPerfil: "escolar", genero: "narrativo" }).dados;
+  assert.equal(d.genero, "narrativo");
+  assert.deepEqual([d.minLinhas, d.maxLinhas], [15, 30]);
+  assert.equal(R.validarPedidoRedacao({ texto: t, bancaPerfil: "enem" }).dados.minLinhas, 7);
+});
+
+test("carta: local e data e vocativo em linhas próprias, sem ponto final forçado", () => {
+  const m = R.montarRedacao({ local: "Araçariguama, 24 de outubro de 2026", vocativo: "Senhor Prefeito", motivo: "Sou aluno do 6º ano", corpo: "A rua da escola não tem faixa", pedido: "Peço uma faixa de pedestres", despedida: "Atenciosamente", assinatura: "Ana" }, undefined, "carta");
+  assert.deepEqual(m.paragrafos.slice(0, 2), ["Araçariguama, 24 de outubro de 2026", "Senhor Prefeito,"]);
+  assert.equal(m.paragrafos.at(-2), "Atenciosamente,");
+  assert.equal(m.paragrafos.at(-1), "Ana");
+});
+
+test("narrativo: rubrica do gênero no prompt e elementos ausentes tiram nota da estrutura", () => {
+  const d = R.validarPedidoRedacao({ texto: palavras(150), bancaPerfil: "escolar", genero: "narrativo" }).dados;
+  const p = R.montarPromptRedacao(d);
+  assert.match(R.sistemaRedacao("escolar", "narrativo"), /Texto narrativo/);
+  assert.match(p, /"elementos":\{"inicial":true,"conflito":true,"climax":true,"desfecho":true/);
+  const r = R.normalizarRespostaRedacao(respostaSimulada(`${R.sistemaRedacao("escolar", "narrativo")}\n${p}`), d).resultado;
+  assert.equal(r.notaMaxima, 10);
+  assert.deepEqual(r.elementos.faltam, ["clímax", "desfecho"]);
+  const estrutura = r.criterios.find((c) => c.id === "estrutura");
+  assert.ok(estrutura.nota <= 1, `estrutura ${estrutura.nota}`);
+  assert.equal(r.propostaIntervencao, undefined);
+});
+
+test("ENEM: competências de 0 a 200 em múltiplos de 40, total até 1000", () => {
+  const d = R.validarPedidoRedacao({ texto: palavras(200), bancaPerfil: "enem" }).dados;
+  const prompt = R.montarPromptRedacao(d);
+  assert.match(prompt, /0, 40, 80, 120, 160 ou 200/);
+  const r = R.normalizarRespostaRedacao(respostaSimulada(prompt), d).resultado;
+  assert.equal(r.notaMaxima, 1000);
+  assert.ok(r.criterios.every((c) => c.max === 200 && c.nota % 40 === 0));
+  // 3 de 5 elementos da proposta → C5 no máximo 120
+  assert.ok(r.criterios[4].nota <= 120);
+  assert.equal(r.notaTotal, r.criterios.reduce((s, c) => s + c.nota, 0));
+});
+
+// ---------- foto ----------
+test("transcrição: normaliza caixas, parágrafos e junta palavra hifenizada", () => {
+  const t = F.normalizarTranscricao({ legivel: true, linhasDaFoto: [{ texto: "O plane-", caixa: [10, 5, 50, 900], novoParagrafo: true }, { texto: "jamento  é bom.", caixa: [2000, 900, 60, 100] }, { texto: "Outro parágrafo", caixa: [70, 5, 110, 900], novoParagrafo: true }] });
+  assert.equal(t.ok, true);
+  assert.deepEqual(t.linhas[1].caixa, [60, 100, 1000, 900]);
+  assert.equal(F.textoDasLinhas([t.linhas]), "O planejamento é bom.\n\nOutro parágrafo");
+  assert.equal(F.normalizarTranscricao({ legivel: false }).ok, false);
+  assert.equal(F.normalizarTranscricao({ linhasDaFoto: [] }).ok, false);
+  assert.match(F.montarPromptTranscricao(), /NÃO corrija/);
+});
+
+test("marcas na foto: acha o trecho do erro na linha certa e na posição aproximada", () => {
+  const linhas = F.normalizarTranscricao(TRANSCRICAO_SIMULADA).linhas;
+  const erros = [
+    { trecho: "os professor", tipo: "concordância", correcao: "os professores" },
+    { trecho: "cabe a coordenação", tipo: "crase", correcao: "cabe à coordenação" },
+    { trecho: "palavra que não existe", tipo: "ortografia", correcao: "x" },
+  ];
+  const m = F.localizarErros([linhas], erros);
+  assert.equal(m.length, 2);
+  assert.equal(m[0].linha, 1);
+  assert.ok(m[0].x1 > 600 && m[0].x2 <= 900, `x ${m[0].x1}-${m[0].x2}`);
+  assert.deepEqual([m[0].y1, m[0].y2], linhas[1].caixa.filter((_, i) => i % 2 === 0));
+  assert.equal(m[1].linha, 4);
+  assert.ok(m[1].x1 < 400);
+});
+
+test("token da foto: vale para a mesma conta por 30 minutos", () => {
+  const em = new Date().toISOString();
+  const t = tokenFoto("a@x.br", em);
+  assert.equal(tokenFotoConfere(t, "a@x.br", em), true);
+  assert.equal(tokenFotoConfere(t, "b@x.br", em), false);
+  assert.equal(tokenFotoConfere(t, "a@x.br", new Date(Date.now() - 31 * 60e3).toISOString()), false);
+});

@@ -5,6 +5,7 @@ import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin } from "@/lib/u
 import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
 import { bancoLigado } from "@/lib/banco";
 import { salvarRedacao } from "@/lib/redacoesBanco";
+import { tokenFotoConfere } from "@/lib/redacaoFotoToken";
 import { validarPedidoRedacao, passaDoLimiteGratis, MENSAGEM_LAUDAS, sistemaRedacao, montarPromptRedacao, normalizarRespostaRedacao } from "@/lib/redacao";
 
 // Correção de redação digitada (docs/specs/redacao.md, seção 4).
@@ -40,9 +41,11 @@ async function postRota(request, _contexto, requestId) {
   if (plano.id === "gratis" && !ehAdmin(usuario.email) && passaDoLimiteGratis(d.texto))
     return NextResponse.json({ error: MENSAGEM_LAUDAS, motivo: "recurso_pro" }, { status: 403 });
 
-  let uso;
+  // texto lido da foto: o uso já foi gasto na leitura (/api/redacao/ler-foto)
+  const daFoto = tokenFotoConfere(body.token, usuario.email, body.lidaEm);
+  let uso = { ok: true };
   try {
-    uso = await consumirRedacao(usuario.email, requestId);
+    if (!daFoto) uso = await consumirRedacao(usuario.email, requestId);
   } catch (e) {
     console.error("Redação: erro ao registrar uso:", e?.message || e);
     return NextResponse.json({ error: "Não foi possível verificar seu limite agora. Tente de novo." }, { status: 503 });
@@ -53,7 +56,7 @@ async function postRota(request, _contexto, requestId) {
     return NextResponse.json({ error: `Você já usou ${n} deste mês do plano ${uso.plano}. O limite renova no dia 1º. Para corrigir mais, assine o Pro em /planos.`, motivo: "mes", limiteAtingido: true }, { status: 429 });
   }
 
-  const sistema = sistemaRedacao(d.perfil);
+  const sistema = sistemaRedacao(d.perfil, d.genero);
   const prompt = montarPromptRedacao(d);
   let final = null;
   for (let tentativa = 0; tentativa < 2 && !final; tentativa++) {
@@ -67,14 +70,14 @@ async function postRota(request, _contexto, requestId) {
     else console.error("Redação: resposta fora do esquema", { tentativa, erro: n.erro.slice(0, 200) });
   }
   if (!final) {
-    await devolverRedacao(usuario.email, requestId);
+    if (!daFoto) await devolverRedacao(usuario.email, requestId);
     return NextResponse.json({ error: "A correção não saiu desta vez. Tente de novo em instantes (não contou no seu limite)." }, { status: 502 });
   }
 
   let id = null;
   if (bancoLigado()) {
     try {
-      id = await salvarRedacao(usuario.email, { tema: d.tema, texto: d.texto, perfil: d.perfil, resultado: final });
+      id = await salvarRedacao(usuario.email, { tema: d.tema, texto: d.texto, perfil: d.perfil, genero: d.genero, resultado: final });
     } catch (e) {
       console.error("Redação: não foi possível salvar no histórico:", e?.message || e);
     }

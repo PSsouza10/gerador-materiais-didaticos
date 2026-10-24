@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PERFIS_REDACAO } from "@/lib/redacao";
+import { PERFIS_REDACAO, GENEROS } from "@/lib/redacao";
 
 // Redações corrigidas da conta: abrir a correção ou apagar (texto do aluno é dado pessoal)
 export default function Historico({ itens: iniciais }) {
@@ -22,7 +22,7 @@ export default function Historico({ itens: iniciais }) {
             <span className="min-w-0 flex-1">
               <b className="text-slate-900">{r.tema || "Sem tema"}</b>
               <span className="block text-slate-500">
-                {PERFIS_REDACAO[r.perfil]} · {new Date(r.criadoEm).toLocaleDateString("pt-BR")}
+                {PERFIS_REDACAO[r.perfil]}{r.genero && r.genero !== "dissertacao" ? ` · ${GENEROS[r.genero]}` : ""} · {new Date(r.criadoEm).toLocaleDateString("pt-BR")}
                 {r.nota !== null && ` · nota ${String(r.nota).replace(".", ",")}`}
               </span>
             </span>

@@ -1,0 +1,1 @@
+ALTER TABLE redacoes DROP COLUMN IF EXISTS genero;

@@ -10,8 +10,8 @@ export default async function PaginaCorrigir({ searchParams }) {
   const usuario = authConfigurado ? await usuarioAtual() : null;
   const id = /^\d{1,18}$/.test(searchParams?.id || "") ? searchParams.id : null;
   return (
-    <Moldura titulo="Corrigir redação" subtitulo="Cole ou digite o texto. A IA corrige pela rubrica de 5 critérios (10 pontos).">
-      {usuario ? <Corretor idSalvo={id} /> : <Entrar voltarPara="/redacao/corrigir" />}
+    <Moldura titulo="Corrigir redação" subtitulo="Digite o texto ou fotografe a folha: a correção volta marcada como a do professor, com nota por critério.">
+      {usuario ? <Corretor idSalvo={id} modoInicial={searchParams?.modo === "foto" ? "foto" : "texto"} /> : <Entrar voltarPara="/redacao/corrigir" />}
     </Moldura>
   );
 }

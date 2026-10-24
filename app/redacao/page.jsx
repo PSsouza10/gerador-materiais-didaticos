@@ -15,16 +15,20 @@ export default async function PaginaRedacao() {
   let historico = null;
   if (usuario && bancoLigado()) historico = await listarRedacoes(usuario.email).catch(() => null);
   return (
-    <Moldura titulo="Construir ou corrigir uma redação" subtitulo="Dissertação argumentativa para concurso, ENEM ou escola." voltar="/criar">
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+    <Moldura titulo="Construir ou corrigir uma redação" subtitulo="Concurso, ENEM e escola (do Fundamental ao Médio)." voltar="/criar">
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
         <a href="/redacao/construir" className="rounded-2xl border border-slate-200 p-5 hover:border-indigo-300">
           <span className="text-lg font-bold text-slate-900">Construir</span>
           {!pro && <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">Pro</span>}
-          <span className="mt-1 block text-sm text-slate-600">Escreva parte por parte, em 9 etapas com dicas. O EduGera monta os 4 parágrafos e conta as linhas.</span>
+          <span className="mt-1 block text-sm text-slate-600">Escreva parte por parte, com dicas: dissertação, artigo, conto, relato, carta ou notícia.</span>
         </a>
         <a href="/redacao/corrigir" className="rounded-2xl border border-slate-200 p-5 hover:border-indigo-300">
           <span className="text-lg font-bold text-slate-900">Corrigir</span>
           <span className="mt-1 block text-sm text-slate-600">Cole o texto e receba nota por critério, erros de português e trechos reescritos.</span>
+        </a>
+        <a href="/redacao/corrigir?modo=foto" className="rounded-2xl border border-slate-200 p-5 hover:border-indigo-300">
+          <span className="text-lg font-bold text-slate-900">Foto da folha</span>
+          <span className="mt-1 block text-sm text-slate-600">Fotografe a redação escrita à mão. Ela volta corrigida em vermelho, como se o professor tivesse corrigido.</span>
         </a>
       </div>
       {!usuario && authConfigurado && <Entrar voltarPara="/redacao" />}
