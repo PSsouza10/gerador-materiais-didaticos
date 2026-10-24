@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { comRequestId } from "@/lib/requestId";
 import { authConfigurado, usuarioAtual } from "@/lib/auth";
 import { consumirRedacao, devolverRedacao, planoDaConta, ehAdmin } from "@/lib/uso";
-import { geminiJson, openaiJson, temGemini, temOpenAI } from "@/lib/provedoresIA";
+import { geminiJson, openaiJson, temGemini, temOpenAI, iaRealRedacao } from "@/lib/provedoresIA";
 import { bancoLigado } from "@/lib/banco";
 import { salvarRedacao } from "@/lib/redacoesBanco";
 import { tokenFotoConfere } from "@/lib/redacaoFotoToken";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function pedirIA(sistema, prompt) {
-  if (temGemini()) return geminiJson({ sistema, prompt, temperatura: 0.2 });
+  if (temGemini()) return geminiJson({ sistema, prompt, temperatura: 0.2, forcarReal: iaRealRedacao() });
   return openaiJson({ sistema, prompt, modelo: process.env.MODELO_TEXTO || "gpt-4o", temperatura: 0.2 });
 }
 
