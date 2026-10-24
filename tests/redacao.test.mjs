@@ -136,7 +136,14 @@ test("validação Zod: aceita números em texto, recusa resposta sem os 5 crité
   assert.equal(r.dentroDoLimite, true); // 200 palavras ≈ 27 linhas
   assert.equal(R.normalizarRespostaRedacao({ ...json, criterios: json.criterios.slice(0, 4) }, d).ok, false);
   assert.equal(R.normalizarRespostaRedacao(null, d).ok, false);
-  assert.equal(R.normalizarRespostaRedacao({ criterios: json.criterios }, d).ok, false); // sem proposta/próximo passo
+  // sem "elementos" e sem próximo passo: aceita, com todos os elementos ausentes (critério da proposta = 0)
+  const minimo = R.normalizarRespostaRedacao({ criterios: json.criterios }, d);
+  assert.equal(minimo.ok, true);
+  assert.equal(minimo.resultado.criterios[3].nota, 0);
+  // resposta em lista e notas escritas por extenso
+  const lista = R.normalizarRespostaRedacao([{ ...json, notaTotal: "6,5/10", criterios: json.criterios.map((c) => ({ ...c, nota: "1,5 de 2", max: "2 pontos" })) }], d);
+  assert.equal(lista.ok, true);
+  assert.equal(lista.resultado.criterios[0].nota, 1.5);
 });
 
 test("planos: correção Grátis 1/mês; construtor só no Pro", () => {
