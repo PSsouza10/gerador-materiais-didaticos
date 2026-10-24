@@ -119,7 +119,7 @@ test("conclusão sem proposta: 0 no critério e mensagem com o que falta", () =>
   json.propostaIntervencao = { agente: false, acao: false, meio: false, finalidade: false, comentario: "" };
   const r = R.normalizarRespostaRedacao(json, d).resultado;
   assert.equal(r.criterios[3].nota, 0);
-  assert.match(r.criterios[3].justificativa, /faltam agente, ação, meio e finalidade/);
+  assert.match(r.criterios[3].justificativa, /ausente: faltam agente, ação, meio, finalidade/);
   assert.equal(r.notaTotal, 1.75 + 1 + 1.75 + 0 + 1.25);
 });
 
