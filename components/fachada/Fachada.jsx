@@ -33,7 +33,7 @@ import {
 import Cabecalho from "./Cabecalho";
 import Vitrine from "./Vitrine";
 import Marca from "./Marca";
-import DemoAnimada from "./DemoAnimada";
+import DemoAbas from "./DemoAbas";
 import "./fachada.css";
 import { SUPORTE_EMAIL_PADRAO, suporteWhatsapp } from "@/lib/planos";
 
@@ -192,13 +192,10 @@ function FuncionandoAoVivo() {
     <section aria-labelledby="titulo-ao-vivo" className="bg-white/60 py-16 sm:py-24">
       <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
         <Titulo2 eyebrow="Na prática" id="titulo-ao-vivo">
-          Do tema à apostila, sem começar do zero
+          Veja o EduGera trabalhando
         </Titulo2>
-        <p className="mt-5 max-w-[640px] text-lg leading-relaxed text-tinta">
-          Você informa o ano, o componente e o tema. O EduGera confere a habilidade da BNCC, monta o material e entrega o PDF do aluno e o do professor.
-        </p>
-        <div className="mt-10 sm:mt-12">
-          <DemoAnimada />
+        <div className="mt-8">
+          <DemoAbas />
         </div>
       </div>
     </section>
